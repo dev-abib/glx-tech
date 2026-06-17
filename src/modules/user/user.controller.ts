@@ -5,6 +5,7 @@ import { ApiResponse } from "../../utils/api-response.js";
 import {
   CreateUserInput,
   ResendOtpInput,
+  ResetPasswordInput,
   VerifyUserAccountInput,
 } from "./user.validation.js";
 
@@ -44,7 +45,9 @@ export const loginUserAccount: RequestHandler<
 > = asyncHandler(async (req: Request, res: Response) => {
   const result = await userService.loginUserAccount(req.body);
 
-  return res.status(201).json(new ApiResponse(201, result.message, result.data));
+  return res
+    .status(201)
+    .json(new ApiResponse(201, result.message, result.data));
 });
 
 // resend otp controller
@@ -65,6 +68,51 @@ export const forgotPassword: RequestHandler<
   ResendOtpInput
 > = asyncHandler(async (req: Request, res: Response) => {
   const msg = await userService.forgotPassword(req.body);
+
+  return res.status(201).json(new ApiResponse(201, msg));
+});
+
+// verify reset otp controller
+export const verifyResetOtp: RequestHandler<
+  {},
+  ApiResponse<any>,
+  VerifyUserAccountInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const msg = await userService.verifyResetOtp(req.body);
+
+  return res.status(201).json(new ApiResponse(201, msg));
+});
+
+// reset password controller
+export const resetPassword: RequestHandler<
+  {},
+  ApiResponse<any>,
+  ResetPasswordInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const msg = await userService.resetPassword(req.body, {});
+
+  return res.status(201).json(new ApiResponse(201, msg));
+});
+
+// change password controller
+export const changePassword: RequestHandler<
+  {},
+  ApiResponse<any>,
+  ResetPasswordInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const msg = await userService.changePassword(req.body, {});
+
+  return res.status(201).json(new ApiResponse(201, msg));
+});
+
+// refresh token controller
+export const refreshToken: RequestHandler<
+  {},
+  ApiResponse<any>,
+  { refreshToken: string }
+> = asyncHandler(async (req: Request, res: Response) => {
+  const token = req.body.refreshToken;
+  const msg = await userService.refreshToken(token);
 
   return res.status(201).json(new ApiResponse(201, msg));
 });

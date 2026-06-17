@@ -82,3 +82,24 @@ export const resetPasswordSchema = z
   .strict();
 
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8)
+      .max(128)
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()[\]{}\-_=+|\\:;"'<>,./~`]).+$/,
+        "Password must include uppercase, lowercase, number, and special character"
+      ),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  })
+
+  .strict();
+
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

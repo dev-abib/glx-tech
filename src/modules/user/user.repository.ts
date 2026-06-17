@@ -1,6 +1,7 @@
 import { PrismaClient, User, Role } from "@prisma/client";
 import { ApiError } from "../../utils/api-error.js";
 import {
+  ChangePasswordInput,
   CreateUserInput,
   LoginUserInput,
   ResendOtpInput,
@@ -18,6 +19,7 @@ import { getPrismaClient } from "../../config/database.js";
 import { accountVerificationConfirmationTemplate } from "../../emails/templates/syestem/account-verfication.confirmation.template.js";
 import { resetPasswordTemplate } from "../../emails/templates/auth/reset-password.template.js";
 import { resetPasswordConfirmationTemplate } from "../../emails/templates/auth/reset-password-confirmation.template.js";
+import { changePasswordConfirmationTemplate } from "../../emails/templates/auth/change-password.template.js";
 
 const prisma = getPrismaClient();
 const auth = new AuthHelper();
@@ -281,7 +283,7 @@ export class UserRepository {
     };
   }
 
-  // forgot password service
+  // forgot password repo
   async forgotPassword(data: ResendOtpInput): Promise<string> {
     const user = await this.findUser("email", data.email, true);
 
@@ -353,8 +355,8 @@ export class UserRepository {
     return "Forgot password otp sent successfully, please check your mailbox";
   }
 
-  // verify otp service
-  async verifyOtp(dto: VerifyUserAccountInput) {
+  // verify otp repo
+  async verifyResetOtp(dto: VerifyUserAccountInput) {
     const user = await this.findUser("email", dto.email, true);
 
     if (user.otpExpiresAt && user.otpExpiresAt < new Date())
@@ -403,7 +405,7 @@ export class UserRepository {
     };
   }
 
-  // reset password service
+  // reset password repo
   async resetPassword(data: ResetPasswordInput, user: JwtPayload) {
     await this.findUser("id", user.id, true);
 
@@ -437,6 +439,104 @@ export class UserRepository {
     return {
       message: "Password reset successful.",
       data: null,
+    };
+  }
+
+  // change password repo
+  async changePassword(data: ChangePasswordInput, user: JwtPayload) {
+    const existingUser = await this.findUser("id", user.id, true);
+
+    if (!existingUser.password) {
+      throw new ApiError(400, "No password set for this account");
+    }
+
+    const isValidPass = await comparePassword(
+      data.password as string,
+      user.password as string
+    );
+
+    if (!isValidPass) {
+      throw new ApiError(401, "Old password is incorrect");
+    }
+
+    const hashPassword = await auth.hashPassword(data.password);
+
+    await prisma.user.update({
+      where: { id: existingUser.id },
+      data: {
+        password: hashPassword,
+      },
+    });
+
+    const isMailSent = await sendEmail({
+      to: user.email,
+      subject: `Password change confirmation  ${process.env.MAIL_FROM_NAME as string}`,
+      html: changePasswordConfirmationTemplate({
+        name: user.name,
+      }),
+    });
+
+    if (!isMailSent) {
+      throw new ApiError(
+        500,
+        "Something went wrong, can't sent otp at the moment"
+      );
+    }
+
+    return {
+      message: "Password changed successfully.",
+      data: null,
+    };
+  }
+
+  // refresh token service
+  async refreshToken(refreshToken: string) {
+    let payload: JwtPayload;
+    try {
+      payload = auth.verifyToken(refreshToken, "user", "refresh");
+    } catch {
+      throw new ApiError(401, "Invalid or expired refresh token");
+    }
+
+    const user = await this.findUser("id", payload.id, true);
+
+    const hashedIncoming = auth.hashToken(refreshToken);
+    if (!user.refreshToken || user.refreshToken !== hashedIncoming) {
+      throw new ApiError(401, "Refresh token revoked or mismatched");
+    }
+
+    const newPayload: JwtPayload = {
+      id: user.id,
+      email: user.email as string,
+      name: user.name as string,
+      role: user.role,
+      isPaid: user.isPaid as boolean,
+    };
+
+    const newAccessToken = auth.generateToken(
+      newPayload,
+      user.role as Role,
+      "access"
+    );
+    const newRefreshToken = auth.generateToken(
+      newPayload,
+      user.role as Role,
+      "refresh"
+    );
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken: auth.hashToken(newRefreshToken) },
+    });
+
+    return {
+      message: "Token refreshed successfully",
+      data: {
+        token: {
+          accessToken: newAccessToken,
+          refreshToken: newRefreshToken,
+        },
+      },
     };
   }
 }
