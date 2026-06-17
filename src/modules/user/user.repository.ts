@@ -1,14 +1,15 @@
 import { PrismaClient, User, Role } from "@prisma/client";
 import { ApiError } from "../../utils/api-error.js";
-import { CreateUserInput } from "./user.validation.js";
+import { CreateUserInput, VerifyUserAccountInput } from "./user.validation.js";
 import { hashPassword } from "../../utils/hash.js";
 import { AuthHelper } from "../../helpers/auth-helpers.js";
 import { JwtPayload } from "jsonwebtoken";
 import { sendEmail } from "../../emails/email.services.js";
 import { accountVerificationTemplate } from "../../emails/templates/syestem/account.verification.template.js";
-import { createOTP } from "../../helpers/otp/otp.js";
+import { createOTP, verifyOTP } from "../../helpers/otp/otp.js";
 import { ApiResponse } from "../../utils/api-response.js";
 import { getPrismaClient } from "../../config/database.js";
+import { accountVerificationConfirmationTemplate } from "../../emails/templates/syestem/account-verfication.confirmation.template.js";
 
 const prisma = getPrismaClient();
 const auth = new AuthHelper();
@@ -43,6 +44,7 @@ export class UserRepository {
     }
   }
 
+  // create user repo
   async createUser(data: CreateUserInput) {
     await this.findUser("email", data.email, false);
 
@@ -95,6 +97,7 @@ export class UserRepository {
         name: user.name as string,
         otp: otp as string,
         email: user.email as string,
+        expiresAt,
       }),
     });
 
@@ -114,5 +117,102 @@ export class UserRepository {
     } = user;
 
     return safeUser;
+  }
+
+  // verify account repo
+  async verifyAccount(data: VerifyUserAccountInput) {
+    const user = await this.findUser("email", data.email, true);
+
+    if (user.isEmailVerified)
+      throw new ApiError(400, "Account already verified");
+
+    if (user.otpExpiresAt && user.otpExpiresAt < new Date())
+      throw new ApiError(400, "Otp expired");
+
+    const isMatch = verifyOTP(
+      data.otp as string,
+      user.otp as string,
+      user.otpExpiresAt as Date
+    );
+    if (!isMatch) {
+      await prisma.user.update({
+        where: { email: data.email },
+        data: { otpAttempts: { increment: 1 }, otpExpiresAt: null, otp: null },
+      });
+      throw new ApiError(401, "Invalid otp");
+    }
+
+    await prisma.user.update({
+      where: { email: data.email },
+      data: {
+        isEmailVerified: true,
+        otp: null,
+        otpExpiresAt: null,
+        otpAttempts: 0,
+      },
+    });
+
+    await sendEmail({
+      to: user.email as string,
+      subject: `Account verification confirmation ${process.env.MAIL_FROM_NAME as string}`,
+      html: accountVerificationConfirmationTemplate({
+        name: user.name as string,
+      }),
+    });
+
+    return {
+      message: "Email verified successfully",
+    };
+  }
+
+  // resend otp
+  async resendOtp(
+    data: VerifyUserAccountInput
+  ): Promise<{ message: string }> {
+    const user = await this.findUser("email", data.email, true);
+
+    const { otp, hashedOtp, expiresAt } = createOTP();
+
+    if (user.isEmailVerified && !user.isResetRequest)
+      throw new ApiError(400, "Account already verified");
+
+    if ((user.otpAttempts ?? 0) >= 3) {
+      await prisma.user.delete({ where: { email: data.email } });
+      throw new ApiError(
+        400,
+        "Max OTP attempts exceeded, please register again"
+      );
+    }
+
+    await prisma.user.update({
+      where: { email: data.email },
+      data: {
+        otp: hashedOtp,
+        otpExpiresAt: expiresAt,
+        otpAttempts: { increment: 1 },
+      },
+    });
+
+    const isMailSent = await sendEmail({
+      to: user.email as string,
+      subject: `OTP Resend ${process.env.MAIL_FROM_NAME as string}`,
+      html: accountVerificationTemplate({
+        name: user.name as string,
+        email: user.email as string,
+        otp,
+        expiresAt,
+      }),
+    });
+
+    if (!isMailSent) {
+      throw new ApiError(
+        500,
+        "Something went wrong, can't send resend otp at the moment"
+      );
+    }
+
+    return {
+      message: "Email otp sent successfully, please check your mailbox",
+    };
   }
 }

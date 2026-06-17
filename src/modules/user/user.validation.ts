@@ -24,3 +24,23 @@ export const createUserSchema = z
   .strict();
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
+
+export const verifyUserAccountSchema = z
+  .object({
+    email: z.string().trim().email("Invalid email format"),
+    otp: z.string().length(4),
+  })
+
+  .strict();
+
+export type VerifyUserAccountInput = z.infer<typeof verifyUserAccountSchema>;
+
+export const resendOtpSchema = z
+  .object({
+    email: z.string().trim().email("Invalid email format"),
+    otp: z.string().length(4),
+  })
+
+  .strict();
+
+export type ResendOtpInput = z.infer<typeof resendOtpSchema>;

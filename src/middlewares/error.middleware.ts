@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { ApiError } from "../utils/api-error.js";
+import { env } from "../config/env.js";
 
 export const errorMiddleware = (
   error: Error,
@@ -14,8 +15,13 @@ export const errorMiddleware = (
     });
   }
 
+  console.error("⚠️ Unhandled Error:", error);
+
+  const isDev = env.NODE_ENV === "development";
+
   return res.status(500).json({
     success: false,
-    message: "Internal Server Error",
+    message: isDev ? error.message : "Internal Server Error",
+    ...(isDev && { stack: error.stack }),
   });
 };

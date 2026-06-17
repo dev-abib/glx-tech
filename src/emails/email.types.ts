@@ -7,6 +7,7 @@ export interface OTPEmailProps {
   name: string;
   otp: string;
   email: string;
+  expiresAt: Date;
 }
 
 export interface ContactEmailProps {

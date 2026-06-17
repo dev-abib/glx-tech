@@ -5,6 +5,7 @@ import { baseTemplate } from "../base.template.js";
 export const accountVerificationTemplate = ({
   name,
   otp,
+  expiresAt,
 }: OTPEmailProps): string => {
   const digits = otp
     .toString()
@@ -56,7 +57,7 @@ export const accountVerificationTemplate = ({
             <tr>${digits}</tr>
           </table>
           <p style="margin:0;font-size:12px;color:#6b7280;">
-            Expires in <strong style="color:#374151;">10 minutes</strong>
+            Expires at <strong style="color:#374151;">${expiresAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</strong>
           </p>
         </td>
       </tr>
