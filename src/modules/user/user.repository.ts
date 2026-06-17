@@ -2,10 +2,12 @@ import { PrismaClient, User, Role } from "@prisma/client";
 import { ApiError } from "../../utils/api-error.js";
 import {
   CreateUserInput,
+  LoginUserInput,
   ResendOtpInput,
+  ResetPasswordInput,
   VerifyUserAccountInput,
 } from "./user.validation.js";
-import { hashPassword } from "../../utils/hash.js";
+import { comparePassword, hashPassword } from "../../utils/hash.js";
 import { AuthHelper } from "../../helpers/auth-helpers.js";
 import { JwtPayload } from "jsonwebtoken";
 import { sendEmail } from "../../emails/email.services.js";
@@ -15,6 +17,7 @@ import { ApiResponse } from "../../utils/api-response.js";
 import { getPrismaClient } from "../../config/database.js";
 import { accountVerificationConfirmationTemplate } from "../../emails/templates/syestem/account-verfication.confirmation.template.js";
 import { resetPasswordTemplate } from "../../emails/templates/auth/reset-password.template.js";
+import { resetPasswordConfirmationTemplate } from "../../emails/templates/auth/reset-password-confirmation.template.js";
 
 const prisma = getPrismaClient();
 const auth = new AuthHelper();
@@ -170,6 +173,65 @@ export class UserRepository {
     };
   }
 
+  // login user repo
+  async loginAccount(data: LoginUserInput) {
+    const user = await this.findUser("email", data.email, true);
+
+    const isValidPass = await comparePassword(
+      data.password as string,
+      user.password as string
+    );
+    if (!isValidPass) throw new ApiError(401, "Invalid email or password");
+
+    const isVerified = user.isEmailVerified;
+    if (!isVerified)
+      throw new ApiError(401, "Before login , please verify you account");
+
+    const payload = {
+      name: user.name as string,
+      email: user.email as string,
+      id: user.id,
+      isPaid: user.isPaid as boolean,
+      role: user.role,
+    };
+
+    const accessToken = auth.generateToken(
+      payload,
+      user.role as Role,
+      "access"
+    );
+    const refreshToken = auth.generateToken(
+      payload,
+      user.role as Role,
+      "refresh"
+    );
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        refreshToken: auth.hashToken(refreshToken),
+        accessToken: auth.hashToken(accessToken),
+      },
+    });
+
+    const return_user = {
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+    };
+
+    return {
+      message: "Logged in successfully",
+      data: {
+        token: {
+          accessToken,
+          refreshToken,
+        },
+        user: return_user,
+      },
+    };
+  }
+
   // resend otp repo
   async resendOtp(data: VerifyUserAccountInput): Promise<{ message: string }> {
     const user = await this.findUser("email", data.email, true);
@@ -289,5 +351,92 @@ export class UserRepository {
     }
 
     return "Forgot password otp sent successfully, please check your mailbox";
+  }
+
+  // verify otp service
+  async verifyOtp(dto: VerifyUserAccountInput) {
+    const user = await this.findUser("email", dto.email, true);
+
+    if (user.otpExpiresAt && user.otpExpiresAt < new Date())
+      throw new ApiError(400, "Otp expired");
+
+    const isMatch = verifyOTP(
+      dto.otp,
+      user.otp as string,
+      user.otpExpiresAt as Date
+    );
+    if (!isMatch) {
+      await prisma.user.update({
+        where: { email: dto.email },
+        data: { otpAttempts: { increment: 1 }, otpExpiresAt: null, otp: null },
+      });
+      throw new ApiError(401, "Invalid otp");
+    }
+
+    const token = auth.generateToken(
+      {
+        name: user.name as string,
+        email: user.email as string,
+        id: user.id,
+        isPaid: user.isPaid as boolean,
+        role: user.role,
+      },
+      "reset",
+      "refresh"
+    );
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken: token,
+        otp: null,
+        otpExpiresAt: null,
+        otpAttempts: 0,
+      },
+    });
+
+    return {
+      message: "otp verified successfully",
+      data: {
+        token,
+      },
+    };
+  }
+
+  // reset password service
+  async resetPassword(data: ResetPasswordInput, user: JwtPayload) {
+    await this.findUser("id", user.id, true);
+
+    const hashedPassword = await auth.hashPassword(data.password);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        isResetRequest: false,
+        resetToken: null,
+        otpAttempts: 0,
+      },
+    });
+
+    const isMailSent = await sendEmail({
+      to: user.email,
+      subject: `Password reset confirmation  ${process.env.MAIL_FROM_NAME as string}`,
+      html: resetPasswordConfirmationTemplate({
+        name: user.name,
+      }),
+    });
+
+    if (!isMailSent) {
+      throw new ApiError(
+        500,
+        "Something went wrong, can't sent otp at the moment"
+      );
+    }
+
+    return {
+      message: "Password reset successful.",
+      data: null,
+    };
   }
 }

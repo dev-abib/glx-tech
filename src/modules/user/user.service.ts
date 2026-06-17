@@ -1,6 +1,7 @@
 import { UserRepository } from "./user.repository.js";
 import {
   CreateUserInput,
+  LoginUserInput,
   ResendOtpInput,
   VerifyUserAccountInput,
 } from "./user.validation.js";
@@ -18,6 +19,20 @@ export class UserService {
   async verifyUser(data: VerifyUserAccountInput) {
     const user = await userRepo.verifyAccount(data);
     return user;
+  }
+
+  // login user service
+  async loginUserAccount<T = any>(
+    payload: LoginUserInput
+  ): Promise<{
+    message: string;
+    data: T;
+  }> {
+    const result = await userRepo.loginAccount(payload);
+    return {
+      message: result.message,
+      data: result.data as T,
+    };
   }
 
   // resend user service

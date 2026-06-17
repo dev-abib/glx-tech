@@ -13,7 +13,7 @@ const userService = new UserService();
 // create user controller
 export const createUser: RequestHandler<
   {},
-  ApiResponse<{ message: string }>,
+  ApiResponse<any>,
   CreateUserInput
 > = asyncHandler(async (req: Request, res: Response) => {
   const user = await userService.createUser(req.body);
@@ -26,7 +26,7 @@ export const createUser: RequestHandler<
 // verify user account controller
 export const verifyUserAccount: RequestHandler<
   {},
-  ApiResponse<{ message: string }>,
+  ApiResponse<any>,
   VerifyUserAccountInput
 > = asyncHandler(async (req: Request, res: Response) => {
   await userService.verifyUser(req.body);
@@ -36,10 +36,21 @@ export const verifyUserAccount: RequestHandler<
     .json(new ApiResponse(201, "User verified successfully"));
 });
 
+// login user account controller
+export const loginUserAccount: RequestHandler<
+  {},
+  ApiResponse<any>,
+  VerifyUserAccountInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const result = await userService.loginUserAccount(req.body);
+
+  return res.status(201).json(new ApiResponse(201, result.message, result.data));
+});
+
 // resend otp controller
 export const resendOtp: RequestHandler<
   {},
-  ApiResponse<{ message: string }>,
+  ApiResponse<any>,
   ResendOtpInput
 > = asyncHandler(async (req: Request, res: Response) => {
   const msg = await userService.resendOtp(req.body);
@@ -50,7 +61,7 @@ export const resendOtp: RequestHandler<
 // forgot password controller
 export const forgotPassword: RequestHandler<
   {},
-  ApiResponse<{ message: string }>,
+  ApiResponse<any>,
   ResendOtpInput
 > = asyncHandler(async (req: Request, res: Response) => {
   const msg = await userService.forgotPassword(req.body);
