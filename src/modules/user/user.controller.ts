@@ -46,3 +46,14 @@ export const resendOtp: RequestHandler<
 
   return res.status(201).json(new ApiResponse(201, msg.message));
 });
+
+// forgot password controller
+export const forgotPassword: RequestHandler<
+  {},
+  ApiResponse<{ message: string }>,
+  ResendOtpInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const msg = await userService.forgotPassword(req.body);
+
+  return res.status(201).json(new ApiResponse(201, msg));
+});

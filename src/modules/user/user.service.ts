@@ -25,4 +25,10 @@ export class UserService {
     const msg = await userRepo.resendOtp(data);
     return msg;
   }
+
+  // forgot password service
+  async forgotPassword(data: ResendOtpInput): Promise<string> {
+    const msg = await userRepo.resendOtp(data);
+    return msg.message;
+  }
 }

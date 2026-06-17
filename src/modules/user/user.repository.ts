@@ -1,6 +1,10 @@
 import { PrismaClient, User, Role } from "@prisma/client";
 import { ApiError } from "../../utils/api-error.js";
-import { CreateUserInput, VerifyUserAccountInput } from "./user.validation.js";
+import {
+  CreateUserInput,
+  ResendOtpInput,
+  VerifyUserAccountInput,
+} from "./user.validation.js";
 import { hashPassword } from "../../utils/hash.js";
 import { AuthHelper } from "../../helpers/auth-helpers.js";
 import { JwtPayload } from "jsonwebtoken";
@@ -10,6 +14,7 @@ import { createOTP, verifyOTP } from "../../helpers/otp/otp.js";
 import { ApiResponse } from "../../utils/api-response.js";
 import { getPrismaClient } from "../../config/database.js";
 import { accountVerificationConfirmationTemplate } from "../../emails/templates/syestem/account-verfication.confirmation.template.js";
+import { resetPasswordTemplate } from "../../emails/templates/auth/reset-password.template.js";
 
 const prisma = getPrismaClient();
 const auth = new AuthHelper();
@@ -165,10 +170,8 @@ export class UserRepository {
     };
   }
 
-  // resend otp
-  async resendOtp(
-    data: VerifyUserAccountInput
-  ): Promise<{ message: string }> {
+  // resend otp repo
+  async resendOtp(data: VerifyUserAccountInput): Promise<{ message: string }> {
     const user = await this.findUser("email", data.email, true);
 
     const { otp, hashedOtp, expiresAt } = createOTP();
@@ -214,5 +217,77 @@ export class UserRepository {
     return {
       message: "Email otp sent successfully, please check your mailbox",
     };
+  }
+
+  // forgot password service
+  async forgotPassword(data: ResendOtpInput): Promise<string> {
+    const user = await this.findUser("email", data.email, true);
+
+    if (user.blockedUntil && user.blockedUntil > new Date()) {
+      const minutesLeft = Math.ceil(
+        (user.blockedUntil.getTime() - Date.now()) / 60000
+      );
+      throw new ApiError(
+        429,
+        `Account is blocked. Try again in ${minutesLeft} minutes.`
+      );
+    }
+
+    if (!user.isEmailVerified) {
+      throw new ApiError(
+        401,
+        "To reset your password, you must verify your account first"
+      );
+    }
+
+    if ((user.otpAttempts ?? 0) >= 3) {
+      const blockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+
+      await prisma.user.update({
+        where: { email: data.email },
+        data: {
+          blockedUntil,
+          otpAttempts: 0,
+        },
+      });
+
+      throw new ApiError(
+        429,
+        "Too many attempts. Your account is blocked for 15 minutes."
+      );
+    }
+
+    const { otp, hashedOtp, expiresAt } = createOTP();
+
+    await prisma.user.update({
+      where: { email: data.email },
+      data: {
+        otp: hashedOtp,
+        otpAttempts: { increment: 1 },
+        otpExpiresAt: expiresAt,
+        blockedUntil: null,
+        isResetRequest: true,
+      },
+    });
+
+    const isMailSent = await sendEmail({
+      to: user.email as string,
+      subject: `Forgot password otp ${process.env.MAIL_FROM_NAME as string}`,
+      html: resetPasswordTemplate({
+        name: user.name as string,
+        email: user.email as string,
+        otp,
+        expiresAt: user.otpExpiresAt as Date,
+      }),
+    });
+
+    if (!isMailSent) {
+      throw new ApiError(
+        500,
+        "Something went wrong, can't send otp at the moment"
+      );
+    }
+
+    return "Forgot password otp sent successfully, please check your mailbox";
   }
 }

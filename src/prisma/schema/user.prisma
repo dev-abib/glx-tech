@@ -24,6 +24,7 @@ model User {
   otpAttempts     Int?      @default(0)
   isActive        Boolean   @default(true) @map("is_active")
   isResetRequest  Boolean   @default(false)
+  blockedUntil    DateTime?   
   address         String?
   refreshToken    String?   @map("refresh_token")
   accessToken     String?   @map("accessToken")
