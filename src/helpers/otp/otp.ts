@@ -5,7 +5,7 @@ import { OTPPayload } from './otp.types.js';
 
 
 export const createOTP = (): OTPPayload => {
-  const otp = generateOTP(6);
+  const otp = generateOTP(4);
 
   const expiresAt = new Date(Date.now() + 2 * 60 * 1000);
 

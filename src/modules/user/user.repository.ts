@@ -4,8 +4,13 @@ import { CreateUserInput } from "./user.validation.js";
 import { hashPassword } from "../../utils/hash.js";
 import { AuthHelper } from "../../helpers/auth-helpers.js";
 import { JwtPayload } from "jsonwebtoken";
+import { sendEmail } from "../../emails/email.services.js";
+import { accountVerificationTemplate } from "../../emails/templates/syestem/account.verification.template.js";
+import { createOTP } from "../../helpers/otp/otp.js";
+import { ApiResponse } from "../../utils/api-response.js";
+import { getPrismaClient } from "../../config/database.js";
 
-const prisma = new PrismaClient();
+const prisma = getPrismaClient();
 const auth = new AuthHelper();
 
 export class UserRepository {
@@ -39,6 +44,9 @@ export class UserRepository {
   }
 
   async createUser(data: CreateUserInput) {
+    this.findUser("email", data.email, false);
+
+    const { otp, hashedOtp, expiresAt } = createOTP();
     const hashedPassword = await hashPassword(data.password);
 
     const user = await prisma.user.create({
@@ -48,6 +56,9 @@ export class UserRepository {
         password: hashedPassword,
         role: data.role as Role,
         phone: data.phone,
+        otp: hashedOtp,
+        otpExpiresAt: expiresAt,
+        otpAttempts: 0,
       },
     });
 
@@ -76,5 +87,25 @@ export class UserRepository {
         refreshToken: auth.hashToken(refreshToken),
       },
     });
+
+    const isMailSent = await sendEmail({
+      to: user.email as string,
+      subject: `Account verification otp ${process.env.MAIL_FROM_NAME as string}`,
+      html: accountVerificationTemplate({
+        name: user.name as string,
+        otp: otp as string,
+        email: user.email as string,
+      }),
+    });
+
+    if (!isMailSent) {
+      return new ApiResponse(201, "User created successfully.");
+    }
+
+    console.log(user, "from repo");
+
+    const { password, otp: otpHash, otpExpiresAt, ...safeUser } = user;
+    console.log(safeUser, "safeUser");
+    return safeUser;
   }
 }

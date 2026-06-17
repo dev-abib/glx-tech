@@ -9,6 +9,7 @@ import helmet from "helmet";
 import compression from "compression";
 import { notFoundMiddleware } from "./middlewares/not-found.middleware.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
+import { env } from "./config/env.js";
 
 app.use(
   helmet({
@@ -32,7 +33,7 @@ app.get("/health", (req: Request, res: Response) => {
   res.send("system is up");
 });
 
-app.use("/api/v1", allRoutes);
+app.use(env.API_VERSION, allRoutes);
 
 app.use(notFoundMiddleware);
 
