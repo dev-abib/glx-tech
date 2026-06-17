@@ -6,15 +6,14 @@ import { CreateUserInput } from "./user.validation.js";
 
 const userService = new UserService();
 
+// create user controller
 export const createUser: RequestHandler<
   {},
   ApiResponse<{ message: string }>,
   CreateUserInput
 > = asyncHandler(async (req: Request, res: Response) => {
-  const user = userService.createUser(req.body);
+  const user = await userService.createUser(req.body);
 
-  console.log(user , 'from controller');
-  
   return res
     .status(201)
     .json(new ApiResponse(201, "User created successfully", user));

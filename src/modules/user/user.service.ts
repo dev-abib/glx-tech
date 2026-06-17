@@ -8,7 +8,6 @@ export class UserService {
   // create user service
   async createUser(data: CreateUserInput) {
     const user = await userRepo.createUser(data);
-    console.log(user , 'from service');
     return user;
   }
 }

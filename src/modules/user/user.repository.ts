@@ -44,7 +44,7 @@ export class UserRepository {
   }
 
   async createUser(data: CreateUserInput) {
-    this.findUser("email", data.email, false);
+    await this.findUser("email", data.email, false);
 
     const { otp, hashedOtp, expiresAt } = createOTP();
     const hashedPassword = await hashPassword(data.password);
@@ -102,10 +102,17 @@ export class UserRepository {
       return new ApiResponse(201, "User created successfully.");
     }
 
-    console.log(user, "from repo");
+    const {
+      password,
+      otp: otpHash,
+      otpExpiresAt,
+      otpAttempts,
+      refreshToken: _,
+      accessToken: __,
+      resetToken,
+      ...safeUser
+    } = user;
 
-    const { password, otp: otpHash, otpExpiresAt, ...safeUser } = user;
-    console.log(safeUser, "safeUser");
     return safeUser;
   }
 }
