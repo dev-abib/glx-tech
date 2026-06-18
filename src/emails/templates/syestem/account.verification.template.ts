@@ -1,3 +1,4 @@
+import { env } from "../../../config/env.js";
 import { OTPEmailProps } from "../../email.types.js";
 import { baseTemplate } from "../base.template.js";
 
@@ -94,7 +95,7 @@ export const accountVerificationTemplate = ({
   `;
 
   return baseTemplate({
-    title: `${"Account Verification"} ${process.env.MAIL_FROM_NAME as string}`,
+    title: `Account Verification ${env.MAIL_FROM_NAME}`,
     content,
   });
 };

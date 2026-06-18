@@ -1,10 +1,10 @@
 import { BaseEmailProps } from "../email.types.js";
-
+import { env } from "../../config/env.js";
 
 export const baseTemplate = ({ title, content }: BaseEmailProps): string => {
   const year = new Date().getFullYear();
-  const siteName = (process.env.SITE_NAME as string) ?? "Verep";
-  const siteUrl = process.env.SITE_URL ?? "#";
+  const siteName = env.SITE_NAME;
+  const siteUrl = env.SITE_URL;
 
   return `
 <!DOCTYPE html>

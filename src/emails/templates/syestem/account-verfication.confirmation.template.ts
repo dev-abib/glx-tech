@@ -1,3 +1,4 @@
+import { env } from "../../../config/env.js";
 import { VerificationStatusProps } from "../../email.types.js";
 import { baseTemplate } from "../base.template.js";
 
@@ -103,7 +104,7 @@ export const accountVerificationConfirmationTemplate = ({
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
       <tr>
         <td style="text-align:center;">
-          <a href="${process.env.APP_URL as string}" style="
+          <a href="${env.APP_URL}" style="
             display:inline-block;
             background:linear-gradient(135deg,#16a34a 0%,#15803d 100%);
             color:#ffffff;
@@ -153,7 +154,7 @@ export const accountVerificationConfirmationTemplate = ({
   `;
 
   return baseTemplate({
-    title: `Account Verified — ${process.env.MAIL_FROM_NAME as string}`,
+    title: `Account Verified — ${env.MAIL_FROM_NAME}`,
     content,
   });
 };

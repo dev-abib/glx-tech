@@ -1,3 +1,4 @@
+import { env } from "../../../config/env.js";
 import { baseTemplate } from "../base.template.js";
 
 
@@ -111,7 +112,7 @@ export const changePasswordConfirmationTemplate = ({
   `;
 
   return baseTemplate({
-    title: `Password Changed — ${process.env.MAIL_FROM_NAME as string}`,
+    title: `Password Changed — ${env.MAIL_FROM_NAME}`,
     content,
   });
 };

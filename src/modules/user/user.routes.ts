@@ -2,41 +2,68 @@ import { Router } from "express";
 import {
   changePassword,
   createUser,
+  deleteUser,
   forgotPassword,
+  getAllUsers,
+  getMe,
   loginUserAccount,
+  logout,
   refreshToken,
   resendOtp,
   resetPassword,
+  updateUser,
   verifyResetOtp,
   verifyUserAccount,
 } from "./user.controller.js";
+import { authenticate } from "../../middlewares/auth.middleware.js";
+import { validate } from "../../middlewares/validation.middleware.js";
+import {
+  changePasswordSchema,
+  createUserSchema,
+  forgotPasswordSchema,
+  loginUserSchema,
+  refreshTokenSchema,
+  resendOtpSchema,
+  resetPasswordSchema,
+  updateUserSchema,
+  verifyUserAccountSchema,
+} from "./user.validation.js";
+import { uploadSingle } from "../../middlewares/file-validation.middleware.js";
 const router = Router();
 
-// create user route
-router.route("/create-user").post(createUser);
+// Public routes
+router.route("/create-user").post(validate(createUserSchema), createUser);
+router.route("/verify-user").post(validate(verifyUserAccountSchema), verifyUserAccount);
+router.route("/login-user").post(validate(loginUserSchema), loginUserAccount);
+router.route("/resend-otp").post(validate(resendOtpSchema), resendOtp);
+router.route("/forgot-password").post(validate(forgotPasswordSchema), forgotPassword);
+router.route("/verify-reset-otp").post(validate(verifyUserAccountSchema), verifyResetOtp);
+router.route("/reset-pass").post(authenticate({ type: "reset" }), validate(resetPasswordSchema), resetPassword);
 
-// verify user route
-router.route("/verify-user").post(verifyUserAccount);
+// Authenticated user routes
+router.route("/change-password").post(authenticate(), validate(changePasswordSchema), changePassword);
+router.route("/refresh-token").post(validate(refreshTokenSchema), refreshToken);
 
-// login user router
-router.route("/login-user").post(loginUserAccount);
+// ── Profile & User management ───────────────────────────────────────────
 
-// resend otp route
-router.route("/resend-otp").post(resendOtp);
+// Get current user profile
+router.route("/me").get(authenticate(), getMe);
 
-// forgot password route
-router.route("/forgot-password").post(forgotPassword);
+// Update user profile (with optional avatar upload)
+router.route("/update-me").put(
+  authenticate(),
+  uploadSingle("avatar"),
+  validate(updateUserSchema),
+  updateUser
+);
 
-// verify reset pass otp route
-router.route("/verify-reset-otp").post(verifyResetOtp);
+// Delete user account
+router.route("/delete-me").delete(authenticate(), deleteUser);
 
-// reset pass route
-router.route("/reset-pass").post(resetPassword);
+// Logout user
+router.route("/logout").post(authenticate(), logout);
 
-// change password route
-router.route("/change-password").post(changePassword);
-
-// refresh token route
-router.route("/refresh-token").post(refreshToken);
+// Admin routes
+router.route("/all").get(authenticate({ type: "admin" }), getAllUsers);
 
 export default router;

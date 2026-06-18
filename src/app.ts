@@ -1,4 +1,4 @@
-import express, { Application, Response, Request } from "express";
+import express, { Application, Response } from "express";
 const app: Application = express();
 import cors from "cors";
 
@@ -29,7 +29,7 @@ app.use(
   })
 );
 
-app.get("/health", (req: Request, res: Response) => {
+app.get("/health", (_req, res: Response) => {
   res.send("system is up");
 });
 

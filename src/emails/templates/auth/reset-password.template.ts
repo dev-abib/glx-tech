@@ -1,3 +1,4 @@
+import { env } from "../../../config/env.js";
 import { OTPEmailProps } from "../../email.types.js";
 import { baseTemplate } from "../base.template.js";
 
@@ -124,7 +125,7 @@ export const resetPasswordTemplate = ({
   `;
 
   return baseTemplate({
-    title: `${"Reset Your Password"} ${process.env.MAIL_FROM_NAME as string}`,
+    title: `Reset Your Password ${env.MAIL_FROM_NAME}`,
     content,
   });
 };

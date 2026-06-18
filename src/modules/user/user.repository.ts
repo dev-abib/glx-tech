@@ -1,4 +1,5 @@
-import { PrismaClient, User, Role } from "@prisma/client";
+import { User, Role } from "@prisma/client";
+import { env } from "../../config/env.js";
 import { ApiError } from "../../utils/api-error.js";
 import {
   ChangePasswordInput,
@@ -6,15 +7,16 @@ import {
   LoginUserInput,
   ResendOtpInput,
   ResetPasswordInput,
+  UpdateUserInput,
   VerifyUserAccountInput,
 } from "./user.validation.js";
 import { comparePassword, hashPassword } from "../../utils/hash.js";
 import { AuthHelper } from "../../helpers/auth-helpers.js";
+import { CloudinaryService } from "../../helpers/cloudinary.service.js";
 import { JwtPayload } from "jsonwebtoken";
 import { sendEmail } from "../../emails/email.services.js";
 import { accountVerificationTemplate } from "../../emails/templates/syestem/account.verification.template.js";
 import { createOTP, verifyOTP } from "../../helpers/otp/otp.js";
-import { ApiResponse } from "../../utils/api-response.js";
 import { getPrismaClient } from "../../config/database.js";
 import { accountVerificationConfirmationTemplate } from "../../emails/templates/syestem/account-verfication.confirmation.template.js";
 import { resetPasswordTemplate } from "../../emails/templates/auth/reset-password.template.js";
@@ -23,6 +25,7 @@ import { changePasswordConfirmationTemplate } from "../../emails/templates/auth/
 
 const prisma = getPrismaClient();
 const auth = new AuthHelper();
+const cloudinary = new CloudinaryService();
 
 export class UserRepository {
   async findUser(
@@ -102,7 +105,7 @@ export class UserRepository {
 
     const isMailSent = await sendEmail({
       to: user.email as string,
-      subject: `Account verification otp ${process.env.MAIL_FROM_NAME as string}`,
+      subject: `Account verification otp ${env.MAIL_FROM_NAME}`,
       html: accountVerificationTemplate({
         name: user.name as string,
         otp: otp as string,
@@ -112,7 +115,10 @@ export class UserRepository {
     });
 
     if (!isMailSent) {
-      return new ApiResponse(201, "User created successfully.");
+      throw new ApiError(
+        500,
+        "Something went wrong, can't send verification email at the moment"
+      );
     }
 
     const {
@@ -164,7 +170,7 @@ export class UserRepository {
 
     await sendEmail({
       to: user.email as string,
-      subject: `Account verification confirmation ${process.env.MAIL_FROM_NAME as string}`,
+      subject: `Account verification confirmation ${env.MAIL_FROM_NAME}`,
       html: accountVerificationConfirmationTemplate({
         name: user.name as string,
       }),
@@ -235,7 +241,7 @@ export class UserRepository {
   }
 
   // resend otp repo
-  async resendOtp(data: VerifyUserAccountInput): Promise<{ message: string }> {
+  async resendOtp(data: ResendOtpInput): Promise<{ message: string }> {
     const user = await this.findUser("email", data.email, true);
 
     const { otp, hashedOtp, expiresAt } = createOTP();
@@ -262,7 +268,7 @@ export class UserRepository {
 
     const isMailSent = await sendEmail({
       to: user.email as string,
-      subject: `OTP Resend ${process.env.MAIL_FROM_NAME as string}`,
+      subject: `OTP Resend ${env.MAIL_FROM_NAME}`,
       html: accountVerificationTemplate({
         name: user.name as string,
         email: user.email as string,
@@ -336,12 +342,12 @@ export class UserRepository {
 
     const isMailSent = await sendEmail({
       to: user.email as string,
-      subject: `Forgot password otp ${process.env.MAIL_FROM_NAME as string}`,
+      subject: `Forgot password otp ${env.MAIL_FROM_NAME}`,
       html: resetPasswordTemplate({
         name: user.name as string,
         email: user.email as string,
         otp,
-        expiresAt: user.otpExpiresAt as Date,
+        expiresAt,
       }),
     });
 
@@ -423,7 +429,7 @@ export class UserRepository {
 
     const isMailSent = await sendEmail({
       to: user.email,
-      subject: `Password reset confirmation  ${process.env.MAIL_FROM_NAME as string}`,
+      subject: `Password reset confirmation  ${env.MAIL_FROM_NAME}`,
       html: resetPasswordConfirmationTemplate({
         name: user.name,
       }),
@@ -451,8 +457,8 @@ export class UserRepository {
     }
 
     const isValidPass = await comparePassword(
-      data.password as string,
-      user.password as string
+      data.oldPassword as string,
+      existingUser.password as string
     );
 
     if (!isValidPass) {
@@ -470,7 +476,7 @@ export class UserRepository {
 
     const isMailSent = await sendEmail({
       to: user.email,
-      subject: `Password change confirmation  ${process.env.MAIL_FROM_NAME as string}`,
+      subject: `Password change confirmation  ${env.MAIL_FROM_NAME}`,
       html: changePasswordConfirmationTemplate({
         name: user.name,
       }),
@@ -487,6 +493,142 @@ export class UserRepository {
       message: "Password changed successfully.",
       data: null,
     };
+  }
+
+  // ── Profile & User management ───────────────────────────────────────
+
+  // get current user by id (get-me)
+  async getMe(userId: string) {
+    const user = await this.findUser("id", userId, true);
+
+    const {
+      password,
+      otp: _otp,
+      otpExpiresAt,
+      otpAttempts,
+      refreshToken: _rt,
+      accessToken: _at,
+      resetToken,
+      ...safeUser
+    } = user;
+
+    return safeUser;
+  }
+
+  // get all users (admin only)
+  async getAllUsers(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          avatar: true,
+          phone: true,
+          isEmailVerified: true,
+          isActive: true,
+          isPaid: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      prisma.user.count(),
+    ]);
+
+    return {
+      users,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // update user (name, phone, address) with optional avatar upload
+  async updateUser(
+    userId: string,
+    data: UpdateUserInput,
+    avatarBuffer?: Buffer
+  ) {
+    const user = await this.findUser("id", userId, true);
+
+    const updateData: Record<string, unknown> = {};
+
+    if (data.name !== undefined) updateData.name = data.name;
+    if (data.phone !== undefined) updateData.phone = data.phone;
+    if (data.address !== undefined) updateData.address = data.address;
+
+    // Handle avatar upload — upload new first, then delete old on success
+    if (avatarBuffer) {
+      const result = await cloudinary.uploadFile(avatarBuffer, "avatars");
+
+      // Upload succeeded — now safe to delete the old one
+      if (user.avatarPublicId) {
+        await cloudinary.deleteFile(user.avatarPublicId).catch(() => {
+          // Ignore errors — old file may have been deleted already
+        });
+      }
+
+      updateData.avatar = result.url;
+      updateData.avatarPublicId = result.publicId;
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    const {
+      password,
+      otp: _otp,
+      otpExpiresAt,
+      otpAttempts,
+      refreshToken: _rt,
+      accessToken: _at,
+      resetToken,
+      ...safeUser
+    } = updated;
+
+    return safeUser;
+  }
+
+  // delete user (hard delete)
+  async deleteUser(userId: string) {
+    const user = await this.findUser("id", userId, true);
+
+    // Delete DB record first, then clean up Cloudinary
+    await prisma.user.delete({ where: { id: userId } });
+
+    if (user.avatarPublicId) {
+      await cloudinary.deleteFile(user.avatarPublicId).catch(() => {
+        // Ignore errors — file cleanup is best-effort after DB delete
+      });
+    }
+
+    return { message: "User deleted successfully" };
+  }
+
+  // logout user — clear refresh token
+  async logoutUser(userId: string) {
+    await this.findUser("id", userId, true);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        refreshToken: null,
+        accessToken: null,
+      },
+    });
+
+    return { message: "Logged out successfully" };
   }
 
   // refresh token service

@@ -1,3 +1,4 @@
+import { env } from "../../../config/env.js";
 import { baseTemplate } from "../base.template.js";
 
 interface ResetPasswordConfirmationProps {
@@ -88,7 +89,7 @@ export const resetPasswordConfirmationTemplate = ({
   `;
 
   return baseTemplate({
-    title: `Password Reset Confirmation — ${process.env.MAIL_FROM_NAME as string}`,
+    title: `Password Reset Confirmation — ${env.MAIL_FROM_NAME}`,
     content,
   });
 };

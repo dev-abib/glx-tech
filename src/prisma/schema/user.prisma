@@ -2,7 +2,6 @@ enum Role {
   user
   admin
   super_admin
-  seller
 }
 
 enum Provider {
@@ -17,6 +16,7 @@ model User {
   password        String
   role            Role      @default(user)
   avatar          String?
+  avatarPublicId  String?
   phone           String?
   isEmailVerified Boolean   @default(false) @map("is_email_verified")
   otp             String?

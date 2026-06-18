@@ -1,9 +1,10 @@
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 import { createHash } from "crypto";
+import { env } from "../config/env.js";
 import { ApiError } from "../utils/api-error.js";
 
-type AuthRole = "user" | "admin" | "reset" | "super_admin" | "seller";
+type AuthRole = "user" | "admin" | "reset" | "super_admin";
 type TokenKind = "access" | "refresh";
 
 export class AuthHelper {
@@ -34,16 +35,16 @@ export class AuthHelper {
         return {
           secret:
             token === "access"
-              ? this.env(process.env.JWT_ACCESS_SECRET, "JWT_ACCESS_SECRET")
-              : this.env(process.env.JWT_REFRESH_SECRET, "JWT_REFRESH_SECRET"),
+              ? this.env(env.JWT_ACCESS_SECRET, "JWT_ACCESS_SECRET")
+              : this.env(env.JWT_REFRESH_SECRET, "JWT_REFRESH_SECRET"),
           expiresIn:
             token === "access"
               ? (this.env(
-                  process.env.JWT_ACCESS_EXPIRES_IN,
+                  env.JWT_ACCESS_EXPIRES_IN,
                   "JWT_ACCESS_EXPIRES_IN"
                 ) as SignOptions["expiresIn"])
               : (this.env(
-                  process.env.JWT_REFRESH_EXPIRES_IN,
+                  env.JWT_REFRESH_EXPIRES_IN,
                   "JWT_REFRESH_EXPIRES_IN"
                 ) as SignOptions["expiresIn"]),
         };
@@ -53,50 +54,29 @@ export class AuthHelper {
         return {
           secret:
             token === "access"
-              ? this.env(process.env.JWT_ADMIN_SECRET, "JWT_ADMIN_SECRET")
+              ? this.env(env.JWT_ADMIN_SECRET, "JWT_ADMIN_SECRET")
               : this.env(
-                  process.env.JWT_ADMIN_REFRESH_SECRET,
+                  env.JWT_ADMIN_REFRESH_SECRET,
                   "JWT_ADMIN_REFRESH_SECRET"
                 ),
           expiresIn:
             token === "access"
               ? (this.env(
-                  process.env.JWT_ADMIN_EXPIRES_IN,
+                  env.JWT_ADMIN_EXPIRES_IN,
                   "JWT_ADMIN_EXPIRES_IN"
                 ) as SignOptions["expiresIn"])
               : (this.env(
-                  process.env.JWT_ADMIN_REFRESH_EXPIRES_IN,
+                  env.JWT_ADMIN_REFRESH_EXPIRES_IN,
                   "JWT_ADMIN_REFRESH_EXPIRES_IN"
-                ) as SignOptions["expiresIn"]),
-        };
-
-      case "seller":
-        return {
-          secret:
-            token === "access"
-              ? this.env(process.env.JWT_SELLER_SECRET, "JWT_SELLER_SECRET")
-              : this.env(
-                  process.env.JWT_SELLER_REFRESH_SECRET,
-                  "JWT_SELLER_REFRESH_SECRET"
-                ),
-          expiresIn:
-            token === "access"
-              ? (this.env(
-                  process.env.JWT_SELLER_EXPIRES_IN,
-                  "JWT_SELLER_EXPIRES_IN"
-                ) as SignOptions["expiresIn"])
-              : (this.env(
-                  process.env.JWT_SELLER_REFRESH_EXPIRES_IN,
-                  "JWT_SELLER_REFRESH_EXPIRES_IN"
                 ) as SignOptions["expiresIn"]),
         };
 
       case "reset":
       default:
         return {
-          secret: this.env(process.env.JWT_RESET_SECRET, "JWT_RESET_SECRET"),
+          secret: this.env(env.JWT_RESET_SECRET, "JWT_RESET_SECRET"),
           expiresIn: this.env(
-            process.env.JWT_RESET_EXPIRES_IN,
+            env.JWT_RESET_EXPIRES_IN,
             "JWT_RESET_EXPIRES_IN"
           ) as SignOptions["expiresIn"],
         };
