@@ -47,7 +47,7 @@ router.route("/refresh-token").post(validate(refreshTokenSchema), refreshToken);
 // ── Profile & User management ───────────────────────────────────────────
 
 // Get current user profile
-router.route("/me").get(authenticate(), getMe);
+router.route("/get-me").get(authenticate(), getMe);
 
 // Update user profile (with optional avatar upload)
 router.route("/update-me").put(
@@ -64,6 +64,6 @@ router.route("/delete-me").delete(authenticate(), deleteUser);
 router.route("/logout").post(authenticate(), logout);
 
 // Admin routes
-router.route("/all").get(authenticate({ type: "admin" }), getAllUsers);
+router.route("/gt-all-users").get(authenticate({ type: "admin" }), getAllUsers);
 
 export default router;

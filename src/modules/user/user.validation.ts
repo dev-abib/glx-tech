@@ -13,7 +13,6 @@ export const createUserSchema = z
         "Password must include uppercase, lowercase, number, and special character"
       ),
     confirmPassword: z.string(),
-    role: z.literal("user"),
     phone: z.string().regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -28,6 +27,7 @@ export type CreateUserInput = z.infer<typeof createUserSchema>;
 export const updateUserSchema = z
   .object({
     name: z.string().trim().min(3).max(100).optional(),
+    email: z.string().trim().email("Invalid email format").optional(),
     phone: z
       .string()
       .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")

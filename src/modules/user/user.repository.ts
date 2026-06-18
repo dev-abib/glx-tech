@@ -22,6 +22,7 @@ import { accountVerificationConfirmationTemplate } from "../../emails/templates/
 import { resetPasswordTemplate } from "../../emails/templates/auth/reset-password.template.js";
 import { resetPasswordConfirmationTemplate } from "../../emails/templates/auth/reset-password-confirmation.template.js";
 import { changePasswordConfirmationTemplate } from "../../emails/templates/auth/change-password.template.js";
+import { deleteAccountConfirmationTemplate } from "../../emails/templates/auth/delete-account-confirmation.template.js";
 
 const prisma = getPrismaClient();
 const auth = new AuthHelper();
@@ -69,7 +70,6 @@ export class UserRepository {
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        role: data.role as Role,
         phone: data.phone,
         otp: hashedOtp,
         otpExpiresAt: expiresAt,
@@ -566,6 +566,15 @@ export class UserRepository {
     if (data.phone !== undefined) updateData.phone = data.phone;
     if (data.address !== undefined) updateData.address = data.address;
 
+    // Handle email change — check uniqueness first
+    if (data.email !== undefined) {
+      // If the email is different from the current one, ensure it's not taken
+      if (data.email !== user.email) {
+        await this.findUser("email", data.email, false);
+      }
+      updateData.email = data.email;
+    }
+
     // Handle avatar upload — upload new first, then delete old on success
     if (avatarBuffer) {
       const result = await cloudinary.uploadFile(avatarBuffer, "avatars");
@@ -604,7 +613,16 @@ export class UserRepository {
   async deleteUser(userId: string) {
     const user = await this.findUser("id", userId, true);
 
-    // Delete DB record first, then clean up Cloudinary
+    // Send confirmation email BEFORE deleting the user
+    await sendEmail({
+      to: user.email as string,
+      subject: `Account deleted — ${env.MAIL_FROM_NAME}`,
+      html: deleteAccountConfirmationTemplate({
+        name: user.name as string,
+      }),
+    });
+
+    // Delete DB record, then clean up Cloudinary
     await prisma.user.delete({ where: { id: userId } });
 
     if (user.avatarPublicId) {
