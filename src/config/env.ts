@@ -109,7 +109,10 @@ export const env = {
   // Server
   PORT: process.env.PORT || "5000",
   NODE_ENV: process.env.NODE_ENV || "development",
-  API_VERSION: process.env.API_VERSION || "/api/v1",
+  // Normalize to undo Git Bash/MSYS2 path conversion ("C:/Program Files/Git/api/v1" → "/api/v1")
+  API_VERSION: (process.env.API_VERSION || "/api/v1")
+    .replace(/^[a-zA-Z]:[\\\/].+[\\\/](.+)$/, "/$1")
+    .replace(/\\/g, "/"),
 
   // Database
   DATABASE_URL: process.env.DATABASE_URL || "",

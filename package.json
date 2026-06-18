@@ -9,7 +9,8 @@
     "start": "node dist/server.js",
     "generate:env-example": "tsx scripts/generate-env-example.ts",
     "check:env-example": "tsx scripts/check-env-example.ts",
-    "seed": "tsx src/seeders/super-admin.seeder.ts"
+    "seed": "tsx src/seeders/super-admin.seeder.ts",
+    "postinstall": "prisma generate"
   },
   "keywords": [],
   "author": "",
