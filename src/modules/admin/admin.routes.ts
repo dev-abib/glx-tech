@@ -28,34 +28,27 @@ const router = Router();
 
 // ── Public Routes ─────────────────────────────────────────────────────────
 
-// Admin login (separate from user login — relaxed password validation)
 router.route("/login").post(validate(adminLoginSchema), adminLogin);
-
-// Admin refresh token
 router.route("/refresh-token").post(adminRefreshToken);
 
 // ── Super Admin Only ──────────────────────────────────────────────────────
 
-// Create new admin / super_admin user
 router
-  .route("/create")
+  .route("/create-admin")
   .post(
     authenticate({ type: "super_admin" }),
     validate(createAdminSchema),
     createAdmin
   );
 
-// Get all users (all roles — super_admin only)
-router.route("/all-users").get(authenticate({ type: "super_admin" }), adminGetAllUsers);
+router.route("/gt-all-users").get(authenticate({ type: "super_admin" }), adminGetAllUsers);
 
-// Delete an admin/super_admin by ID (super_admin only)
 router
-  .route("/delete/:id")
+  .route("/delete-admin/:id")
   .delete(authenticate({ type: "super_admin" }), adminDeleteAdmin);
 
-// Update an admin/super_admin by ID (super_admin only)
 router
-  .route("/update/:id")
+  .route("/update-admin/:id")
   .put(
     authenticate({ type: "super_admin" }),
     validate(adminUpdateUserSchema),
@@ -64,17 +57,13 @@ router
 
 // ── Authenticated Admin Routes ────────────────────────────────────────────
 
-// Get current admin profile
-router.route("/me").get(authenticate({ type: "admin" }), getAdminMe);
+router.route("/get-me").get(authenticate({ type: "admin" }), getAdminMe);
 
-// Update own admin profile (name, email, phone, avatar)
 router
   .route("/update-me")
   .put(
     authenticate({ type: "admin" }),
     uploadSingle("avatar"),
-    // Multer puts the file in req.file and may leave metadata in req.body.avatar.
-    // Strip it before validation since it's not a zod-validated field.
     (req, _res, next) => {
       delete req.body.avatar;
       next();
@@ -83,10 +72,8 @@ router
     adminUpdateSelf
   );
 
-// Get all admins (super_admin only)
-router.route("/all").get(authenticate({ type: "super_admin" }), getAllAdmins);
+router.route("/gt-all-admins").get(authenticate({ type: "super_admin" }), getAllAdmins);
 
-// Change admin password
 router
   .route("/change-password")
   .post(
@@ -95,10 +82,12 @@ router
     adminChangePassword
   );
 
-// Get a single user/admin by ID (admin/super_admin)
 router
-  .route("/users/:id")
-  .get(authenticate({ type: "admin" }), adminGetUserById)
+  .route("/get-user/:id")
+  .get(authenticate({ type: "admin" }), adminGetUserById);
+
+router
+  .route("/delete-user/:id")
   .delete(authenticate({ type: "admin" }), adminDeleteUser);
 
 export default router;

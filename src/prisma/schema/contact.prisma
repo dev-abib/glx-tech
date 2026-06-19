@@ -1,0 +1,16 @@
+model ContactInquiry {
+  id           String    @id @default(uuid())
+  name         String
+  email        String
+  phone        String?
+  subject      String?
+  message      String
+  isRead       Boolean   @default(false) @map("is_read")
+  isReplied    Boolean   @default(false) @map("is_replied")
+  replyMessage String?   @map("reply_message")
+  repliedAt    DateTime? @map("replied_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@map("contact_inquiries")
+}

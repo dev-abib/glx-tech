@@ -32,3 +32,7 @@ export const uploadSingle = (fieldName: string) => {
 export const uploadMultiple = (fieldName: string, max: number) => {
   return upload.array(fieldName, max);
 };
+
+export const uploadFields = (fieldConfigs: { name: string; maxCount: number }[]) => {
+  return upload.fields(fieldConfigs);
+};
