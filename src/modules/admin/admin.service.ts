@@ -271,7 +271,7 @@ export class AdminService {
 
   // ── Admin updates own profile ───────────────────────────────────────────
 
-  async updateSelf(adminId: string, data: AdminUpdateSelfInput) {
+  async updateSelf(adminId: string, data: AdminUpdateSelfInput, avatarBuffer?: Buffer) {
     const user = await userRepo.findUser("id", adminId, true);
 
     if (user.role !== "admin" && user.role !== "super_admin") {
@@ -288,6 +288,21 @@ export class AdminService {
         await userRepo.findUser("email", data.email, false);
       }
       updateData.email = data.email;
+    }
+
+    // Handle avatar upload — upload new first, then delete old on success
+    if (avatarBuffer) {
+      const result = await cloudinary.uploadFile(avatarBuffer, "avatars");
+
+      // Upload succeeded — now safe to delete the old one
+      if (user.avatarPublicId) {
+        await cloudinary.deleteFile(user.avatarPublicId).catch(() => {
+          // Ignore errors — old file may have been deleted already
+        });
+      }
+
+      updateData.avatar = result.url;
+      updateData.avatarPublicId = result.publicId;
     }
 
     const updated = await prisma.user.update({

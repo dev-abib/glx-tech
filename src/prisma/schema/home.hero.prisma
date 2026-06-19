@@ -1,0 +1,18 @@
+model Service {
+  id           String  @id @default(uuid())
+  name         String?
+  description  String?
+  icon         String?
+  iconPublicId String
+
+  heroId String?
+  hero   Hero?   @relation(fields: [heroId], references: [id])
+}
+
+model Hero {
+  id              String    @id @default(uuid())
+  title           String?
+  sub_title       String?
+  highlighted_txt String?
+  services        Service[]
+}

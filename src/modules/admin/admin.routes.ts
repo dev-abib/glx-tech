@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware.js";
 import { validate } from "../../middlewares/validation.middleware.js";
+import { uploadSingle } from "../../middlewares/file-validation.middleware.js";
 import {
   adminLogin,
   createAdmin,
@@ -66,11 +67,18 @@ router
 // Get current admin profile
 router.route("/me").get(authenticate({ type: "admin" }), getAdminMe);
 
-// Update own admin profile (name, email, phone)
+// Update own admin profile (name, email, phone, avatar)
 router
   .route("/update-me")
   .put(
     authenticate({ type: "admin" }),
+    uploadSingle("avatar"),
+    // Multer puts the file in req.file and may leave metadata in req.body.avatar.
+    // Strip it before validation since it's not a zod-validated field.
+    (req, _res, next) => {
+      delete req.body.avatar;
+      next();
+    },
     validate(adminUpdateSelfSchema),
     adminUpdateSelf
   );

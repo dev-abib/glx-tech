@@ -64,6 +64,8 @@ export type AdminChangePasswordInput = z.infer<typeof adminChangePasswordSchema>
 
 /**
  * Schema for admin updating their own profile.
+ * The avatar key is stripped from req.body by the route middleware
+ * before validation (multer handles it as req.file).
  */
 export const adminUpdateSelfSchema = z
   .object({
@@ -72,7 +74,8 @@ export const adminUpdateSelfSchema = z
     phone: z
       .string()
       .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")
-      .optional(),
+      .optional()
+      .or(z.literal("")),
   })
   .strict();
 

@@ -6,7 +6,6 @@ import type {
   AdminLoginInput,
   CreateAdminInput,
   AdminChangePasswordInput,
-  AdminUpdateSelfInput,
   AdminUpdateUserInput,
 } from "./admin.validation.js";
 
@@ -175,10 +174,12 @@ export const adminUpdateSelf: RequestHandler<
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
-  }>,
-  AdminUpdateSelfInput
+  }>
 > = asyncHandler(async (req: Request, res: Response) => {
-  const admin = await adminService.updateSelf(req.user!.id, req.body);
+  const file = req.file;
+  const avatarBuffer = file ? file.buffer : undefined;
+
+  const admin = await adminService.updateSelf(req.user!.id, req.body, avatarBuffer);
 
   return res
     .status(200)
