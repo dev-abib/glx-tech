@@ -11,8 +11,7 @@ import { errorMiddleware } from "./middlewares/error.middleware.js";
 import { env } from "./config/env.js";
 
 // ── Swagger ────────────────────────────────────────────────────────────────
-import swaggerUi from "swagger-ui-express";
-import { swaggerSpec } from "./config/swagger.js";
+import swaggerRoutes from "./routes/swagger.route.js";
 import helmetModule from "helmet";
 import type { Request, NextFunction } from "express";
 const helmet = helmetModule as unknown as (
@@ -22,6 +21,16 @@ const helmet = helmetModule as unknown as (
 app.use(
   helmet({
     crossOriginResourcePolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://unpkg.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
+        imgSrc: ["'self'", "data:", "https://unpkg.com"],
+        fontSrc: ["'self'", "https://unpkg.com", "data:"],
+        connectSrc: ["'self'"],
+      },
+    },
   })
 );
 
@@ -43,23 +52,9 @@ app.get("/health", (_req, res: Response) => {
 });
 
 
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec, {
-    explorer: true,
-    customSiteTitle: "Nexus API Documentation",
-    customCss:
-      ".swagger-ui .topbar { display: none } .swagger-ui .info { margin: 20px 0 } .swagger-ui .scheme-container { margin: 0 0 10px }",
-    swaggerOptions: {
-      persistAuthorization: true,
-      docExpansion: "list",
-      filter: true,
-      tagsSorter: "alpha",
-      operationsSorter: "alpha",
-    },
-  })
-);
+
+// ── Swagger Routes ────────────────────────────────────────────────────────
+app.use(swaggerRoutes);
 
 // ── API Routes ─────────────────────────────────────────────────────────────
 app.use(env.API_VERSION, allRoutes);
