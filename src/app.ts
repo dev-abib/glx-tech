@@ -24,11 +24,11 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "https://unpkg.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://vercel.live"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
         imgSrc: ["'self'", "data:", "https://unpkg.com"],
         fontSrc: ["'self'", "https://unpkg.com", "data:"],
-        connectSrc: ["'self'"],
+        connectSrc: ["'self'", "https://unpkg.com"],
       },
     },
   })
@@ -36,6 +36,9 @@ app.use(
 
 app.use(cors());
 app.use(express.json());
+
+// ── Static Assets (favicon, etc.) ─────────────────────────────────────────
+app.use(express.static("public"));
 
 app.use(morgan("dev"));
 app.use(compression());
@@ -49,6 +52,11 @@ app.use(
 
 app.get("/health", (_req, res: Response) => {
   res.send("system is up");
+});
+
+// ── Favicon ────────────────────────────────────────────────────────────────
+app.get("/favicon.ico", (_req, res: Response) => {
+  res.sendFile("favicon.svg", { root: "public" });
 });
 
 
