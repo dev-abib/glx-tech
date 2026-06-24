@@ -649,6 +649,60 @@ export class UserRepository {
     return { message: "Logged out successfully" };
   }
 
+  // switch role between user and seller
+  async switchRole(userId: string) {
+    const user = await this.findUser("id", userId, true);
+
+    if (user.role !== "user" && user.role !== "seller") {
+      throw new ApiError(400, "Only users can switch between user and seller roles");
+    }
+
+    const newRole = user.role === "user" ? "seller" : "user";
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { role: newRole },
+    });
+
+    const payload: JwtPayload = {
+      name: updated.name as string,
+      email: updated.email as string,
+      id: updated.id,
+      isPaid: updated.isPaid as boolean,
+      role: updated.role,
+    };
+
+    const accessToken = auth.generateToken(
+      payload,
+      updated.role as Role,
+      "access"
+    );
+    const refreshToken = auth.generateToken(
+      payload,
+      updated.role as Role,
+      "refresh"
+    );
+
+    await prisma.user.update({
+      where: { id: updated.id },
+      data: {
+        accessToken: auth.hashToken(accessToken),
+        refreshToken: auth.hashToken(refreshToken),
+      },
+    });
+
+    return {
+      message: `Role switched to ${newRole} successfully`,
+      data: {
+        token: {
+          accessToken,
+          refreshToken,
+        },
+        role: newRole,
+      },
+    };
+  }
+
   // refresh token service
   async refreshToken(refreshToken: string) {
     let payload: JwtPayload;

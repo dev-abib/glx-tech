@@ -11,6 +11,7 @@ import {
   refreshToken,
   resendOtp,
   resetPassword,
+  switchRole,
   updateUser,
   verifyResetOtp,
   verifyUserAccount,
@@ -25,6 +26,7 @@ import {
   refreshTokenSchema,
   resendOtpSchema,
   resetPasswordSchema,
+  switchRoleSchema,
   updateUserSchema,
   verifyUserAccountSchema,
 } from "./user.validation.js";
@@ -62,6 +64,9 @@ router.route("/delete-me").delete(authenticate(), deleteUser);
 
 // Logout user
 router.route("/logout").post(authenticate(), logout);
+
+// Switch user/seller role
+router.route("/switch-role").post(authenticate(), validate(switchRoleSchema), switchRole);
 
 // Admin routes
 router.route("/gt-all-users").get(authenticate({ type: "admin" }), getAllUsers);

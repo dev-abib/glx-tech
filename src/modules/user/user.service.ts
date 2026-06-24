@@ -119,6 +119,24 @@ export class UserService {
     return userRepo.logoutUser(userId);
   }
 
+  // switch role between user and seller
+  async switchRole(
+    userId: string
+  ): Promise<{
+    message: string;
+    data: { accessToken: string; refreshToken: string; role: string };
+  }> {
+    const result = await userRepo.switchRole(userId);
+    return {
+      message: result.message,
+      data: {
+        accessToken: result.data.token.accessToken,
+        refreshToken: result.data.token.refreshToken,
+        role: result.data.role,
+      },
+    };
+  }
+
   // refresh token service
   async refreshToken(
     refreshToken: RefreshTokenInput["refreshToken"]

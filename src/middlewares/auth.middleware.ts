@@ -2,13 +2,13 @@ import { NextFunction, Request, Response } from "express";
 import { AuthHelper } from "../helpers/auth-helpers.js";
 import { ApiError } from "../utils/api-error.js";
 
-type AuthRole = "user" | "admin" | "super_admin" | "reset";
+type AuthRole = "user" | "seller" | "admin" | "super_admin" | "reset";
 
 export interface AuthPayload {
   id: string;
   email: string;
   name: string;
-  role: "user" | "admin" | "super_admin";
+  role: "user" | "seller" | "admin" | "super_admin";
   isGuest?: boolean;
   iat?: number;
   exp?: number;
@@ -26,8 +26,11 @@ interface AuthOptions {
  * then attaches the decoded payload to `req.user`.
  *
  * @example
- * // Protect a route for regular users
+ * // Protect a route for regular users (also allows sellers)
  * router.get("/profile", authenticate(), handler);
+ *
+ * // Require seller access
+ * router.get("/seller/dashboard", authenticate({ type: "seller" }), handler);
  *
  * // Require admin access
  * router.get("/admin/dashboard", authenticate({ type: "admin" }), handler);
@@ -70,8 +73,11 @@ export const authenticate = (options: AuthOptions = {}) => {
       if (authType === "super_admin" && decoded.role !== "super_admin") {
         throw new ApiError(401, "Super admin access required");
       }
-      if (authType === "user" && decoded.role !== "user") {
+      if (authType === "user" && decoded.role !== "user" && decoded.role !== "seller") {
         throw new ApiError(401, "User access required");
+      }
+      if (authType === "seller" && decoded.role !== "seller") {
+        throw new ApiError(401, "Seller access required");
       }
       req.user = decoded;
       next();

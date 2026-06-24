@@ -10,6 +10,7 @@ import {
   RefreshTokenInput,
   ResendOtpInput,
   ResetPasswordInput,
+  SwitchRoleInput,
   UpdateUserInput,
   VerifyUserAccountInput,
 } from "./user.validation.js";
@@ -210,6 +211,26 @@ export const logout: RequestHandler<{}, ApiResponse<null>> = asyncHandler(
       .json(new ApiResponse<null>(200, "Logged out successfully"));
   }
 );
+
+// switch role controller
+export const switchRole: RequestHandler<
+  {},
+  ApiResponse<{
+    accessToken: string;
+    refreshToken: string;
+    role: string;
+  }>,
+  SwitchRoleInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const result = await userService.switchRole(userId);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, result.message, result.data)
+    );
+});
 
 // refresh token controller
 export const refreshToken: RequestHandler<

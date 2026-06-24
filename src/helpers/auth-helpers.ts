@@ -4,7 +4,7 @@ import { createHash } from "crypto";
 import { env } from "../config/env.js";
 import { ApiError } from "../utils/api-error.js";
 
-type AuthRole = "user" | "admin" | "reset" | "super_admin";
+type AuthRole = "user" | "seller" | "admin" | "reset" | "super_admin";
 type TokenKind = "access" | "refresh";
 
 export class AuthHelper {
@@ -32,6 +32,7 @@ export class AuthHelper {
   ): { secret: string; expiresIn: SignOptions["expiresIn"] } {
     switch (type) {
       case "user":
+      case "seller":
         return {
           secret:
             token === "access"

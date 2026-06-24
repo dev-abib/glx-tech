@@ -1,5 +1,6 @@
 enum Role {
   user
+  seller
   admin
   super_admin
 }

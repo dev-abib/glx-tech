@@ -22,6 +22,7 @@ Most endpoints require authentication via **JWT Bearer tokens**.
 | Role | Description |
 |------|-------------|
 | \`user\` | Regular authenticated user |
+| \`seller\` | Seller account with additional privileges |
 | \`admin\` | Admin-level access |
 | \`super_admin\` | Full system access |
 
@@ -67,7 +68,7 @@ Error responses:
         description: "Development server",
       },
       {
-        url: "https://nexus-backend.vercel.app",
+        url: "https://glx-tech-pink.vercel.app",
         description: "Production server (Vercel)",
       },
     ],
@@ -122,10 +123,28 @@ Error responses:
           type: "object",
           required: ["name", "email", "password", "confirmPassword", "phone"],
           properties: {
-            name: { type: "string", example: "John Doe", minLength: 3, maxLength: 100 },
-            email: { type: "string", format: "email", example: "john@example.com" },
-            password: { type: "string", format: "password", example: "P@ssw0rd!", minLength: 8 },
-            confirmPassword: { type: "string", format: "password", example: "P@ssw0rd!" },
+            name: {
+              type: "string",
+              example: "John Doe",
+              minLength: 3,
+              maxLength: 100,
+            },
+            email: {
+              type: "string",
+              format: "email",
+              example: "john@example.com",
+            },
+            password: {
+              type: "string",
+              format: "password",
+              example: "P@ssw0rd!",
+              minLength: 8,
+            },
+            confirmPassword: {
+              type: "string",
+              format: "password",
+              example: "P@ssw0rd!",
+            },
             phone: { type: "string", example: "+1234567890" },
           },
         },
@@ -133,16 +152,33 @@ Error responses:
           type: "object",
           required: ["email", "otp"],
           properties: {
-            email: { type: "string", format: "email", example: "john@example.com" },
-            otp: { type: "string", example: "1234", minLength: 4, maxLength: 4 },
+            email: {
+              type: "string",
+              format: "email",
+              example: "john@example.com",
+            },
+            otp: {
+              type: "string",
+              example: "1234",
+              minLength: 4,
+              maxLength: 4,
+            },
           },
         },
         LoginUserInput: {
           type: "object",
           required: ["email", "password"],
           properties: {
-            email: { type: "string", format: "email", example: "john@example.com" },
-            password: { type: "string", format: "password", example: "P@ssw0rd!" },
+            email: {
+              type: "string",
+              format: "email",
+              example: "john@example.com",
+            },
+            password: {
+              type: "string",
+              format: "password",
+              example: "P@ssw0rd!",
+            },
           },
         },
         LoginResponse: {
@@ -151,8 +187,14 @@ Error responses:
             token: {
               type: "object",
               properties: {
-                accessToken: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
-                refreshToken: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
+                accessToken: {
+                  type: "string",
+                  example: "eyJhbGciOiJIUzI1NiIs...",
+                },
+                refreshToken: {
+                  type: "string",
+                  example: "eyJhbGciOiJIUzI1NiIs...",
+                },
               },
             },
             user: {
@@ -160,7 +202,11 @@ Error responses:
               properties: {
                 name: { type: "string", example: "John Doe" },
                 email: { type: "string", example: "john@example.com" },
-                avatar: { type: "string", nullable: true, example: "https://res.cloudinary.com/..." },
+                avatar: {
+                  type: "string",
+                  nullable: true,
+                  example: "https://res.cloudinary.com/...",
+                },
               },
             },
           },
@@ -171,7 +217,11 @@ Error responses:
             id: { type: "string", example: "uuid" },
             name: { type: "string", example: "John Doe" },
             email: { type: "string", example: "john@example.com" },
-            role: { type: "string", enum: ["user", "admin", "super_admin"], example: "user" },
+            role: {
+              type: "string",
+              enum: ["user", "seller", "admin", "super_admin"],
+              example: "user",
+            },
             avatar: { type: "string", nullable: true },
             avatarPublicId: { type: "string", nullable: true },
             phone: { type: "string", nullable: true, example: "+1234567890" },
@@ -179,7 +229,11 @@ Error responses:
             isActive: { type: "boolean", example: true },
             isPaid: { type: "boolean", example: false },
             address: { type: "string", nullable: true },
-            lastLoginAt: { type: "string", format: "date-time", nullable: true },
+            lastLoginAt: {
+              type: "string",
+              format: "date-time",
+              nullable: true,
+            },
             createdAt: { type: "string", format: "date-time" },
             updatedAt: { type: "string", format: "date-time" },
           },
@@ -187,8 +241,17 @@ Error responses:
         UpdateUserInput: {
           type: "object",
           properties: {
-            name: { type: "string", example: "John Updated", minLength: 3, maxLength: 100 },
-            email: { type: "string", format: "email", example: "john.updated@example.com" },
+            name: {
+              type: "string",
+              example: "John Updated",
+              minLength: 3,
+              maxLength: 100,
+            },
+            email: {
+              type: "string",
+              format: "email",
+              example: "john.updated@example.com",
+            },
             phone: { type: "string", example: "+1987654321" },
             address: { type: "string", example: "123 Main St" },
           },
@@ -197,38 +260,69 @@ Error responses:
           type: "object",
           required: ["refreshToken"],
           properties: {
-            refreshToken: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
+            refreshToken: {
+              type: "string",
+              example: "eyJhbGciOiJIUzI1NiIs...",
+            },
           },
         },
         ChangePasswordInput: {
           type: "object",
           required: ["oldPassword", "password", "confirmPassword"],
           properties: {
-            oldPassword: { type: "string", format: "password", example: "OldP@ss1!" },
-            password: { type: "string", format: "password", example: "NewP@ss1!" },
-            confirmPassword: { type: "string", format: "password", example: "NewP@ss1!" },
+            oldPassword: {
+              type: "string",
+              format: "password",
+              example: "OldP@ss1!",
+            },
+            password: {
+              type: "string",
+              format: "password",
+              example: "NewP@ss1!",
+            },
+            confirmPassword: {
+              type: "string",
+              format: "password",
+              example: "NewP@ss1!",
+            },
           },
         },
         ResetPasswordInput: {
           type: "object",
           required: ["password", "confirmPassword"],
           properties: {
-            password: { type: "string", format: "password", example: "NewP@ss1!" },
-            confirmPassword: { type: "string", format: "password", example: "NewP@ss1!" },
+            password: {
+              type: "string",
+              format: "password",
+              example: "NewP@ss1!",
+            },
+            confirmPassword: {
+              type: "string",
+              format: "password",
+              example: "NewP@ss1!",
+            },
           },
         },
         ForgotPasswordInput: {
           type: "object",
           required: ["email"],
           properties: {
-            email: { type: "string", format: "email", example: "john@example.com" },
+            email: {
+              type: "string",
+              format: "email",
+              example: "john@example.com",
+            },
           },
         },
         ResendOtpInput: {
           type: "object",
           required: ["email"],
           properties: {
-            email: { type: "string", format: "email", example: "john@example.com" },
+            email: {
+              type: "string",
+              format: "email",
+              example: "john@example.com",
+            },
           },
         },
 
@@ -237,15 +331,26 @@ Error responses:
           type: "object",
           required: ["email", "password"],
           properties: {
-            email: { type: "string", format: "email", example: "admin@example.com" },
-            password: { type: "string", format: "password", example: "AdminP@ss1!" },
+            email: {
+              type: "string",
+              format: "email",
+              example: "admin@example.com",
+            },
+            password: {
+              type: "string",
+              format: "password",
+              example: "AdminP@ss1!",
+            },
           },
         },
         AdminLoginResponse: {
           type: "object",
           properties: {
             accessToken: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
-            refreshToken: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
+            refreshToken: {
+              type: "string",
+              example: "eyJhbGciOiJIUzI1NiIs...",
+            },
             admin: {
               type: "object",
               properties: {
@@ -262,11 +367,32 @@ Error responses:
           type: "object",
           required: ["name", "email", "password", "confirmPassword", "role"],
           properties: {
-            name: { type: "string", example: "New Admin", minLength: 3, maxLength: 100 },
-            email: { type: "string", format: "email", example: "newadmin@example.com" },
-            password: { type: "string", format: "password", example: "AdminP@ss1!" },
-            confirmPassword: { type: "string", format: "password", example: "AdminP@ss1!" },
-            role: { type: "string", enum: ["admin", "super_admin"], example: "admin" },
+            name: {
+              type: "string",
+              example: "New Admin",
+              minLength: 3,
+              maxLength: 100,
+            },
+            email: {
+              type: "string",
+              format: "email",
+              example: "newadmin@example.com",
+            },
+            password: {
+              type: "string",
+              format: "password",
+              example: "AdminP@ss1!",
+            },
+            confirmPassword: {
+              type: "string",
+              format: "password",
+              example: "AdminP@ss1!",
+            },
+            role: {
+              type: "string",
+              enum: ["admin", "super_admin"],
+              example: "admin",
+            },
             phone: { type: "string", example: "+1234567890" },
           },
         },
@@ -289,8 +415,17 @@ Error responses:
         AdminUpdateSelfInput: {
           type: "object",
           properties: {
-            name: { type: "string", example: "Updated Admin", minLength: 3, maxLength: 100 },
-            email: { type: "string", format: "email", example: "admin.updated@example.com" },
+            name: {
+              type: "string",
+              example: "Updated Admin",
+              minLength: 3,
+              maxLength: 100,
+            },
+            email: {
+              type: "string",
+              format: "email",
+              example: "admin.updated@example.com",
+            },
             phone: { type: "string", example: "+1987654321" },
           },
         },
@@ -298,7 +433,11 @@ Error responses:
           type: "object",
           properties: {
             name: { type: "string", example: "Updated User" },
-            email: { type: "string", format: "email", example: "user.updated@example.com" },
+            email: {
+              type: "string",
+              format: "email",
+              example: "user.updated@example.com",
+            },
             phone: { type: "string", example: "+1987654321" },
             isActive: { type: "boolean", example: true },
             role: { type: "string", enum: ["user", "admin", "super_admin"] },
@@ -308,9 +447,21 @@ Error responses:
           type: "object",
           required: ["oldPassword", "password", "confirmPassword"],
           properties: {
-            oldPassword: { type: "string", format: "password", example: "OldP@ss1!" },
-            password: { type: "string", format: "password", example: "NewP@ss1!" },
-            confirmPassword: { type: "string", format: "password", example: "NewP@ss1!" },
+            oldPassword: {
+              type: "string",
+              format: "password",
+              example: "OldP@ss1!",
+            },
+            password: {
+              type: "string",
+              format: "password",
+              example: "NewP@ss1!",
+            },
+            confirmPassword: {
+              type: "string",
+              format: "password",
+              example: "NewP@ss1!",
+            },
           },
         },
 
@@ -319,9 +470,21 @@ Error responses:
           type: "object",
           properties: {
             id: { type: "string", example: "uuid" },
-            title: { type: "string", nullable: true, example: "Welcome to Nexus" },
-            sub_title: { type: "string", nullable: true, example: "Your Digital Solution Partner" },
-            highlighted_txt: { type: "string", nullable: true, example: "Innovation" },
+            title: {
+              type: "string",
+              nullable: true,
+              example: "Welcome to Nexus",
+            },
+            sub_title: {
+              type: "string",
+              nullable: true,
+              example: "Your Digital Solution Partner",
+            },
+            highlighted_txt: {
+              type: "string",
+              nullable: true,
+              example: "Innovation",
+            },
             services: {
               type: "array",
               items: { $ref: "#/components/schemas/Service" },
@@ -331,17 +494,37 @@ Error responses:
         CreateHeroInput: {
           type: "object",
           properties: {
-            title: { type: "string", example: "Welcome to Nexus", maxLength: 200 },
-            sub_title: { type: "string", example: "Your Digital Solution Partner", maxLength: 300 },
-            highlighted_txt: { type: "string", example: "Innovation", maxLength: 200 },
+            title: {
+              type: "string",
+              example: "Welcome to Nexus",
+              maxLength: 200,
+            },
+            sub_title: {
+              type: "string",
+              example: "Your Digital Solution Partner",
+              maxLength: 300,
+            },
+            highlighted_txt: {
+              type: "string",
+              example: "Innovation",
+              maxLength: 200,
+            },
           },
         },
         UpdateHeroInput: {
           type: "object",
           properties: {
             title: { type: "string", example: "Updated Title", maxLength: 200 },
-            sub_title: { type: "string", example: "Updated Subtitle", maxLength: 300 },
-            highlighted_txt: { type: "string", example: "Excellence", maxLength: 200 },
+            sub_title: {
+              type: "string",
+              example: "Updated Subtitle",
+              maxLength: 300,
+            },
+            highlighted_txt: {
+              type: "string",
+              example: "Excellence",
+              maxLength: 200,
+            },
           },
         },
 
@@ -350,9 +533,21 @@ Error responses:
           type: "object",
           properties: {
             id: { type: "string", example: "uuid" },
-            name: { type: "string", nullable: true, example: "Web Development" },
-            description: { type: "string", nullable: true, example: "We build modern web applications" },
-            icon: { type: "string", nullable: true, example: "https://res.cloudinary.com/..." },
+            name: {
+              type: "string",
+              nullable: true,
+              example: "Web Development",
+            },
+            description: {
+              type: "string",
+              nullable: true,
+              example: "We build modern web applications",
+            },
+            icon: {
+              type: "string",
+              nullable: true,
+              example: "https://res.cloudinary.com/...",
+            },
             iconPublicId: { type: "string", example: "cms/services/abc123" },
             heroId: { type: "string", nullable: true, example: "uuid" },
           },
@@ -361,17 +556,36 @@ Error responses:
           type: "object",
           required: ["name"],
           properties: {
-            name: { type: "string", example: "Web Development", maxLength: 100 },
-            description: { type: "string", example: "We build modern web applications", maxLength: 500 },
+            name: {
+              type: "string",
+              example: "Web Development",
+              maxLength: 100,
+            },
+            description: {
+              type: "string",
+              example: "We build modern web applications",
+              maxLength: 500,
+            },
             icon: { type: "string", example: "https://example.com/icon.svg" },
           },
         },
         UpdateServiceInput: {
           type: "object",
           properties: {
-            name: { type: "string", example: "Mobile Development", maxLength: 100 },
-            description: { type: "string", example: "iOS & Android apps", maxLength: 500 },
-            icon: { type: "string", example: "https://example.com/new-icon.svg" },
+            name: {
+              type: "string",
+              example: "Mobile Development",
+              maxLength: 100,
+            },
+            description: {
+              type: "string",
+              example: "iOS & Android apps",
+              maxLength: 500,
+            },
+            icon: {
+              type: "string",
+              example: "https://example.com/new-icon.svg",
+            },
           },
         },
 
@@ -383,8 +597,15 @@ Error responses:
             name: { type: "string", example: "Jane Doe" },
             email: { type: "string", example: "jane@example.com" },
             phone: { type: "string", nullable: true, example: "+1234567890" },
-            subject: { type: "string", nullable: true, example: "Partnership Inquiry" },
-            message: { type: "string", example: "I'd like to partner with you..." },
+            subject: {
+              type: "string",
+              nullable: true,
+              example: "Partnership Inquiry",
+            },
+            message: {
+              type: "string",
+              example: "I'd like to partner with you...",
+            },
             isRead: { type: "boolean", example: false },
             isReplied: { type: "boolean", example: false },
             replyMessage: { type: "string", nullable: true },
@@ -398,17 +619,33 @@ Error responses:
           required: ["name", "email", "message"],
           properties: {
             name: { type: "string", example: "Jane Doe", maxLength: 100 },
-            email: { type: "string", format: "email", example: "jane@example.com" },
+            email: {
+              type: "string",
+              format: "email",
+              example: "jane@example.com",
+            },
             phone: { type: "string", example: "+1234567890", maxLength: 30 },
-            subject: { type: "string", example: "Partnership Inquiry", maxLength: 200 },
-            message: { type: "string", example: "I'd like to discuss a potential partnership.", maxLength: 5000 },
+            subject: {
+              type: "string",
+              example: "Partnership Inquiry",
+              maxLength: 200,
+            },
+            message: {
+              type: "string",
+              example: "I'd like to discuss a potential partnership.",
+              maxLength: 5000,
+            },
           },
         },
         ReplyContactInput: {
           type: "object",
           required: ["replyMessage"],
           properties: {
-            replyMessage: { type: "string", example: "Thank you for reaching out! We'll contact you shortly.", maxLength: 5000 },
+            replyMessage: {
+              type: "string",
+              example: "Thank you for reaching out! We'll contact you shortly.",
+              maxLength: 5000,
+            },
           },
         },
         InquiryStats: {
@@ -426,10 +663,21 @@ Error responses:
           properties: {
             id: { type: "string", example: "uuid" },
             title: { type: "string", example: "About Our Company" },
-            description: { type: "string", example: "We are a leading technology company..." },
-            image1: { type: "string", nullable: true, example: "https://res.cloudinary.com/..." },
+            description: {
+              type: "string",
+              example: "We are a leading technology company...",
+            },
+            image1: {
+              type: "string",
+              nullable: true,
+              example: "https://res.cloudinary.com/...",
+            },
             image1PublicId: { type: "string", nullable: true },
-            image2: { type: "string", nullable: true, example: "https://res.cloudinary.com/..." },
+            image2: {
+              type: "string",
+              nullable: true,
+              example: "https://res.cloudinary.com/...",
+            },
             image2PublicId: { type: "string", nullable: true },
             createdAt: { type: "string", format: "date-time" },
             updatedAt: { type: "string", format: "date-time" },
@@ -439,29 +687,71 @@ Error responses:
           type: "object",
           required: ["title", "description"],
           properties: {
-            title: { type: "string", example: "About Our Company", maxLength: 300 },
-            description: { type: "string", example: "We are a leading technology company...", maxLength: 10000 },
+            title: {
+              type: "string",
+              example: "About Our Company",
+              maxLength: 300,
+            },
+            description: {
+              type: "string",
+              example: "We are a leading technology company...",
+              maxLength: 10000,
+            },
           },
         },
         UpdateAboutInput: {
           type: "object",
           properties: {
-            title: { type: "string", example: "Updated About Title", maxLength: 300 },
-            description: { type: "string", example: "Updated company description...", maxLength: 10000 },
+            title: {
+              type: "string",
+              example: "Updated About Title",
+              maxLength: 300,
+            },
+            description: {
+              type: "string",
+              example: "Updated company description...",
+              maxLength: 10000,
+            },
           },
         },
       },
     },
     tags: [
       { name: "Health", description: "Health check endpoint" },
-      { name: "Users (Public)", description: "Public user endpoints — registration, login, password reset, etc." },
-      { name: "Users (Authenticated)", description: "Endpoints for authenticated user profile management" },
-      { name: "Users (Admin)", description: "Admin-only user management endpoints" },
-      { name: "Admin (Public)", description: "Public admin authentication endpoints" },
-      { name: "Admin (Super Admin)", description: "Super admin exclusive endpoints" },
-      { name: "Admin (Authenticated)", description: "Endpoints for authenticated admin profile management" },
+      {
+        name: "Users (Public)",
+        description:
+          "Public user endpoints — registration, login, password reset, etc.",
+      },
+      {
+        name: "Users (Authenticated)",
+        description: "Endpoints for authenticated user profile management",
+      },
+      {
+        name: "Users (Role)",
+        description: "Role switching between user and seller",
+      },
+      {
+        name: "Users (Admin)",
+        description: "Admin-only user management endpoints",
+      },
+      {
+        name: "Admin (Public)",
+        description: "Public admin authentication endpoints",
+      },
+      {
+        name: "Admin (Super Admin)",
+        description: "Super admin exclusive endpoints",
+      },
+      {
+        name: "Admin (Authenticated)",
+        description: "Endpoints for authenticated admin profile management",
+      },
       { name: "CMS — Hero", description: "Homepage hero section management" },
-      { name: "CMS — Services", description: "Hero service section management" },
+      {
+        name: "CMS — Services",
+        description: "Hero service section management",
+      },
       { name: "CMS — Contact", description: "Contact inquiry management" },
       { name: "CMS — About Us", description: "About Us section management" },
     ],
@@ -473,7 +763,8 @@ Error responses:
         get: {
           tags: ["Health"],
           summary: "Health check",
-          description: "Returns a simple response to confirm the server is running.",
+          description:
+            "Returns a simple response to confirm the server is running.",
           responses: {
             200: {
               description: "Server is up",
@@ -494,7 +785,8 @@ Error responses:
         post: {
           tags: ["Users (Public)"],
           summary: "Create a new user account",
-          description: "Registers a new user and sends an OTP to the provided email for verification.",
+          description:
+            "Registers a new user and sends an OTP to the provided email for verification.",
           requestBody: {
             required: true,
             content: {
@@ -530,7 +822,8 @@ Error responses:
         post: {
           tags: ["Users (Public)"],
           summary: "Verify user account",
-          description: "Verifies a user's email using the OTP sent during registration.",
+          description:
+            "Verifies a user's email using the OTP sent during registration.",
           requestBody: {
             required: true,
             content: {
@@ -549,7 +842,8 @@ Error responses:
         post: {
           tags: ["Users (Public)"],
           summary: "Login user account",
-          description: "Authenticates a user and returns access and refresh tokens.",
+          description:
+            "Authenticates a user and returns access and refresh tokens.",
           requestBody: {
             required: true,
             content: {
@@ -603,7 +897,8 @@ Error responses:
         post: {
           tags: ["Users (Public)"],
           summary: "Forgot password",
-          description: "Initiates a password reset by sending an OTP to the user's email.",
+          description:
+            "Initiates a password reset by sending an OTP to the user's email.",
           requestBody: {
             required: true,
             content: {
@@ -622,7 +917,8 @@ Error responses:
         post: {
           tags: ["Users (Public)"],
           summary: "Verify password reset OTP",
-          description: "Verifies the OTP for password reset and returns a reset token.",
+          description:
+            "Verifies the OTP for password reset and returns a reset token.",
           requestBody: {
             required: true,
             content: {
@@ -644,7 +940,10 @@ Error responses:
                           data: {
                             type: "object",
                             properties: {
-                              token: { type: "string", example: "eyJhbGciOiJIUzI1NiIs..." },
+                              token: {
+                                type: "string",
+                                example: "eyJhbGciOiJIUzI1NiIs...",
+                              },
                             },
                           },
                         },
@@ -662,7 +961,8 @@ Error responses:
         post: {
           tags: ["Users (Public)"],
           summary: "Reset password",
-          description: "Resets the user's password using a valid reset token (requires Authorization header with reset token).",
+          description:
+            "Resets the user's password using a valid reset token (requires Authorization header with reset token).",
           security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
@@ -683,7 +983,8 @@ Error responses:
         post: {
           tags: ["Users (Public)"],
           summary: "Refresh access token",
-          description: "Exchanges a valid refresh token for a new access/refresh token pair.",
+          description:
+            "Exchanges a valid refresh token for a new access/refresh token pair.",
           requestBody: {
             required: true,
             content: {
@@ -748,7 +1049,8 @@ Error responses:
         get: {
           tags: ["Users (Authenticated)"],
           summary: "Get current user profile",
-          description: "Returns the profile of the currently authenticated user.",
+          description:
+            "Returns the profile of the currently authenticated user.",
           security: [{ bearerAuth: [] }],
           responses: {
             200: {
@@ -758,7 +1060,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/SafeUser" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/SafeUser" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -772,7 +1078,8 @@ Error responses:
         put: {
           tags: ["Users (Authenticated)"],
           summary: "Update user profile",
-          description: "Updates the authenticated user's profile. Supports optional avatar upload (multipart/form-data).",
+          description:
+            "Updates the authenticated user's profile. Supports optional avatar upload (multipart/form-data).",
           security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
@@ -782,10 +1089,18 @@ Error responses:
                   type: "object",
                   properties: {
                     name: { type: "string", description: "User's full name" },
-                    email: { type: "string", format: "email", description: "New email address" },
+                    email: {
+                      type: "string",
+                      format: "email",
+                      description: "New email address",
+                    },
                     phone: { type: "string", description: "Phone number" },
                     address: { type: "string", description: "Address" },
-                    avatar: { type: "string", format: "binary", description: "Avatar image (jpg, png, webp; max 5MB)" },
+                    avatar: {
+                      type: "string",
+                      format: "binary",
+                      description: "Avatar image (jpg, png, webp; max 5MB)",
+                    },
                   },
                 },
               },
@@ -799,7 +1114,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/SafeUser" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/SafeUser" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -826,10 +1145,61 @@ Error responses:
         post: {
           tags: ["Users (Authenticated)"],
           summary: "Logout user",
-          description: "Logs out the authenticated user by clearing their stored tokens.",
+          description:
+            "Logs out the authenticated user by clearing their stored tokens.",
           security: [{ bearerAuth: [] }],
           responses: {
             200: { description: "Logged out successfully" },
+            401: { description: "Unauthorized" },
+          },
+        },
+      },
+      "/users/switch-role": {
+        post: {
+          tags: ["Users (Role)"],
+          summary: "Switch between user and seller roles",
+          description:
+            "Toggles the authenticated user's role between 'user' and 'seller'. Returns new access/refresh tokens with the updated role claim.",
+          security: [{ bearerAuth: [] }],
+          responses: {
+            200: {
+              description: "Role switched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            type: "object",
+                            properties: {
+                              accessToken: {
+                                type: "string",
+                                example: "eyJhbGciOiJIUzI1NiIs...",
+                              },
+                              refreshToken: {
+                                type: "string",
+                                example: "eyJhbGciOiJIUzI1NiIs...",
+                              },
+                              role: {
+                                type: "string",
+                                enum: ["user", "seller"],
+                                example: "seller",
+                              },
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            400: {
+              description:
+                "Only users can switch between user and seller roles",
+            },
             401: { description: "Unauthorized" },
           },
         },
@@ -842,11 +1212,22 @@ Error responses:
         get: {
           tags: ["Users (Admin)"],
           summary: "Get all users (Admin only)",
-          description: "Returns a paginated list of all users. Accessible only by admin or super_admin roles.",
+          description:
+            "Returns a paginated list of all users. Accessible only by admin or super_admin roles.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "page", in: "query", schema: { type: "integer", default: 1 }, description: "Page number" },
-            { name: "limit", in: "query", schema: { type: "integer", default: 10, maximum: 50 }, description: "Items per page" },
+            {
+              name: "page",
+              in: "query",
+              schema: { type: "integer", default: 1 },
+              description: "Page number",
+            },
+            {
+              name: "limit",
+              in: "query",
+              schema: { type: "integer", default: 10, maximum: 50 },
+              description: "Items per page",
+            },
           ],
           responses: {
             200: {
@@ -861,8 +1242,15 @@ Error responses:
                           data: {
                             type: "object",
                             properties: {
-                              users: { type: "array", items: { $ref: "#/components/schemas/SafeUser" } },
-                              pagination: { $ref: "#/components/schemas/Pagination" },
+                              users: {
+                                type: "array",
+                                items: {
+                                  $ref: "#/components/schemas/SafeUser",
+                                },
+                              },
+                              pagination: {
+                                $ref: "#/components/schemas/Pagination",
+                              },
                             },
                           },
                         },
@@ -885,7 +1273,8 @@ Error responses:
         post: {
           tags: ["Admin (Public)"],
           summary: "Admin login",
-          description: "Authenticates an admin or super_admin user and returns access/refresh tokens.",
+          description:
+            "Authenticates an admin or super_admin user and returns access/refresh tokens.",
           requestBody: {
             required: true,
             content: {
@@ -902,7 +1291,13 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/AdminLoginResponse" } } },
+                      {
+                        properties: {
+                          data: {
+                            $ref: "#/components/schemas/AdminLoginResponse",
+                          },
+                        },
+                      },
                     ],
                   },
                 },
@@ -917,7 +1312,8 @@ Error responses:
         post: {
           tags: ["Admin (Public)"],
           summary: "Admin refresh token",
-          description: "Exchanges a valid admin refresh token for a new access/refresh token pair.",
+          description:
+            "Exchanges a valid admin refresh token for a new access/refresh token pair.",
           requestBody: {
             required: true,
             content: {
@@ -962,7 +1358,8 @@ Error responses:
         get: {
           tags: ["Admin (Authenticated)"],
           summary: "Get admin profile",
-          description: "Returns the profile of the currently authenticated admin/super_admin user.",
+          description:
+            "Returns the profile of the currently authenticated admin/super_admin user.",
           security: [{ bearerAuth: [] }],
           responses: {
             200: {
@@ -972,7 +1369,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/AdminProfile" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/AdminProfile" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -987,7 +1388,8 @@ Error responses:
         put: {
           tags: ["Admin (Authenticated)"],
           summary: "Update admin profile",
-          description: "Updates the admin's own profile. Supports optional avatar upload (multipart/form-data).",
+          description:
+            "Updates the admin's own profile. Supports optional avatar upload (multipart/form-data).",
           security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
@@ -997,9 +1399,17 @@ Error responses:
                   type: "object",
                   properties: {
                     name: { type: "string", description: "Admin's full name" },
-                    email: { type: "string", format: "email", description: "New email address" },
+                    email: {
+                      type: "string",
+                      format: "email",
+                      description: "New email address",
+                    },
                     phone: { type: "string", description: "Phone number" },
-                    avatar: { type: "string", format: "binary", description: "Avatar image (jpg, png, webp; max 5MB)" },
+                    avatar: {
+                      type: "string",
+                      format: "binary",
+                      description: "Avatar image (jpg, png, webp; max 5MB)",
+                    },
                   },
                 },
               },
@@ -1013,7 +1423,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/AdminProfile" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/AdminProfile" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1034,7 +1448,9 @@ Error responses:
             required: true,
             content: {
               "application/json": {
-                schema: { $ref: "#/components/schemas/AdminChangePasswordInput" },
+                schema: {
+                  $ref: "#/components/schemas/AdminChangePasswordInput",
+                },
               },
             },
           },
@@ -1048,10 +1464,17 @@ Error responses:
         get: {
           tags: ["Admin (Authenticated)"],
           summary: "Get user by ID (Admin only)",
-          description: "Returns a single user/admin by their ID. Requires admin or super_admin role.",
+          description:
+            "Returns a single user/admin by their ID. Requires admin or super_admin role.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "User ID" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "User ID",
+            },
           ],
           responses: {
             200: {
@@ -1061,7 +1484,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/AdminProfile" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/AdminProfile" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1075,10 +1502,17 @@ Error responses:
         delete: {
           tags: ["Admin (Authenticated)"],
           summary: "Delete a user (Admin only)",
-          description: "Deletes a regular user by ID. Super admins can also delete admins via this endpoint.",
+          description:
+            "Deletes a regular user by ID. Super admins can also delete admins via this endpoint.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "User ID to delete" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "User ID to delete",
+            },
           ],
           responses: {
             200: { description: "User deleted successfully" },
@@ -1095,7 +1529,8 @@ Error responses:
         post: {
           tags: ["Admin (Super Admin)"],
           summary: "Create admin (Super Admin only)",
-          description: "Creates a new admin or super_admin user. Only accessible by super_admin role.",
+          description:
+            "Creates a new admin or super_admin user. Only accessible by super_admin role.",
           security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
@@ -1124,7 +1559,10 @@ Error responses:
                               role: { type: "string" },
                               isEmailVerified: { type: "boolean" },
                               isActive: { type: "boolean" },
-                              createdAt: { type: "string", format: "date-time" },
+                              createdAt: {
+                                type: "string",
+                                format: "date-time",
+                              },
                             },
                           },
                         },
@@ -1143,11 +1581,20 @@ Error responses:
         get: {
           tags: ["Admin (Super Admin)"],
           summary: "Get all users (Super Admin only)",
-          description: "Returns a paginated list of all users across all roles. Super admin only.",
+          description:
+            "Returns a paginated list of all users across all roles. Super admin only.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "page", in: "query", schema: { type: "integer", default: 1 } },
-            { name: "limit", in: "query", schema: { type: "integer", default: 10, maximum: 50 } },
+            {
+              name: "page",
+              in: "query",
+              schema: { type: "integer", default: 1 },
+            },
+            {
+              name: "limit",
+              in: "query",
+              schema: { type: "integer", default: 10, maximum: 50 },
+            },
           ],
           responses: {
             200: {
@@ -1162,8 +1609,15 @@ Error responses:
                           data: {
                             type: "object",
                             properties: {
-                              users: { type: "array", items: { $ref: "#/components/schemas/AdminProfile" } },
-                              pagination: { $ref: "#/components/schemas/Pagination" },
+                              users: {
+                                type: "array",
+                                items: {
+                                  $ref: "#/components/schemas/AdminProfile",
+                                },
+                              },
+                              pagination: {
+                                $ref: "#/components/schemas/Pagination",
+                              },
                             },
                           },
                         },
@@ -1181,11 +1635,20 @@ Error responses:
         get: {
           tags: ["Admin (Super Admin)"],
           summary: "Get all admins (Super Admin only)",
-          description: "Returns a paginated list of all admin and super_admin users.",
+          description:
+            "Returns a paginated list of all admin and super_admin users.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "page", in: "query", schema: { type: "integer", default: 1 } },
-            { name: "limit", in: "query", schema: { type: "integer", default: 10, maximum: 50 } },
+            {
+              name: "page",
+              in: "query",
+              schema: { type: "integer", default: 1 },
+            },
+            {
+              name: "limit",
+              in: "query",
+              schema: { type: "integer", default: 10, maximum: 50 },
+            },
           ],
           responses: {
             200: {
@@ -1200,8 +1663,15 @@ Error responses:
                           data: {
                             type: "object",
                             properties: {
-                              admins: { type: "array", items: { $ref: "#/components/schemas/AdminProfile" } },
-                              pagination: { $ref: "#/components/schemas/Pagination" },
+                              admins: {
+                                type: "array",
+                                items: {
+                                  $ref: "#/components/schemas/AdminProfile",
+                                },
+                              },
+                              pagination: {
+                                $ref: "#/components/schemas/Pagination",
+                              },
                             },
                           },
                         },
@@ -1219,14 +1689,24 @@ Error responses:
         delete: {
           tags: ["Admin (Super Admin)"],
           summary: "Delete an admin (Super Admin only)",
-          description: "Deletes an admin or super_admin user by ID. A super admin cannot delete their own account through this endpoint.",
+          description:
+            "Deletes an admin or super_admin user by ID. A super admin cannot delete their own account through this endpoint.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "Admin ID to delete" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Admin ID to delete",
+            },
           ],
           responses: {
             200: { description: "Admin deleted successfully" },
-            400: { description: "Cannot delete own account or target is not an admin" },
+            400: {
+              description:
+                "Cannot delete own account or target is not an admin",
+            },
             403: { description: "Forbidden" },
           },
         },
@@ -1235,10 +1715,17 @@ Error responses:
         put: {
           tags: ["Admin (Super Admin)"],
           summary: "Update an admin (Super Admin only)",
-          description: "Updates an admin/super_admin user's details including name, email, role, and active status.",
+          description:
+            "Updates an admin/super_admin user's details including name, email, role, and active status.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "Admin ID to update" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Admin ID to update",
+            },
           ],
           requestBody: {
             required: true,
@@ -1256,7 +1743,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/AdminProfile" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/AdminProfile" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1275,7 +1766,8 @@ Error responses:
         get: {
           tags: ["CMS — Hero"],
           summary: "Get home hero section",
-          description: "Returns the homepage hero section with its associated services.",
+          description:
+            "Returns the homepage hero section with its associated services.",
           responses: {
             200: {
               description: "Home hero section fetched successfully",
@@ -1308,7 +1800,8 @@ Error responses:
         post: {
           tags: ["CMS — Hero"],
           summary: "Create hero section (Admin only)",
-          description: "Creates the homepage hero section. Only one hero section can exist.",
+          description:
+            "Creates the homepage hero section. Only one hero section can exist.",
           security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
@@ -1326,7 +1819,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/Hero" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/Hero" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1343,7 +1840,13 @@ Error responses:
           description: "Updates an existing hero section by ID.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "Hero ID" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Hero ID",
+            },
           ],
           requestBody: {
             required: true,
@@ -1361,7 +1864,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/Hero" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/Hero" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1381,7 +1888,13 @@ Error responses:
           summary: "Get services by hero",
           description: "Returns all services associated with a hero section.",
           parameters: [
-            { name: "heroId", in: "path", required: true, schema: { type: "string" }, description: "Hero ID" },
+            {
+              name: "heroId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Hero ID",
+            },
           ],
           responses: {
             200: {
@@ -1391,7 +1904,14 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { type: "array", items: { $ref: "#/components/schemas/Service" } } } },
+                      {
+                        properties: {
+                          data: {
+                            type: "array",
+                            items: { $ref: "#/components/schemas/Service" },
+                          },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1409,10 +1929,17 @@ Error responses:
         post: {
           tags: ["CMS — Services"],
           summary: "Create service (Admin only)",
-          description: "Creates a new service under a hero section. Supports optional icon upload (multipart/form-data).",
+          description:
+            "Creates a new service under a hero section. Supports optional icon upload (multipart/form-data).",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "heroId", in: "path", required: true, schema: { type: "string" }, description: "Hero ID" },
+            {
+              name: "heroId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Hero ID",
+            },
           ],
           requestBody: {
             required: true,
@@ -1423,8 +1950,16 @@ Error responses:
                   required: ["name"],
                   properties: {
                     name: { type: "string", description: "Service name" },
-                    description: { type: "string", description: "Service description" },
-                    icon: { type: "string", format: "binary", description: "Service icon image (jpg, png, webp; max 5MB)" },
+                    description: {
+                      type: "string",
+                      description: "Service description",
+                    },
+                    icon: {
+                      type: "string",
+                      format: "binary",
+                      description:
+                        "Service icon image (jpg, png, webp; max 5MB)",
+                    },
                   },
                 },
               },
@@ -1438,7 +1973,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/Service" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/Service" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1452,10 +1991,17 @@ Error responses:
         put: {
           tags: ["CMS — Services"],
           summary: "Update service (Admin only)",
-          description: "Updates a service by ID. Supports optional icon upload (multipart/form-data).",
+          description:
+            "Updates a service by ID. Supports optional icon upload (multipart/form-data).",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "serviceId", in: "path", required: true, schema: { type: "string" }, description: "Service ID" },
+            {
+              name: "serviceId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Service ID",
+            },
           ],
           requestBody: {
             required: true,
@@ -1465,8 +2011,15 @@ Error responses:
                   type: "object",
                   properties: {
                     name: { type: "string", description: "Service name" },
-                    description: { type: "string", description: "Service description" },
-                    icon: { type: "string", format: "binary", description: "New service icon image" },
+                    description: {
+                      type: "string",
+                      description: "Service description",
+                    },
+                    icon: {
+                      type: "string",
+                      format: "binary",
+                      description: "New service icon image",
+                    },
                   },
                 },
               },
@@ -1480,7 +2033,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/Service" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/Service" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1497,7 +2054,13 @@ Error responses:
           description: "Deletes a service by ID.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "serviceId", in: "path", required: true, schema: { type: "string" }, description: "Service ID" },
+            {
+              name: "serviceId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Service ID",
+            },
           ],
           responses: {
             200: { description: "Service deleted successfully" },
@@ -1513,7 +2076,8 @@ Error responses:
         post: {
           tags: ["CMS — Contact"],
           summary: "Submit contact inquiry (Public)",
-          description: "Submits a new contact inquiry. Sends a notification email to the site owner.",
+          description:
+            "Submits a new contact inquiry. Sends a notification email to the site owner.",
           requestBody: {
             required: true,
             content: {
@@ -1558,15 +2122,51 @@ Error responses:
         get: {
           tags: ["CMS — Contact"],
           summary: "Get all inquiries (Admin only)",
-          description: "Returns a paginated, filterable list of all contact inquiries.",
+          description:
+            "Returns a paginated, filterable list of all contact inquiries.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "page", in: "query", schema: { type: "integer", default: 1 } },
-            { name: "limit", in: "query", schema: { type: "integer", default: 10, maximum: 50 } },
-            { name: "sortBy", in: "query", schema: { type: "string", default: "createdAt" }, description: "Sort field" },
-            { name: "sortOrder", in: "query", schema: { type: "string", enum: ["asc", "desc"], default: "desc" } },
-            { name: "search", in: "query", schema: { type: "string" }, description: "Search keyword for name, email, subject, or message" },
-            { name: "status", in: "query", schema: { type: "string", enum: ["all", "unread", "replied"], default: "all" } },
+            {
+              name: "page",
+              in: "query",
+              schema: { type: "integer", default: 1 },
+            },
+            {
+              name: "limit",
+              in: "query",
+              schema: { type: "integer", default: 10, maximum: 50 },
+            },
+            {
+              name: "sortBy",
+              in: "query",
+              schema: { type: "string", default: "createdAt" },
+              description: "Sort field",
+            },
+            {
+              name: "sortOrder",
+              in: "query",
+              schema: {
+                type: "string",
+                enum: ["asc", "desc"],
+                default: "desc",
+              },
+            },
+            {
+              name: "search",
+              in: "query",
+              schema: { type: "string" },
+              description:
+                "Search keyword for name, email, subject, or message",
+            },
+            {
+              name: "status",
+              in: "query",
+              schema: {
+                type: "string",
+                enum: ["all", "unread", "replied"],
+                default: "all",
+              },
+            },
           ],
           responses: {
             200: {
@@ -1581,8 +2181,15 @@ Error responses:
                           data: {
                             type: "object",
                             properties: {
-                              inquiries: { type: "array", items: { $ref: "#/components/schemas/ContactInquiry" } },
-                              pagination: { $ref: "#/components/schemas/Pagination" },
+                              inquiries: {
+                                type: "array",
+                                items: {
+                                  $ref: "#/components/schemas/ContactInquiry",
+                                },
+                              },
+                              pagination: {
+                                $ref: "#/components/schemas/Pagination",
+                              },
                             },
                           },
                         },
@@ -1610,7 +2217,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/InquiryStats" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/InquiryStats" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1626,7 +2237,13 @@ Error responses:
           description: "Returns a single contact inquiry by its ID.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "Inquiry ID" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Inquiry ID",
+            },
           ],
           responses: {
             200: {
@@ -1636,7 +2253,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/ContactInquiry" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/ContactInquiry" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1653,7 +2274,13 @@ Error responses:
           description: "Marks a contact inquiry as read.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "Inquiry ID" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Inquiry ID",
+            },
           ],
           responses: {
             200: {
@@ -1663,7 +2290,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/ContactInquiry" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/ContactInquiry" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1677,10 +2308,17 @@ Error responses:
         post: {
           tags: ["CMS — Contact"],
           summary: "Reply to inquiry (Admin only)",
-          description: "Sends a reply to a contact inquiry and emails the response to the inquirer.",
+          description:
+            "Sends a reply to a contact inquiry and emails the response to the inquirer.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "Inquiry ID" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Inquiry ID",
+            },
           ],
           requestBody: {
             required: true,
@@ -1698,7 +2336,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/ContactInquiry" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/ContactInquiry" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1715,7 +2357,13 @@ Error responses:
           description: "Permanently deletes a contact inquiry.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "Inquiry ID" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Inquiry ID",
+            },
           ],
           responses: {
             200: { description: "Inquiry deleted successfully" },
@@ -1740,7 +2388,14 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { nullable: true, allOf: [{ $ref: "#/components/schemas/AboutUs" }] } } },
+                      {
+                        properties: {
+                          data: {
+                            nullable: true,
+                            allOf: [{ $ref: "#/components/schemas/AboutUs" }],
+                          },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1757,7 +2412,8 @@ Error responses:
         post: {
           tags: ["CMS — About Us"],
           summary: "Create About Us section (Admin only)",
-          description: "Creates the About Us section. Only one section can exist. Supports up to 2 image uploads (multipart/form-data).",
+          description:
+            "Creates the About Us section. Only one section can exist. Supports up to 2 image uploads (multipart/form-data).",
           security: [{ bearerAuth: [] }],
           requestBody: {
             required: true,
@@ -1768,9 +2424,20 @@ Error responses:
                   required: ["title", "description"],
                   properties: {
                     title: { type: "string", description: "About Us title" },
-                    description: { type: "string", description: "About Us description" },
-                    image1: { type: "string", format: "binary", description: "First about image" },
-                    image2: { type: "string", format: "binary", description: "Second about image" },
+                    description: {
+                      type: "string",
+                      description: "About Us description",
+                    },
+                    image1: {
+                      type: "string",
+                      format: "binary",
+                      description: "First about image",
+                    },
+                    image2: {
+                      type: "string",
+                      format: "binary",
+                      description: "Second about image",
+                    },
                   },
                 },
               },
@@ -1784,7 +2451,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/AboutUs" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/AboutUs" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1798,10 +2469,17 @@ Error responses:
         put: {
           tags: ["CMS — About Us"],
           summary: "Update About Us section (Admin only)",
-          description: "Updates the About Us section. Supports up to 2 image uploads (multipart/form-data).",
+          description:
+            "Updates the About Us section. Supports up to 2 image uploads (multipart/form-data).",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "About Us ID" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "About Us ID",
+            },
           ],
           requestBody: {
             required: true,
@@ -1811,9 +2489,20 @@ Error responses:
                   type: "object",
                   properties: {
                     title: { type: "string", description: "About Us title" },
-                    description: { type: "string", description: "About Us description" },
-                    image1: { type: "string", format: "binary", description: "New first about image" },
-                    image2: { type: "string", format: "binary", description: "New second about image" },
+                    description: {
+                      type: "string",
+                      description: "About Us description",
+                    },
+                    image1: {
+                      type: "string",
+                      format: "binary",
+                      description: "New first about image",
+                    },
+                    image2: {
+                      type: "string",
+                      format: "binary",
+                      description: "New second about image",
+                    },
                   },
                 },
               },
@@ -1827,7 +2516,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/AboutUs" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/AboutUs" },
+                        },
+                      },
                     ],
                   },
                 },
@@ -1841,11 +2534,24 @@ Error responses:
         delete: {
           tags: ["CMS — About Us"],
           summary: "Delete About Us image (Admin only)",
-          description: "Deletes a specific image (image1 or image2) from the About Us section via query parameter.",
+          description:
+            "Deletes a specific image (image1 or image2) from the About Us section via query parameter.",
           security: [{ bearerAuth: [] }],
           parameters: [
-            { name: "id", in: "path", required: true, schema: { type: "string" }, description: "About Us ID" },
-            { name: "image", in: "query", required: true, schema: { type: "string", enum: ["image1", "image2"] }, description: "Which image to delete" },
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "About Us ID",
+            },
+            {
+              name: "image",
+              in: "query",
+              required: true,
+              schema: { type: "string", enum: ["image1", "image2"] },
+              description: "Which image to delete",
+            },
           ],
           responses: {
             200: {
@@ -1855,7 +2561,11 @@ Error responses:
                   schema: {
                     allOf: [
                       { $ref: "#/components/schemas/ApiResponse" },
-                      { properties: { data: { $ref: "#/components/schemas/AboutUs" } } },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/AboutUs" },
+                        },
+                      },
                     ],
                   },
                 },
