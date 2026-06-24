@@ -13,7 +13,13 @@ import { env } from "./config/env.js";
 // ── Swagger ────────────────────────────────────────────────────────────────
 import swaggerRoutes from "./routes/swagger.route.js";
 import helmetModule from "helmet";
+import path from "path";
+import { fileURLToPath } from "url";
 import type { Request, NextFunction } from "express";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const helmet = helmetModule as unknown as (
   options?: Record<string, unknown>
 ) => (req: Request, res: Response, next: NextFunction) => void;
@@ -26,9 +32,9 @@ app.use(
         defaultSrc: ["'self'"],
         scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://vercel.live"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
-        imgSrc: ["'self'", "data:", "https://unpkg.com"],
+        imgSrc: ["'self'", "data:", "https://unpkg.com", "https://validator.swagger.io"],
         fontSrc: ["'self'", "https://unpkg.com", "data:"],
-        connectSrc: ["'self'", "https://unpkg.com"],
+        connectSrc: ["'self'", "https://unpkg.com", "https://glx-tech-pink.vercel.app"],
       },
     },
   })
@@ -38,7 +44,8 @@ app.use(cors());
 app.use(express.json());
 
 // ── Static Assets (favicon, etc.) ─────────────────────────────────────────
-app.use(express.static("public"));
+const publicDir = path.join(__dirname, "..", "public");
+app.use(express.static(publicDir));
 
 app.use(morgan("dev"));
 app.use(compression());
@@ -53,13 +60,6 @@ app.use(
 app.get("/health", (_req, res: Response) => {
   res.send("system is up");
 });
-
-// ── Favicon ────────────────────────────────────────────────────────────────
-app.get("/favicon.ico", (_req, res: Response) => {
-  res.sendFile("favicon.svg", { root: "public" });
-});
-
-
 
 // ── Swagger Routes ────────────────────────────────────────────────────────
 app.use(swaggerRoutes);

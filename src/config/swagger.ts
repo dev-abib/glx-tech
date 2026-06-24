@@ -64,12 +64,12 @@ Error responses:
     },
     servers: [
       {
-        url: `http://localhost:${env.PORT}`,
-        description: "Development server",
+        url: `https://glx-tech-pink.vercel.app${env.API_VERSION}`,
+        description: "Production server (Vercel)",
       },
       {
-        url: "https://glx-tech-pink.vercel.app",
-        description: "Production server (Vercel)",
+        url: `http://localhost:${env.PORT}${env.API_VERSION}`,
+        description: "Development server",
       },
     ],
     components: {
