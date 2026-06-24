@@ -2,6 +2,8 @@ import { Request, RequestHandler, Response } from "express";
 import { UserService } from "./user.service.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { ApiResponse } from "../../utils/api-response.js";
+
+type MulterFile = { buffer: Buffer };
 import {
   CreateUserInput,
   ForgotPasswordInput,
@@ -118,25 +120,49 @@ export const changePassword: RequestHandler<
 // ── Profile & User management ───────────────────────────────────────────
 
 // get current user profile
-export const getMe: RequestHandler<{}, ApiResponse<SafeUser>> =
-  asyncHandler(async (req: Request, res: Response) => {
+export const getMe: RequestHandler<{}, ApiResponse<SafeUser>> = asyncHandler(
+  async (req: Request, res: Response) => {
     const user = await userService.getMe(req.user!.id);
 
     return res
       .status(200)
-      .json(new ApiResponse<SafeUser>(200, "Profile fetched successfully", user));
-  });
+      .json(
+        new ApiResponse<SafeUser>(200, "Profile fetched successfully", user)
+      );
+  }
+);
 
 // get all users (admin)
 export const getAllUsers: RequestHandler<
   {},
   ApiResponse<{
-    users: Pick<SafeUser, "id" | "name" | "email" | "role" | "avatar" | "phone" | "isEmailVerified" | "isActive" | "isPaid" | "createdAt" | "updatedAt">[];
-    pagination: { page: number; limit: number; total: number; totalPages: number };
+    users: Pick<
+      SafeUser,
+      | "id"
+      | "name"
+      | "email"
+      | "role"
+      | "avatar"
+      | "phone"
+      | "isEmailVerified"
+      | "isActive"
+      | "isPaid"
+      | "createdAt"
+      | "updatedAt"
+    >[];
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
   }>
 > = asyncHandler(async (req: Request, res: Response) => {
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
-  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
+  const limit = Math.min(
+    50,
+    Math.max(1, parseInt(req.query.limit as string) || 10)
+  );
   const result = await userService.getAllUsers(page, limit);
 
   return res
@@ -151,7 +177,7 @@ export const updateUser: RequestHandler<
   UpdateUserInput
 > = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.id;
-  const file = req.file;
+  const file = (req as Request & { file?: MulterFile }).file;
   const avatarBuffer = file ? file.buffer : undefined;
 
   const user = await userService.updateUser(userId, req.body, avatarBuffer);
@@ -162,26 +188,28 @@ export const updateUser: RequestHandler<
 });
 
 // delete user
-export const deleteUser: RequestHandler<{}, ApiResponse<null>> =
-  asyncHandler(async (req: Request, res: Response) => {
+export const deleteUser: RequestHandler<{}, ApiResponse<null>> = asyncHandler(
+  async (req: Request, res: Response) => {
     const userId = req.user!.id;
     await userService.deleteUser(userId);
 
     return res
       .status(200)
       .json(new ApiResponse<null>(200, "User deleted successfully"));
-  });
+  }
+);
 
 // logout user
-export const logout: RequestHandler<{}, ApiResponse<null>> =
-  asyncHandler(async (req: Request, res: Response) => {
+export const logout: RequestHandler<{}, ApiResponse<null>> = asyncHandler(
+  async (req: Request, res: Response) => {
     const userId = req.user!.id;
     await userService.logoutUser(userId);
 
     return res
       .status(200)
       .json(new ApiResponse<null>(200, "Logged out successfully"));
-  });
+  }
+);
 
 // refresh token controller
 export const refreshToken: RequestHandler<
