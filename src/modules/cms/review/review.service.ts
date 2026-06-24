@@ -73,8 +73,8 @@ export class ReviewService {
 
     // Clean up all review images from Cloudinary
     for (const review of existing.reviews) {
-      if (review.pictureId) {
-        await cloudinary.deleteFile(review.pictureId).catch(() => {});
+      if (review.picturePublicId) {
+        await cloudinary.deleteFile(review.picturePublicId).catch(() => {});
       }
     }
 
@@ -138,7 +138,7 @@ export class ReviewService {
         review: data.review,
         ratingCount: data.ratingCount,
         picture: pictureUrl ?? "",
-        pictureId: picturePublicId ?? "",
+        picturePublicId: picturePublicId ?? "",
         sectionId,
       },
     });
@@ -165,13 +165,13 @@ export class ReviewService {
     if (data.ratingCount !== undefined) updateData.ratingCount = data.ratingCount;
 
     if (pictureBuffer) {
-      if (review.pictureId) {
-        await cloudinary.deleteFile(review.pictureId).catch(() => {});
+      if (review.picturePublicId) {
+        await cloudinary.deleteFile(review.picturePublicId).catch(() => {});
       }
 
       const result = await cloudinary.uploadFile(pictureBuffer, "cms/reviews");
       updateData.picture = result.url;
-      updateData.pictureId = result.publicId;
+      updateData.picturePublicId = result.publicId;
     }
 
     const updated = await prisma.review.update({
@@ -188,8 +188,8 @@ export class ReviewService {
       throw new ApiError(404, "Review not found");
     }
 
-    if (review.pictureId) {
-      await cloudinary.deleteFile(review.pictureId).catch(() => {});
+    if (review.picturePublicId) {
+      await cloudinary.deleteFile(review.picturePublicId).catch(() => {});
     }
 
     await prisma.review.delete({ where: { id: reviewId } });
