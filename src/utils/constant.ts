@@ -1,1 +1,1 @@
-export const APP_NAME = "Nexus API";
+export const APP_NAME = "GLX-Tech";

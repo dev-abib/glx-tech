@@ -227,7 +227,7 @@ const envVars: EnvVarEntry[] = [
   },
   {
     key: "CLOUDINARY_BASE_FOLDER",
-    default: "nexus",
+    default: "glx-tech",
     example: "my-app",
     group: "Cloudinary",
     description: "Base folder prefix in Cloudinary for app uploads",

@@ -12,6 +12,7 @@ import { env } from "./config/env.js";
 
 // ── Swagger ────────────────────────────────────────────────────────────────
 import swaggerRoutes from "./routes/swagger.route.js";
+import { getSystemReport } from "./modules/system/system.controller.js";
 import helmetModule from "helmet";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -57,9 +58,8 @@ app.use(
 );
 
 
-app.get("/health", (_req, res: Response) => {
-  res.send("system is up");
-});
+// System health report (also available at /api/v1/health)
+app.get("/health", getSystemReport);
 
 // ── Swagger Routes ────────────────────────────────────────────────────────
 app.use(swaggerRoutes);

@@ -142,6 +142,6 @@ export const changePasswordSchema = z
 
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 
-export const switchRoleSchema = z.object({}).strict();
+export const switchRoleSchema = z.object({}).strict().default({});
 
 export type SwitchRoleInput = z.infer<typeof switchRoleSchema>;

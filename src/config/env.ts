@@ -145,7 +145,7 @@ export const env = {
   CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME || "",
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY || "",
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET || "",
-  CLOUDINARY_BASE_FOLDER: process.env.CLOUDINARY_BASE_FOLDER || "nexus",
+  CLOUDINARY_BASE_FOLDER: process.env.CLOUDINARY_BASE_FOLDER || "glx-tech",
 
   // Site
   SITE_NAME: process.env.SITE_NAME || "Verep",

@@ -8,10 +8,10 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: `${APP_NAME} — Documentation`,
+      title: `${APP_NAME} API Documentation`,
       version,
       description: `
-## Nexus Backend API
+## GLX-Tech Backend API
 
 A comprehensive backend API built with **Express 5**, **TypeScript**, **Prisma (PostgreSQL)**, and **Zod** validation.
 
@@ -57,9 +57,7 @@ Error responses:
 
 \`${env.API_VERSION}\`
 
-### Health Check
-
-\`GET /health\` — Returns \`"system is up"\`
+### Health Check      \`GET /health\` — Returns a detailed system report with server status, database connectivity, uptime, and memory usage.
       `.trim(),
     },
     servers: [
@@ -88,8 +86,74 @@ Error responses:
           description:
             "Alternative: JWT access token sent as an 'accessToken' cookie.",
         },
-      },
-      schemas: {
+      },        schemas: {
+        // ── System Report ────────────────────────────────────────────
+        SystemReport: {
+          type: "object",
+          properties: {
+            status: {
+              type: "string",
+              enum: ["healthy"],
+              example: "healthy",
+            },
+            version: { type: "string", example: "1.0.0" },
+            environment: {
+              type: "string",
+              example: "development",
+              enum: ["development", "production"],
+            },
+            uptime: {
+              type: "object",
+              properties: {
+                seconds: { type: "integer", example: 3600 },
+                human: { type: "string", example: "1h 0m 0s" },
+              },
+            },
+            timestamp: {
+              type: "string",
+              format: "date-time",
+              example: "2026-06-24T07:00:00.000Z",
+            },
+            node: {
+              type: "object",
+              properties: {
+                version: { type: "string", example: "v25.9.3" },
+                memory: {
+                  type: "object",
+                  properties: {
+                    rss: { type: "string", example: "45.23 MB" },
+                    heapTotal: { type: "string", example: "30.12 MB" },
+                    heapUsed: { type: "string", example: "20.45 MB" },
+                    external: { type: "string", example: "5.67 MB" },
+                  },
+                },
+              },
+            },
+            api: {
+              type: "object",
+              properties: {
+                name: { type: "string", example: "GLX-Tech" },
+                version: { type: "string", example: "1.0.0" },
+                baseUrl: { type: "string", example: "/api/v1" },
+              },
+            },
+            database: {
+              type: "object",
+              properties: {
+                status: {
+                  type: "string",
+                  enum: ["connected", "disconnected"],
+                  example: "connected",
+                },
+                provider: {
+                  type: "string",
+                  example: "PostgreSQL (Prisma)",
+                },
+              },
+            },
+          },
+        },
+
         // ── Shared Response Wrappers ───────────────────────────────────
         ApiResponse: {
           type: "object",
@@ -473,7 +537,7 @@ Error responses:
             title: {
               type: "string",
               nullable: true,
-              example: "Welcome to Nexus",
+              example: "Welcome to GLX-Tech",
             },
             sub_title: {
               type: "string",
@@ -496,7 +560,7 @@ Error responses:
           properties: {
             title: {
               type: "string",
-              example: "Welcome to Nexus",
+              example: "Welcome to GLX-Tech",
               maxLength: 200,
             },
             sub_title: {
@@ -717,43 +781,46 @@ Error responses:
       },
     },
     tags: [
-      { name: "Health", description: "Health check endpoint" },
+      { name: "01 — Health", description: "Health check endpoint" },
       {
-        name: "Users (Public)",
+        name: "02 — Users — Authentication",
         description:
-          "Public user endpoints — registration, login, password reset, etc.",
+          "Public user endpoints — registration, login, email verification, password reset, token refresh",
       },
       {
-        name: "Users (Authenticated)",
-        description: "Endpoints for authenticated user profile management",
+        name: "03 — Users — Profile",
+        description:
+          "Endpoints for authenticated user profile management (get/update profile, change password, logout)",
       },
       {
-        name: "Users (Role)",
+        name: "04 — Users — Role",
         description: "Role switching between user and seller",
       },
       {
-        name: "Users (Admin)",
+        name: "05 — Users — Admin",
         description: "Admin-only user management endpoints",
       },
       {
-        name: "Admin (Public)",
+        name: "06 — Admin — Authentication",
         description: "Public admin authentication endpoints",
       },
       {
-        name: "Admin (Super Admin)",
-        description: "Super admin exclusive endpoints",
+        name: "07 — Admin — Profile",
+        description:
+          "Endpoints for authenticated admin/super_admin profile and user management (get/update profile, change password, get/delete users by ID)",
       },
       {
-        name: "Admin (Authenticated)",
-        description: "Endpoints for authenticated admin profile management",
+        name: "08 — Admin — Super Admin",
+        description:
+          "Super admin exclusive endpoints (create/update/delete admins, list all admins and users)",
       },
-      { name: "CMS — Hero", description: "Homepage hero section management" },
       {
-        name: "CMS — Services",
-        description: "Hero service section management",
+        name: "09 — CMS — Hero & Services",
+        description:
+          "Homepage hero section and service management",
       },
-      { name: "CMS — Contact", description: "Contact inquiry management" },
-      { name: "CMS — About Us", description: "About Us section management" },
+      { name: "10 — CMS — Contact", description: "Contact inquiry management" },
+      { name: "11 — CMS — About Us", description: "About Us section management" },
     ],
     paths: {
       // ══════════════════════════════════════════════════════════════════
@@ -761,16 +828,42 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/health": {
         get: {
-          tags: ["Health"],
-          summary: "Health check",
+          tags: ["01 — Health"],
+          summary: "System health report",
           description:
-            "Returns a simple response to confirm the server is running.",
+            "Returns a detailed system health report including server status, database connectivity, uptime, Node.js version, and memory usage.",
           responses: {
             200: {
-              description: "Server is up",
+              description: "System is healthy",
               content: {
-                "text/html": {
-                  schema: { type: "string", example: "system is up" },
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/SystemReport" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            503: {
+              description: "System is unhealthy (e.g., database disconnected)",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/SystemReport" },
+                        },
+                      },
+                    ],
+                  },
                 },
               },
             },
@@ -783,7 +876,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/users/create-user": {
         post: {
-          tags: ["Users (Public)"],
+          tags: ["02 — Users — Authentication"],
           summary: "Create a new user account",
           description:
             "Registers a new user and sends an OTP to the provided email for verification.",
@@ -820,7 +913,7 @@ Error responses:
       },
       "/users/verify-user": {
         post: {
-          tags: ["Users (Public)"],
+          tags: ["02 — Users — Authentication"],
           summary: "Verify user account",
           description:
             "Verifies a user's email using the OTP sent during registration.",
@@ -840,7 +933,7 @@ Error responses:
       },
       "/users/login-user": {
         post: {
-          tags: ["Users (Public)"],
+          tags: ["02 — Users — Authentication"],
           summary: "Login user account",
           description:
             "Authenticates a user and returns access and refresh tokens.",
@@ -876,7 +969,7 @@ Error responses:
       },
       "/users/resend-otp": {
         post: {
-          tags: ["Users (Public)"],
+          tags: ["02 — Users — Authentication"],
           summary: "Resend OTP",
           description: "Resends the verification OTP to the user's email.",
           requestBody: {
@@ -895,7 +988,7 @@ Error responses:
       },
       "/users/forgot-password": {
         post: {
-          tags: ["Users (Public)"],
+          tags: ["02 — Users — Authentication"],
           summary: "Forgot password",
           description:
             "Initiates a password reset by sending an OTP to the user's email.",
@@ -915,7 +1008,7 @@ Error responses:
       },
       "/users/verify-reset-otp": {
         post: {
-          tags: ["Users (Public)"],
+          tags: ["02 — Users — Authentication"],
           summary: "Verify password reset OTP",
           description:
             "Verifies the OTP for password reset and returns a reset token.",
@@ -959,7 +1052,7 @@ Error responses:
       },
       "/users/reset-pass": {
         post: {
-          tags: ["Users (Public)"],
+          tags: ["02 — Users — Authentication"],
           summary: "Reset password",
           description:
             "Resets the user's password using a valid reset token (requires Authorization header with reset token).",
@@ -981,7 +1074,7 @@ Error responses:
       },
       "/users/refresh-token": {
         post: {
-          tags: ["Users (Public)"],
+          tags: ["02 — Users — Authentication"],
           summary: "Refresh access token",
           description:
             "Exchanges a valid refresh token for a new access/refresh token pair.",
@@ -1027,7 +1120,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/users/change-password": {
         post: {
-          tags: ["Users (Authenticated)"],
+          tags: ["03 — Users — Profile"],
           summary: "Change password",
           description: "Changes the authenticated user's password.",
           security: [{ bearerAuth: [] }],
@@ -1047,7 +1140,7 @@ Error responses:
       },
       "/users/get-me": {
         get: {
-          tags: ["Users (Authenticated)"],
+          tags: ["03 — Users — Profile"],
           summary: "Get current user profile",
           description:
             "Returns the profile of the currently authenticated user.",
@@ -1076,7 +1169,7 @@ Error responses:
       },
       "/users/update-me": {
         put: {
-          tags: ["Users (Authenticated)"],
+          tags: ["03 — Users — Profile"],
           summary: "Update user profile",
           description:
             "Updates the authenticated user's profile. Supports optional avatar upload (multipart/form-data).",
@@ -1131,7 +1224,7 @@ Error responses:
       },
       "/users/delete-me": {
         delete: {
-          tags: ["Users (Authenticated)"],
+          tags: ["03 — Users — Profile"],
           summary: "Delete user account",
           description: "Permanently deletes the authenticated user's account.",
           security: [{ bearerAuth: [] }],
@@ -1143,7 +1236,7 @@ Error responses:
       },
       "/users/logout": {
         post: {
-          tags: ["Users (Authenticated)"],
+          tags: ["03 — Users — Profile"],
           summary: "Logout user",
           description:
             "Logs out the authenticated user by clearing their stored tokens.",
@@ -1156,7 +1249,7 @@ Error responses:
       },
       "/users/switch-role": {
         post: {
-          tags: ["Users (Role)"],
+          tags: ["04 — Users — Role"],
           summary: "Switch between user and seller roles",
           description:
             "Toggles the authenticated user's role between 'user' and 'seller'. Returns new access/refresh tokens with the updated role claim.",
@@ -1210,7 +1303,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/users/gt-all-users": {
         get: {
-          tags: ["Users (Admin)"],
+          tags: ["05 — Users — Admin"],
           summary: "Get all users (Admin only)",
           description:
             "Returns a paginated list of all users. Accessible only by admin or super_admin roles.",
@@ -1271,7 +1364,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/admin/login": {
         post: {
-          tags: ["Admin (Public)"],
+          tags: ["06 — Admin — Authentication"],
           summary: "Admin login",
           description:
             "Authenticates an admin or super_admin user and returns access/refresh tokens.",
@@ -1310,7 +1403,7 @@ Error responses:
       },
       "/admin/refresh-token": {
         post: {
-          tags: ["Admin (Public)"],
+          tags: ["06 — Admin — Authentication"],
           summary: "Admin refresh token",
           description:
             "Exchanges a valid admin refresh token for a new access/refresh token pair.",
@@ -1356,7 +1449,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/admin/get-me": {
         get: {
-          tags: ["Admin (Authenticated)"],
+          tags: ["07 — Admin — Profile"],
           summary: "Get admin profile",
           description:
             "Returns the profile of the currently authenticated admin/super_admin user.",
@@ -1386,7 +1479,7 @@ Error responses:
       },
       "/admin/update-me": {
         put: {
-          tags: ["Admin (Authenticated)"],
+          tags: ["07 — Admin — Profile"],
           summary: "Update admin profile",
           description:
             "Updates the admin's own profile. Supports optional avatar upload (multipart/form-data).",
@@ -1440,7 +1533,7 @@ Error responses:
       },
       "/admin/change-password": {
         post: {
-          tags: ["Admin (Authenticated)"],
+          tags: ["07 — Admin — Profile"],
           summary: "Change admin password",
           description: "Changes the authenticated admin's password.",
           security: [{ bearerAuth: [] }],
@@ -1462,7 +1555,7 @@ Error responses:
       },
       "/admin/get-user/{id}": {
         get: {
-          tags: ["Admin (Authenticated)"],
+          tags: ["07 — Admin — Profile"],
           summary: "Get user by ID (Admin only)",
           description:
             "Returns a single user/admin by their ID. Requires admin or super_admin role.",
@@ -1500,7 +1593,7 @@ Error responses:
       },
       "/admin/delete-user/{id}": {
         delete: {
-          tags: ["Admin (Authenticated)"],
+          tags: ["07 — Admin — Profile"],
           summary: "Delete a user (Admin only)",
           description:
             "Deletes a regular user by ID. Super admins can also delete admins via this endpoint.",
@@ -1527,7 +1620,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/admin/create-admin": {
         post: {
-          tags: ["Admin (Super Admin)"],
+          tags: ["08 — Admin — Super Admin"],
           summary: "Create admin (Super Admin only)",
           description:
             "Creates a new admin or super_admin user. Only accessible by super_admin role.",
@@ -1579,7 +1672,7 @@ Error responses:
       },
       "/admin/gt-all-users": {
         get: {
-          tags: ["Admin (Super Admin)"],
+          tags: ["08 — Admin — Super Admin"],
           summary: "Get all users (Super Admin only)",
           description:
             "Returns a paginated list of all users across all roles. Super admin only.",
@@ -1633,7 +1726,7 @@ Error responses:
       },
       "/admin/gt-all-admins": {
         get: {
-          tags: ["Admin (Super Admin)"],
+          tags: ["08 — Admin — Super Admin"],
           summary: "Get all admins (Super Admin only)",
           description:
             "Returns a paginated list of all admin and super_admin users.",
@@ -1687,7 +1780,7 @@ Error responses:
       },
       "/admin/delete-admin/{id}": {
         delete: {
-          tags: ["Admin (Super Admin)"],
+          tags: ["08 — Admin — Super Admin"],
           summary: "Delete an admin (Super Admin only)",
           description:
             "Deletes an admin or super_admin user by ID. A super admin cannot delete their own account through this endpoint.",
@@ -1713,7 +1806,7 @@ Error responses:
       },
       "/admin/update-admin/{id}": {
         put: {
-          tags: ["Admin (Super Admin)"],
+          tags: ["08 — Admin — Super Admin"],
           summary: "Update an admin (Super Admin only)",
           description:
             "Updates an admin/super_admin user's details including name, email, role, and active status.",
@@ -1764,7 +1857,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/cms/hero": {
         get: {
-          tags: ["CMS — Hero"],
+          tags: ["09 — CMS — Hero & Services"],
           summary: "Get home hero section",
           description:
             "Returns the homepage hero section with its associated services.",
@@ -1798,7 +1891,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/cms/create-hero": {
         post: {
-          tags: ["CMS — Hero"],
+          tags: ["09 — CMS — Hero & Services"],
           summary: "Create hero section (Admin only)",
           description:
             "Creates the homepage hero section. Only one hero section can exist.",
@@ -1835,7 +1928,7 @@ Error responses:
       },
       "/cms/update-hero/{id}": {
         put: {
-          tags: ["CMS — Hero"],
+          tags: ["09 — CMS — Hero & Services"],
           summary: "Update hero section (Admin only)",
           description: "Updates an existing hero section by ID.",
           security: [{ bearerAuth: [] }],
@@ -1884,7 +1977,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/cms/hero/{heroId}/services": {
         get: {
-          tags: ["CMS — Services"],
+          tags: ["09 — CMS — Hero & Services"],
           summary: "Get services by hero",
           description: "Returns all services associated with a hero section.",
           parameters: [
@@ -1927,7 +2020,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/cms/hero/{heroId}/create-service": {
         post: {
-          tags: ["CMS — Services"],
+          tags: ["09 — CMS — Hero & Services"],
           summary: "Create service (Admin only)",
           description:
             "Creates a new service under a hero section. Supports optional icon upload (multipart/form-data).",
@@ -1989,7 +2082,7 @@ Error responses:
       },
       "/cms/update-service/{serviceId}": {
         put: {
-          tags: ["CMS — Services"],
+          tags: ["09 — CMS — Hero & Services"],
           summary: "Update service (Admin only)",
           description:
             "Updates a service by ID. Supports optional icon upload (multipart/form-data).",
@@ -2049,7 +2142,7 @@ Error responses:
       },
       "/cms/delete-service/{serviceId}": {
         delete: {
-          tags: ["CMS — Services"],
+          tags: ["09 — CMS — Hero & Services"],
           summary: "Delete service (Admin only)",
           description: "Deletes a service by ID.",
           security: [{ bearerAuth: [] }],
@@ -2074,7 +2167,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/cms/submit-inquiry": {
         post: {
-          tags: ["CMS — Contact"],
+          tags: ["10 — CMS — Contact"],
           summary: "Submit contact inquiry (Public)",
           description:
             "Submits a new contact inquiry. Sends a notification email to the site owner.",
@@ -2120,7 +2213,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/cms/gt-all-inquiries": {
         get: {
-          tags: ["CMS — Contact"],
+          tags: ["10 — CMS — Contact"],
           summary: "Get all inquiries (Admin only)",
           description:
             "Returns a paginated, filterable list of all contact inquiries.",
@@ -2205,7 +2298,7 @@ Error responses:
       },
       "/cms/get-inquiry-stats": {
         get: {
-          tags: ["CMS — Contact"],
+          tags: ["10 — CMS — Contact"],
           summary: "Get inquiry statistics (Admin only)",
           description: "Returns total, unread, and replied inquiry counts.",
           security: [{ bearerAuth: [] }],
@@ -2232,7 +2325,7 @@ Error responses:
       },
       "/cms/get-inquiry/{id}": {
         get: {
-          tags: ["CMS — Contact"],
+          tags: ["10 — CMS — Contact"],
           summary: "Get inquiry by ID (Admin only)",
           description: "Returns a single contact inquiry by its ID.",
           security: [{ bearerAuth: [] }],
@@ -2269,7 +2362,7 @@ Error responses:
       },
       "/cms/mark-inquiry-read/{id}": {
         patch: {
-          tags: ["CMS — Contact"],
+          tags: ["10 — CMS — Contact"],
           summary: "Mark inquiry as read (Admin only)",
           description: "Marks a contact inquiry as read.",
           security: [{ bearerAuth: [] }],
@@ -2306,7 +2399,7 @@ Error responses:
       },
       "/cms/reply-inquiry/{id}": {
         post: {
-          tags: ["CMS — Contact"],
+          tags: ["10 — CMS — Contact"],
           summary: "Reply to inquiry (Admin only)",
           description:
             "Sends a reply to a contact inquiry and emails the response to the inquirer.",
@@ -2352,7 +2445,7 @@ Error responses:
       },
       "/cms/delete-inquiry/{id}": {
         delete: {
-          tags: ["CMS — Contact"],
+          tags: ["10 — CMS — Contact"],
           summary: "Delete inquiry (Admin only)",
           description: "Permanently deletes a contact inquiry.",
           security: [{ bearerAuth: [] }],
@@ -2377,7 +2470,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/cms/get-about": {
         get: {
-          tags: ["CMS — About Us"],
+          tags: ["11 — CMS — About Us"],
           summary: "Get About Us section",
           description: "Returns the About Us section content.",
           responses: {
@@ -2410,7 +2503,7 @@ Error responses:
       // ══════════════════════════════════════════════════════════════════
       "/cms/create-about": {
         post: {
-          tags: ["CMS — About Us"],
+          tags: ["11 — CMS — About Us"],
           summary: "Create About Us section (Admin only)",
           description:
             "Creates the About Us section. Only one section can exist. Supports up to 2 image uploads (multipart/form-data).",
@@ -2467,7 +2560,7 @@ Error responses:
       },
       "/cms/update-about/{id}": {
         put: {
-          tags: ["CMS — About Us"],
+          tags: ["11 — CMS — About Us"],
           summary: "Update About Us section (Admin only)",
           description:
             "Updates the About Us section. Supports up to 2 image uploads (multipart/form-data).",
@@ -2532,7 +2625,7 @@ Error responses:
       },
       "/cms/delete-about-image/{id}": {
         delete: {
-          tags: ["CMS — About Us"],
+          tags: ["11 — CMS — About Us"],
           summary: "Delete About Us image (Admin only)",
           description:
             "Deletes a specific image (image1 or image2) from the About Us section via query parameter.",
