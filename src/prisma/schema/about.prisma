@@ -1,13 +1,13 @@
 model AboutUs {
-  id            String   @id @default(uuid())
-  title         String
-  description   String
-  image1        String?
-  image1PublicId String? @map("image1_public_id")
-  image2        String?
-  image2PublicId String? @map("image2_public_id")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id             String   @id @default(uuid())
+  title          String
+  description    String
+  image1         String?
+  image1PublicId String?  @map("image1_public_id")
+  image2         String?
+  image2PublicId String?  @map("image2_public_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
 
   @@map("about_us")
 }

@@ -778,6 +778,336 @@ Error responses:
             },
           },
         },
+
+        // ── CMS: Site Settings Schemas ────────────────────────────────
+        SiteSettings: {
+          type: "object",
+          properties: {
+            id: { type: "string", example: "uuid" },
+            title: {
+              type: "string",
+              nullable: true,
+              example: "GLX-Tech",
+            },
+            subTitle: {
+              type: "string",
+              nullable: true,
+              example: "Your Digital Partner",
+            },
+            footerTxt: {
+              type: "string",
+              nullable: true,
+              example: "© 2026 GLX-Tech. All rights reserved.",
+            },
+            siteLink: {
+              type: "string",
+              nullable: true,
+              example: "https://glx-tech.com",
+            },
+            location: {
+              type: "string",
+              nullable: true,
+              example: "123 Tech Street, Silicon Valley, CA",
+            },
+            phone: {
+              type: "string",
+              nullable: true,
+              example: "+1 (555) 123-4567",
+            },
+            email: {
+              type: "string",
+              nullable: true,
+              example: "contact@glx-tech.com",
+            },
+          },
+        },
+        CreateSiteSettingsInput: {
+          type: "object",
+          properties: {
+            title: {
+              type: "string",
+              example: "GLX-Tech",
+              maxLength: 200,
+            },
+            subTitle: {
+              type: "string",
+              example: "Your Digital Partner",
+              maxLength: 300,
+            },
+            footerTxt: {
+              type: "string",
+              example: "© 2026 GLX-Tech. All rights reserved.",
+              maxLength: 1000,
+            },
+            siteLink: {
+              type: "string",
+              example: "https://glx-tech.com",
+              maxLength: 500,
+            },
+            location: {
+              type: "string",
+              example: "123 Tech Street, Silicon Valley, CA",
+              maxLength: 500,
+            },
+            phone: {
+              type: "string",
+              example: "+1 (555) 123-4567",
+              maxLength: 30,
+            },
+            email: {
+              type: "string",
+              format: "email",
+              example: "contact@glx-tech.com",
+            },
+          },
+        },
+        UpdateSiteSettingsInput: {
+          type: "object",
+          properties: {
+            title: {
+              type: "string",
+              example: "GLX-Tech",
+              maxLength: 200,
+            },
+            subTitle: {
+              type: "string",
+              example: "Your Digital Partner",
+              maxLength: 300,
+            },
+            footerTxt: {
+              type: "string",
+              example: "Updated footer text",
+              maxLength: 1000,
+            },
+            siteLink: {
+              type: "string",
+              example: "https://glx-tech.com",
+              maxLength: 500,
+            },
+            location: {
+              type: "string",
+              example: "456 New Avenue, NYC",
+              maxLength: 500,
+            },
+            phone: {
+              type: "string",
+              example: "+1 (555) 987-6543",
+              maxLength: 30,
+            },
+            email: {
+              type: "string",
+              format: "email",
+              example: "info@glx-tech.com",
+            },
+          },
+        },
+
+        // ── CMS: Social Link Schemas ───────────────────────────────────
+        SocialLink: {
+          type: "object",
+          properties: {
+            id: { type: "string", example: "uuid" },
+            icon: {
+              type: "string",
+              example: "https://res.cloudinary.com/...",
+            },
+            iconPublicId: {
+              type: "string",
+              example: "cms/socials/abc123",
+            },
+            socialLink: {
+              type: "string",
+              example: "https://facebook.com/glxtech",
+            },
+          },
+        },
+        CreateSocialInput: {
+          type: "object",
+          required: ["socialLink"],
+          properties: {
+            socialLink: {
+              type: "string",
+              example: "https://facebook.com/glxtech",
+              maxLength: 500,
+            },
+            icon: {
+              type: "string",
+              example: "https://res.cloudinary.com/...",
+            },
+          },
+        },
+        UpdateSocialInput: {
+          type: "object",
+          properties: {
+            socialLink: {
+              type: "string",
+              example: "https://twitter.com/glxtech",
+              maxLength: 500,
+            },
+            icon: {
+              type: "string",
+              example: "https://res.cloudinary.com/...",
+            },
+          },
+        },
+
+        // ── CMS: Review Section Schemas ───────────────────────────────
+        ReviewSection: {
+          type: "object",
+          properties: {
+            id: { type: "string", example: "uuid" },
+            title: { type: "string", example: "What Our Clients Say" },
+            subTitle: {
+              type: "string",
+              example: "Trusted by hundreds of businesses worldwide",
+            },
+            reviews: {
+              type: "array",
+              items: { $ref: "#/components/schemas/Review" },
+            },
+          },
+        },
+        CreateReviewSectionInput: {
+          type: "object",
+          required: ["title", "subTitle"],
+          properties: {
+            title: {
+              type: "string",
+              example: "What Our Clients Say",
+              maxLength: 200,
+            },
+            subTitle: {
+              type: "string",
+              example: "Trusted by hundreds of businesses worldwide",
+              maxLength: 300,
+            },
+          },
+        },
+        UpdateReviewSectionInput: {
+          type: "object",
+          properties: {
+            title: {
+              type: "string",
+              example: "Updated Section Title",
+              maxLength: 200,
+            },
+            subTitle: {
+              type: "string",
+              example: "Updated subtitle text",
+              maxLength: 300,
+            },
+          },
+        },
+
+        // ── CMS: Individual Review Schemas ─────────────────────────────
+        Review: {
+          type: "object",
+          properties: {
+            id: { type: "string", example: "uuid" },
+            name: {
+              type: "string",
+              example: "Jane Smith",
+            },
+            position: {
+              type: "string",
+              example: "CEO, TechCorp",
+            },
+            reviewDate: {
+              type: "string",
+              example: "June 2026",
+            },
+            picture: {
+              type: "string",
+              example: "https://res.cloudinary.com/...",
+            },
+            picturePublicId: {
+              type: "string",
+              example: "cms/reviews/abc123",
+            },
+            review: {
+              type: "string",
+              example: "GLX-Tech provided outstanding service...",
+            },
+            ratingCount: {
+              type: "string",
+              example: "5",
+            },
+            sectionId: {
+              type: "string",
+              nullable: true,
+              example: "uuid",
+            },
+          },
+        },
+        CreateReviewInput: {
+          type: "object",
+          required: ["name", "position", "reviewDate", "review", "ratingCount"],
+          properties: {
+            name: {
+              type: "string",
+              example: "Jane Smith",
+              maxLength: 100,
+            },
+            position: {
+              type: "string",
+              example: "CEO, TechCorp",
+              maxLength: 200,
+            },
+            reviewDate: {
+              type: "string",
+              example: "June 2026",
+              maxLength: 50,
+            },
+            review: {
+              type: "string",
+              example: "GLX-Tech provided outstanding service and delivered beyond our expectations.",
+              maxLength: 5000,
+            },
+            ratingCount: {
+              type: "string",
+              example: "5",
+              maxLength: 10,
+            },
+            picture: {
+              type: "string",
+              example: "https://res.cloudinary.com/...",
+            },
+          },
+        },
+        UpdateReviewInput: {
+          type: "object",
+          properties: {
+            name: {
+              type: "string",
+              example: "Jane Smith Updated",
+              maxLength: 100,
+            },
+            position: {
+              type: "string",
+              example: "CTO, TechCorp",
+              maxLength: 200,
+            },
+            reviewDate: {
+              type: "string",
+              example: "July 2026",
+              maxLength: 50,
+            },
+            review: {
+              type: "string",
+              example: "Updated review text...",
+              maxLength: 5000,
+            },
+            ratingCount: {
+              type: "string",
+              example: "4",
+              maxLength: 10,
+            },
+            picture: {
+              type: "string",
+              example: "https://res.cloudinary.com/...",
+            },
+          },
+        },
       },
     },
     tags: [
@@ -821,6 +1151,16 @@ Error responses:
       },
       { name: "10 — CMS — Contact", description: "Contact inquiry management" },
       { name: "11 — CMS — About Us", description: "About Us section management" },
+      {
+        name: "12 — CMS — Site Settings",
+        description:
+          "Site-wide settings (title, contact info) and social media link management",
+      },
+      {
+        name: "13 — CMS — Reviews",
+        description:
+          "Testimonial review section management (section header + individual reviews with ratings and pictures)",
+      },
     ],
     paths: {
       // ══════════════════════════════════════════════════════════════════
@@ -2665,6 +3005,709 @@ Error responses:
               },
             },
             404: { description: "About Us section not found" },
+          },
+        },
+      },
+
+      // ══════════════════════════════════════════════════════════════════
+      // CMS — Site Settings (Public)
+      // ══════════════════════════════════════════════════════════════════
+      "/cms/site-settings": {
+        get: {
+          tags: ["12 — CMS — Site Settings"],
+          summary: "Get site settings",
+          description:
+            "Returns the site-wide configuration including title, subtitle, footer text, contact info, and links.",
+          responses: {
+            200: {
+              description: "Site settings fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            nullable: true,
+                            allOf: [
+                              {
+                                $ref: "#/components/schemas/SiteSettings",
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+
+      // ══════════════════════════════════════════════════════════════════
+      // CMS — Site Settings (Admin)
+      // ══════════════════════════════════════════════════════════════════
+      "/cms/create-site-settings": {
+        post: {
+          tags: ["12 — CMS — Site Settings"],
+          summary: "Create site settings (Admin only)",
+          description:
+            "Creates the site-wide configuration. Only one set of site settings can exist.",
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CreateSiteSettingsInput",
+                },
+              },
+            },
+          },
+          responses: {
+            201: {
+              description: "Site settings created successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            $ref: "#/components/schemas/SiteSettings",
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            409: { description: "Site settings already exist" },
+          },
+        },
+      },
+      "/cms/update-site-settings/{id}": {
+        put: {
+          tags: ["12 — CMS — Site Settings"],
+          summary: "Update site settings (Admin only)",
+          description: "Updates an existing site configuration by ID.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Site settings ID",
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UpdateSiteSettingsInput",
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Site settings updated successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            $ref: "#/components/schemas/SiteSettings",
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Site settings not found" },
+          },
+        },
+      },
+
+      // ══════════════════════════════════════════════════════════════════
+      // CMS — Social (Public)
+      // ══════════════════════════════════════════════════════════════════
+      "/cms/site-settings/socials": {
+        get: {
+          tags: ["12 — CMS — Site Settings"],
+          summary: "Get all social links",
+          description: "Returns all social media links for the site.",
+          responses: {
+            200: {
+              description: "Social links fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            type: "array",
+                            items: {
+                              $ref: "#/components/schemas/SocialLink",
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+
+      // ══════════════════════════════════════════════════════════════════
+      // CMS — Social (Admin)
+      // ══════════════════════════════════════════════════════════════════
+      "/cms/site-settings/create-social": {
+        post: {
+          tags: ["12 — CMS — Site Settings"],
+          summary: "Create social link (Admin only)",
+          description:
+            "Creates a new social media link. Supports optional icon upload (multipart/form-data).",
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "multipart/form-data": {
+                schema: {
+                  type: "object",
+                  required: ["socialLink"],
+                  properties: {
+                    socialLink: {
+                      type: "string",
+                      description: "Social media profile URL",
+                    },
+                    icon: {
+                      type: "string",
+                      format: "binary",
+                      description:
+                        "Social platform icon image (jpg, png, webp; max 5MB)",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            201: {
+              description: "Social link created successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/SocialLink" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/cms/site-settings/update-social/{socialId}": {
+        put: {
+          tags: ["12 — CMS — Site Settings"],
+          summary: "Update social link (Admin only)",
+          description:
+            "Updates a social media link by ID. Supports optional icon upload (multipart/form-data).",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "socialId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Social link ID",
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "multipart/form-data": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    socialLink: {
+                      type: "string",
+                      description: "Social media profile URL",
+                    },
+                    icon: {
+                      type: "string",
+                      format: "binary",
+                      description: "New social platform icon image",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Social link updated successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/SocialLink" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Social link not found" },
+          },
+        },
+      },
+      "/cms/site-settings/delete-social/{socialId}": {
+        delete: {
+          tags: ["12 — CMS — Site Settings"],
+          summary: "Delete social link (Admin only)",
+          description: "Deletes a social media link by ID.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "socialId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Social link ID",
+            },
+          ],
+          responses: {
+            200: { description: "Social link deleted successfully" },
+            404: { description: "Social link not found" },
+          },
+        },
+      },
+
+
+      // ══════════════════════════════════════════════════════════════════
+      // CMS — Reviews — Section (Public)
+      // ══════════════════════════════════════════════════════════════════
+      "/cms/review/section": {
+        get: {
+          tags: ["13 — CMS — Reviews"],
+          summary: "Get review section",
+          description:
+            "Returns the review/testimonial section header with its associated reviews.",
+          responses: {
+            200: {
+              description: "Review section fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            nullable: true,
+                            allOf: [
+                              {
+                                $ref: "#/components/schemas/ReviewSection",
+                              },
+                            ],
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+
+      // ══════════════════════════════════════════════════════════════════
+      // CMS — Reviews — Section (Admin)
+      // ══════════════════════════════════════════════════════════════════
+      "/cms/review/create-section": {
+        post: {
+          tags: ["13 — CMS — Reviews"],
+          summary: "Create review section (Admin only)",
+          description:
+            "Creates the review/testimonial section. Only one section can exist.",
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CreateReviewSectionInput",
+                },
+              },
+            },
+          },
+          responses: {
+            201: {
+              description: "Review section created successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/ReviewSection" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            409: { description: "Review section already exists" },
+          },
+        },
+      },
+      "/cms/review/update-section/{id}": {
+        put: {
+          tags: ["13 — CMS — Reviews"],
+          summary: "Update review section (Admin only)",
+          description: "Updates an existing review section by ID.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Review section ID",
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UpdateReviewSectionInput",
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Review section updated successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/ReviewSection" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Review section not found" },
+          },
+        },
+      },
+      "/cms/review/delete-section/{id}": {
+        delete: {
+          tags: ["13 — CMS — Reviews"],
+          summary: "Delete review section (Admin only)",
+          description: "Deletes a review section and all its associated reviews.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Review section ID",
+            },
+          ],
+          responses: {
+            200: { description: "Review section deleted successfully" },
+            404: { description: "Review section not found" },
+          },
+        },
+      },
+
+      // ══════════════════════════════════════════════════════════════════
+      // CMS — Reviews — Individual Reviews (Public)
+      // ══════════════════════════════════════════════════════════════════
+      "/cms/review/{sectionId}/reviews": {
+        get: {
+          tags: ["13 — CMS — Reviews"],
+          summary: "Get reviews by section",
+          description:
+            "Returns all individual reviews for a given review section.",
+          parameters: [
+            {
+              name: "sectionId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Review section ID",
+            },
+          ],
+          responses: {
+            200: {
+              description: "Reviews fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            type: "array",
+                            items: { $ref: "#/components/schemas/Review" },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Review section not found" },
+          },
+        },
+      },
+      "/cms/review/{reviewId}": {
+        get: {
+          tags: ["13 — CMS — Reviews"],
+          summary: "Get review by ID",
+          description: "Returns a single review by its ID.",
+          parameters: [
+            {
+              name: "reviewId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Review ID",
+            },
+          ],
+          responses: {
+            200: {
+              description: "Review fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/Review" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Review not found" },
+          },
+        },
+      },
+
+      // ══════════════════════════════════════════════════════════════════
+      // CMS — Reviews — Individual Reviews (Admin)
+      // ══════════════════════════════════════════════════════════════════
+      "/cms/review/{sectionId}/create-review": {
+        post: {
+          tags: ["13 — CMS — Reviews"],
+          summary: "Create review (Admin only)",
+          description:
+            "Creates a new review under a review section. Supports optional picture upload (multipart/form-data).",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "sectionId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Review section ID",
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "multipart/form-data": {
+                schema: {
+                  type: "object",
+                  required: ["name", "position", "reviewDate", "review", "ratingCount"],
+                  properties: {
+                    name: { type: "string", description: "Reviewer name" },
+                    position: {
+                      type: "string",
+                      description: "Reviewer position/role",
+                    },
+                    reviewDate: {
+                      type: "string",
+                      description: "Review date or timeframe",
+                    },
+                    review: {
+                      type: "string",
+                      description: "Review/testimonial text",
+                    },
+                    ratingCount: {
+                      type: "string",
+                      description: "Rating (e.g. '5' for 5 stars)",
+                    },
+                    picture: {
+                      type: "string",
+                      format: "binary",
+                      description:
+                        "Reviewer picture image (jpg, png, webp; max 5MB)",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            201: {
+              description: "Review created successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/Review" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Review section not found" },
+          },
+        },
+      },
+      "/cms/review/update-review/{reviewId}": {
+        put: {
+          tags: ["13 — CMS — Reviews"],
+          summary: "Update review (Admin only)",
+          description:
+            "Updates a review by ID. Supports optional picture upload (multipart/form-data).",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "reviewId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Review ID",
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "multipart/form-data": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    name: { type: "string", description: "Reviewer name" },
+                    position: {
+                      type: "string",
+                      description: "Reviewer position/role",
+                    },
+                    reviewDate: {
+                      type: "string",
+                      description: "Review date or timeframe",
+                    },
+                    review: {
+                      type: "string",
+                      description: "Review/testimonial text",
+                    },
+                    ratingCount: {
+                      type: "string",
+                      description: "Rating (e.g. '5' for 5 stars)",
+                    },
+                    picture: {
+                      type: "string",
+                      format: "binary",
+                      description: "New reviewer picture image",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Review updated successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/Review" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Review not found" },
+          },
+        },
+      },
+      "/cms/review/delete-review/{reviewId}": {
+        delete: {
+          tags: ["13 — CMS — Reviews"],
+          summary: "Delete review (Admin only)",
+          description: "Deletes a review by ID.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "reviewId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Review ID",
+            },
+          ],
+          responses: {
+            200: { description: "Review deleted successfully" },
+            404: { description: "Review not found" },
           },
         },
       },

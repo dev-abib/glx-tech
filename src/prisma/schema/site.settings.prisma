@@ -1,0 +1,17 @@
+model Social {
+  id           String @id @default(uuid())
+  icon         String
+  iconPublicId String
+  socialLink   String
+}
+
+model SiteSettings {
+  id        String  @id @default(uuid())
+  title     String?
+  subTitle  String?
+  footerTxt String?
+  siteLink  String?
+  location  String?
+  phone     String?
+  email     String?
+}

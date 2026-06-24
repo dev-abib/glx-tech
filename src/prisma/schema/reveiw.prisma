@@ -1,0 +1,19 @@
+model Review {
+  id              String         @id() @default(uuid())
+  name            String
+  position        String
+  reviewDate      String
+  picture         String
+  picturePublicId String
+  review          String
+  ratingCount     String
+  sectionId       String?
+  ReviewSection   ReviewSection? @relation(fields: [sectionId], references: [id])
+}
+
+model ReviewSection {
+  id       String   @id() @default(uuid())
+  title    String
+  subTitle String
+  reviews  Review[]
+}
