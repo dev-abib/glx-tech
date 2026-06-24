@@ -10,10 +10,9 @@ import { notFoundMiddleware } from "./middlewares/not-found.middleware.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 import { env } from "./config/env.js";
 
-// Helmet v8 type resolution workaround for Vercel (Linux) build
-// TypeScript 6.0.3 on Linux resolves helmet's types as module namespace
-// instead of a callable function due to missing "types" condition in
-// helmet's exports map. We use a local type assertion to bypass this.
+// ── Swagger ────────────────────────────────────────────────────────────────
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.js";
 import helmetModule from "helmet";
 import type { Request, NextFunction } from "express";
 const helmet = helmetModule as unknown as (
@@ -38,10 +37,31 @@ app.use(
   })
 );
 
+
 app.get("/health", (_req, res: Response) => {
   res.send("system is up");
 });
 
+
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    explorer: true,
+    customSiteTitle: "Nexus API Documentation",
+    customCss:
+      ".swagger-ui .topbar { display: none } .swagger-ui .info { margin: 20px 0 } .swagger-ui .scheme-container { margin: 0 0 10px }",
+    swaggerOptions: {
+      persistAuthorization: true,
+      docExpansion: "list",
+      filter: true,
+      tagsSorter: "alpha",
+      operationsSorter: "alpha",
+    },
+  })
+);
+
+// ── API Routes ─────────────────────────────────────────────────────────────
 app.use(env.API_VERSION, allRoutes);
 
 app.use(notFoundMiddleware);
