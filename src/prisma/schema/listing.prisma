@@ -1,11 +1,3 @@
-model Media {
-  id            String  @id @default(uuid())
-  mediaLink     String
-  mediaPublicId String
-  listingId     String
-  listing       Listing @relation(fields: [listingId], references: [id])
-}
-
 model UserReview {
   id        String  @id() @default(uuid())
   userId    String
@@ -21,11 +13,12 @@ model Listing {
   userId            String
   user              User         @relation(fields: [userId], references: [id])
   title             String
+  slug              String   @unique()
   serviceId         String
   service           Service      @relation(fields: [serviceId], references: [id])
   description       String
   address           String
-  media             Media[]
+  media             Json
   days              String[]
   weekend           String[]
   timeSlot          String[]

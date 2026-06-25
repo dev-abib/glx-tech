@@ -9,7 +9,7 @@ export interface AuthPayload {
   email: string;
   name: string;
   role: "user" | "seller" | "admin" | "super_admin";
-  isGuest?: boolean;
+  isPaid: boolean;
   iat?: number;
   exp?: number;
 }
@@ -73,7 +73,11 @@ export const authenticate = (options: AuthOptions = {}) => {
       if (authType === "super_admin" && decoded.role !== "super_admin") {
         throw new ApiError(401, "Super admin access required");
       }
-      if (authType === "user" && decoded.role !== "user" && decoded.role !== "seller") {
+      if (
+        authType === "user" &&
+        decoded.role !== "user" &&
+        decoded.role !== "seller"
+      ) {
         throw new ApiError(401, "User access required");
       }
       if (authType === "seller" && decoded.role !== "seller") {

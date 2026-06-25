@@ -86,8 +86,8 @@ Error responses:
           description:
             "Alternative: JWT access token sent as an 'accessToken' cookie.",
         },
-      },        schemas: {
-        // ── System Report ────────────────────────────────────────────
+      },
+      schemas: {
         SystemReport: {
           type: "object",
           properties: {
@@ -153,8 +153,6 @@ Error responses:
             },
           },
         },
-
-        // ── Shared Response Wrappers ───────────────────────────────────
         ApiResponse: {
           type: "object",
           properties: {
@@ -181,8 +179,6 @@ Error responses:
             totalPages: { type: "integer", example: 10 },
           },
         },
-
-        // ── User Schemas ──────────────────────────────────────────────
         CreateUserInput: {
           type: "object",
           required: ["name", "email", "password", "confirmPassword", "phone"],
@@ -389,8 +385,6 @@ Error responses:
             },
           },
         },
-
-        // ── Admin Schemas ─────────────────────────────────────────────
         AdminLoginInput: {
           type: "object",
           required: ["email", "password"],
@@ -528,8 +522,6 @@ Error responses:
             },
           },
         },
-
-        // ── CMS: Hero Schemas ──────────────────────────────────────────
         Hero: {
           type: "object",
           properties: {
@@ -591,8 +583,6 @@ Error responses:
             },
           },
         },
-
-        // ── CMS: Service Schemas ───────────────────────────────────────
         Service: {
           type: "object",
           properties: {
@@ -652,8 +642,6 @@ Error responses:
             },
           },
         },
-
-        // ── CMS: Contact Inquiry Schemas ───────────────────────────────
         ContactInquiry: {
           type: "object",
           properties: {
@@ -720,8 +708,6 @@ Error responses:
             replied: { type: "integer", example: 5 },
           },
         },
-
-        // ── CMS: About Us Schemas ──────────────────────────────────────
         AboutUs: {
           type: "object",
           properties: {
@@ -778,8 +764,6 @@ Error responses:
             },
           },
         },
-
-        // ── CMS: Site Settings Schemas ────────────────────────────────
         SiteSettings: {
           type: "object",
           properties: {
@@ -901,8 +885,6 @@ Error responses:
             },
           },
         },
-
-        // ── CMS: Social Link Schemas ───────────────────────────────────
         SocialLink: {
           type: "object",
           properties: {
@@ -950,8 +932,6 @@ Error responses:
             },
           },
         },
-
-        // ── CMS: Review Section Schemas ───────────────────────────────
         ReviewSection: {
           type: "object",
           properties: {
@@ -998,24 +978,13 @@ Error responses:
             },
           },
         },
-
-        // ── CMS: Individual Review Schemas ─────────────────────────────
         Review: {
           type: "object",
           properties: {
             id: { type: "string", example: "uuid" },
-            name: {
-              type: "string",
-              example: "Jane Smith",
-            },
-            position: {
-              type: "string",
-              example: "CEO, TechCorp",
-            },
-            reviewDate: {
-              type: "string",
-              example: "June 2026",
-            },
+            name: { type: "string", example: "Jane Smith" },
+            position: { type: "string", example: "CEO, TechCorp" },
+            reviewDate: { type: "string", example: "June 2026" },
             picture: {
               type: "string",
               example: "https://res.cloudinary.com/...",
@@ -1028,26 +997,15 @@ Error responses:
               type: "string",
               example: "GLX-Tech provided outstanding service...",
             },
-            ratingCount: {
-              type: "string",
-              example: "5",
-            },
-            sectionId: {
-              type: "string",
-              nullable: true,
-              example: "uuid",
-            },
+            ratingCount: { type: "string", example: "5" },
+            sectionId: { type: "string", nullable: true, example: "uuid" },
           },
         },
         CreateReviewInput: {
           type: "object",
           required: ["name", "position", "reviewDate", "review", "ratingCount"],
           properties: {
-            name: {
-              type: "string",
-              example: "Jane Smith",
-              maxLength: 100,
-            },
+            name: { type: "string", example: "Jane Smith", maxLength: 100 },
             position: {
               type: "string",
               example: "CEO, TechCorp",
@@ -1060,14 +1018,11 @@ Error responses:
             },
             review: {
               type: "string",
-              example: "GLX-Tech provided outstanding service and delivered beyond our expectations.",
+              example:
+                "GLX-Tech provided outstanding service and delivered beyond our expectations.",
               maxLength: 5000,
             },
-            ratingCount: {
-              type: "string",
-              example: "5",
-              maxLength: 10,
-            },
+            ratingCount: { type: "string", example: "5", maxLength: 10 },
             picture: {
               type: "string",
               example: "https://res.cloudinary.com/...",
@@ -1087,24 +1042,174 @@ Error responses:
               example: "CTO, TechCorp",
               maxLength: 200,
             },
-            reviewDate: {
-              type: "string",
-              example: "July 2026",
-              maxLength: 50,
-            },
+            reviewDate: { type: "string", example: "July 2026", maxLength: 50 },
             review: {
               type: "string",
               example: "Updated review text...",
               maxLength: 5000,
             },
-            ratingCount: {
-              type: "string",
-              example: "4",
-              maxLength: 10,
-            },
+            ratingCount: { type: "string", example: "4", maxLength: 10 },
             picture: {
               type: "string",
               example: "https://res.cloudinary.com/...",
+            },
+          },
+        },
+        Listing: {
+          type: "object",
+          properties: {
+            id: { type: "string", example: "uuid" },
+            userId: { type: "string", example: "uuid" },
+            title: { type: "string", example: "Professional Web Development" },
+            slug: { type: "string", example: "professional-web-development" },
+            serviceId: { type: "string", example: "uuid" },
+            description: {
+              type: "string",
+              example: "We build modern web applications...",
+            },
+            address: { type: "string", example: "123 Tech Street" },
+            media: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  url: {
+                    type: "string",
+                    example: "https://res.cloudinary.com/...",
+                  },
+                  publicId: { type: "string", example: "listings/abc123" },
+                },
+              },
+            },
+            days: {
+              type: "array",
+              items: { type: "string" },
+              example: ["Monday", "Tuesday"],
+            },
+            weekend: {
+              type: "array",
+              items: { type: "string" },
+              example: ["Saturday", "Sunday"],
+            },
+            timeSlot: {
+              type: "array",
+              items: { type: "string" },
+              example: ["09:00", "10:00"],
+            },
+            basePrice: { type: "string", example: "500" },
+            hourlyPrice: { type: "string", example: "50" },
+            dailyPrice: { type: "string", example: "200" },
+            estimatedDuration: { type: "string", example: "2 weeks" },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
+          },
+        },
+        CreateListingInput: {
+          type: "object",
+          required: [
+            "title",
+            "slug",
+            "serviceId",
+            "description",
+            "address",
+            "days",
+            "weekend",
+            "timeSlot",
+            "basePrice",
+            "hourlyPrice",
+            "dailyPrice",
+            "estimatedDuration",
+          ],
+          properties: {
+            title: { type: "string", example: "Professional Web Development" },
+            slug: { type: "string", example: "professional-web-development" },
+            serviceId: { type: "string", example: "uuid" },
+            description: {
+              type: "string",
+              example: "We build modern web applications...",
+            },
+            address: { type: "string", example: "123 Tech Street" },
+            days: {
+              type: "array",
+              items: { type: "string" },
+              example: ["Monday", "Tuesday"],
+            },
+            weekend: {
+              type: "array",
+              items: { type: "string" },
+              example: ["Saturday", "Sunday"],
+            },
+            timeSlot: {
+              type: "array",
+              items: { type: "string" },
+              example: ["09:00", "10:00"],
+            },
+            basePrice: { type: "string", example: "500" },
+            hourlyPrice: { type: "string", example: "50" },
+            dailyPrice: { type: "string", example: "200" },
+            estimatedDuration: { type: "string", example: "2 weeks" },
+          },
+        },
+        UpdateListingInput: {
+          type: "object",
+          properties: {
+            title: { type: "string", example: "Updated Title" },
+            slug: { type: "string", example: "updated-slug" },
+            serviceId: { type: "string", example: "uuid" },
+            description: { type: "string", example: "Updated description..." },
+            address: { type: "string", example: "456 New Street" },
+            days: { type: "array", items: { type: "string" } },
+            weekend: { type: "array", items: { type: "string" } },
+            timeSlot: { type: "array", items: { type: "string" } },
+            basePrice: { type: "string", example: "600" },
+            hourlyPrice: { type: "string", example: "60" },
+            dailyPrice: { type: "string", example: "250" },
+            estimatedDuration: { type: "string", example: "3 weeks" },
+          },
+        },
+        UserReview: {
+          type: "object",
+          properties: {
+            id: { type: "string", example: "uuid" },
+            userId: { type: "string", example: "uuid" },
+            listingId: { type: "string", example: "uuid" },
+            rating: { type: "number", example: 4.5, minimum: 1, maximum: 5 },
+            review: {
+              type: "string",
+              example: "Great service! Highly recommended.",
+            },
+            createdAt: { type: "string", format: "date-time" },
+            updatedAt: { type: "string", format: "date-time" },
+            user: {
+              type: "object",
+              properties: {
+                id: { type: "string", example: "uuid" },
+                name: { type: "string", example: "John Doe" },
+                avatar: { type: "string", nullable: true },
+              },
+            },
+          },
+        },
+        CreateUserReviewInput: {
+          type: "object",
+          required: ["rating", "review"],
+          properties: {
+            rating: { type: "number", example: 4.5, minimum: 1, maximum: 5 },
+            review: {
+              type: "string",
+              example: "Great service! Highly recommended.",
+              maxLength: 5000,
+            },
+          },
+        },
+        UpdateUserReviewInput: {
+          type: "object",
+          properties: {
+            rating: { type: "number", example: 5, minimum: 1, maximum: 5 },
+            review: {
+              type: "string",
+              example: "Updated review text...",
+              maxLength: 5000,
             },
           },
         },
@@ -1146,11 +1251,13 @@ Error responses:
       },
       {
         name: "09 — CMS — Hero & Services",
-        description:
-          "Homepage hero section and service management",
+        description: "Homepage hero section and service management",
       },
       { name: "10 — CMS — Contact", description: "Contact inquiry management" },
-      { name: "11 — CMS — About Us", description: "About Us section management" },
+      {
+        name: "11 — CMS — About Us",
+        description: "About Us section management",
+      },
       {
         name: "12 — CMS — Site Settings",
         description:
@@ -1161,11 +1268,12 @@ Error responses:
         description:
           "Testimonial review section management (section header + individual reviews with ratings and pictures)",
       },
+      {
+        name: "14 — Listings & Reviews",
+        description: "Seller listings (CRUD) and user reviews for listings",
+      },
     ],
     paths: {
-      // ══════════════════════════════════════════════════════════════════
-      // HEALTH
-      // ══════════════════════════════════════════════════════════════════
       "/health": {
         get: {
           tags: ["01 — Health"],
@@ -1210,10 +1318,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // USER — Public
-      // ══════════════════════════════════════════════════════════════════
       "/users/create-user": {
         post: {
           tags: ["02 — Users — Authentication"],
@@ -1454,10 +1558,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // USER — Authenticated
-      // ══════════════════════════════════════════════════════════════════
       "/users/change-password": {
         post: {
           tags: ["03 — Users — Profile"],
@@ -1637,10 +1737,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // USER — Admin
-      // ══════════════════════════════════════════════════════════════════
       "/users/gt-all-users": {
         get: {
           tags: ["05 — Users — Admin"],
@@ -1698,10 +1794,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // ADMIN — Public
-      // ══════════════════════════════════════════════════════════════════
       "/admin/login": {
         post: {
           tags: ["06 — Admin — Authentication"],
@@ -1783,10 +1875,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // ADMIN — Authenticated
-      // ══════════════════════════════════════════════════════════════════
       "/admin/get-me": {
         get: {
           tags: ["07 — Admin — Profile"],
@@ -1954,10 +2042,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // ADMIN — Super Admin
-      // ══════════════════════════════════════════════════════════════════
       "/admin/create-admin": {
         post: {
           tags: ["08 — Admin — Super Admin"],
@@ -2191,10 +2275,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Hero (Public)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/hero": {
         get: {
           tags: ["09 — CMS — Hero & Services"],
@@ -2225,10 +2305,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Hero (Admin)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/create-hero": {
         post: {
           tags: ["09 — CMS — Hero & Services"],
@@ -2311,10 +2387,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Services (Public)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/hero/{heroId}/services": {
         get: {
           tags: ["09 — CMS — Hero & Services"],
@@ -2354,10 +2426,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Services (Admin)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/hero/{heroId}/create-service": {
         post: {
           tags: ["09 — CMS — Hero & Services"],
@@ -2501,10 +2569,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Contact (Public)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/submit-inquiry": {
         post: {
           tags: ["10 — CMS — Contact"],
@@ -2547,10 +2611,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Contact (Admin)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/gt-all-inquiries": {
         get: {
           tags: ["10 — CMS — Contact"],
@@ -2804,10 +2864,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — About Us (Public)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/get-about": {
         get: {
           tags: ["11 — CMS — About Us"],
@@ -2837,10 +2893,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — About Us (Admin)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/create-about": {
         post: {
           tags: ["11 — CMS — About Us"],
@@ -3008,10 +3060,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Site Settings (Public)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/site-settings": {
         get: {
           tags: ["12 — CMS — Site Settings"],
@@ -3031,9 +3079,7 @@ Error responses:
                           data: {
                             nullable: true,
                             allOf: [
-                              {
-                                $ref: "#/components/schemas/SiteSettings",
-                              },
+                              { $ref: "#/components/schemas/SiteSettings" },
                             ],
                           },
                         },
@@ -3046,10 +3092,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Site Settings (Admin)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/create-site-settings": {
         post: {
           tags: ["12 — CMS — Site Settings"],
@@ -3077,9 +3119,7 @@ Error responses:
                       { $ref: "#/components/schemas/ApiResponse" },
                       {
                         properties: {
-                          data: {
-                            $ref: "#/components/schemas/SiteSettings",
-                          },
+                          data: { $ref: "#/components/schemas/SiteSettings" },
                         },
                       },
                     ],
@@ -3126,9 +3166,7 @@ Error responses:
                       { $ref: "#/components/schemas/ApiResponse" },
                       {
                         properties: {
-                          data: {
-                            $ref: "#/components/schemas/SiteSettings",
-                          },
+                          data: { $ref: "#/components/schemas/SiteSettings" },
                         },
                       },
                     ],
@@ -3140,10 +3178,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Social (Public)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/site-settings/socials": {
         get: {
           tags: ["12 — CMS — Site Settings"],
@@ -3161,9 +3195,7 @@ Error responses:
                         properties: {
                           data: {
                             type: "array",
-                            items: {
-                              $ref: "#/components/schemas/SocialLink",
-                            },
+                            items: { $ref: "#/components/schemas/SocialLink" },
                           },
                         },
                       },
@@ -3175,10 +3207,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Social (Admin)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/site-settings/create-social": {
         post: {
           tags: ["12 — CMS — Site Settings"],
@@ -3310,11 +3338,6 @@ Error responses:
           },
         },
       },
-
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Reviews — Section (Public)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/review/section": {
         get: {
           tags: ["13 — CMS — Reviews"],
@@ -3334,9 +3357,7 @@ Error responses:
                           data: {
                             nullable: true,
                             allOf: [
-                              {
-                                $ref: "#/components/schemas/ReviewSection",
-                              },
+                              { $ref: "#/components/schemas/ReviewSection" },
                             ],
                           },
                         },
@@ -3349,10 +3370,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Reviews — Section (Admin)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/review/create-section": {
         post: {
           tags: ["13 — CMS — Reviews"],
@@ -3443,7 +3460,8 @@ Error responses:
         delete: {
           tags: ["13 — CMS — Reviews"],
           summary: "Delete review section (Admin only)",
-          description: "Deletes a review section and all its associated reviews.",
+          description:
+            "Deletes a review section and all its associated reviews.",
           security: [{ bearerAuth: [] }],
           parameters: [
             {
@@ -3460,10 +3478,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Reviews — Individual Reviews (Public)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/review/{sectionId}/reviews": {
         get: {
           tags: ["13 — CMS — Reviews"],
@@ -3540,10 +3554,6 @@ Error responses:
           },
         },
       },
-
-      // ══════════════════════════════════════════════════════════════════
-      // CMS — Reviews — Individual Reviews (Admin)
-      // ══════════════════════════════════════════════════════════════════
       "/cms/review/{sectionId}/create-review": {
         post: {
           tags: ["13 — CMS — Reviews"],
@@ -3566,7 +3576,13 @@ Error responses:
               "multipart/form-data": {
                 schema: {
                   type: "object",
-                  required: ["name", "position", "reviewDate", "review", "ratingCount"],
+                  required: [
+                    "name",
+                    "position",
+                    "reviewDate",
+                    "review",
+                    "ratingCount",
+                  ],
                   properties: {
                     name: { type: "string", description: "Reviewer name" },
                     position: {
@@ -3708,6 +3724,263 @@ Error responses:
           responses: {
             200: { description: "Review deleted successfully" },
             404: { description: "Review not found" },
+          },
+        },
+      },
+      "/listings/gt-all-listings": {
+        get: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Get all listings (Public)",
+          description:
+            "Returns a paginated list of all listings with optional search and filtering by service.",
+          parameters: [
+            {
+              name: "page",
+              in: "query",
+              schema: { type: "integer", default: 1 },
+              description: "Page number",
+            },
+            {
+              name: "limit",
+              in: "query",
+              schema: { type: "integer", default: 10, maximum: 50 },
+              description: "Items per page",
+            },
+            {
+              name: "search",
+              in: "query",
+              schema: { type: "string" },
+              description: "Search keyword (slug, description, address)",
+            },
+            {
+              name: "serviceId",
+              in: "query",
+              schema: { type: "string" },
+              description: "Filter by service ID",
+            },
+            {
+              name: "sortBy",
+              in: "query",
+              schema: { type: "string", default: "createdAt" },
+              description: "Sort field",
+            },
+            {
+              name: "sortOrder",
+              in: "query",
+              schema: {
+                type: "string",
+                enum: ["asc", "desc"],
+                default: "desc",
+              },
+            },
+          ],
+          responses: {
+            200: {
+              description: "Listings fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            type: "object",
+                            properties: {
+                              listings: {
+                                type: "array",
+                                items: { $ref: "#/components/schemas/Listing" },
+                              },
+                              pagination: {
+                                $ref: "#/components/schemas/Pagination",
+                              },
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      "/listings/listing/{slug}": {
+        get: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Get listing by slug (Public)",
+          description:
+            "Returns a single listing with full details including user info, service info, and reviews.",
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Listing slug",
+            },
+          ],
+          responses: {
+            200: {
+              description: "Listing fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/Listing" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Listing not found" },
+          },
+        },
+      },
+      "/listings/create-listing": {
+        post: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Create listing (Seller only)",
+          description:
+            "Creates a new listing with up to 10 images (multipart/form-data). Accessible by seller role.",
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "multipart/form-data": {
+                schema: {
+                  type: "object",
+                  required: [
+                    "title",
+                    "slug",
+                    "serviceId",
+                    "description",
+                    "address",
+                    "days",
+                    "weekend",
+                    "timeSlot",
+                    "basePrice",
+                    "hourlyPrice",
+                    "dailyPrice",
+                    "estimatedDuration",
+                  ],
+                  properties: {
+                    title: { type: "string", description: "Listing title" },
+                    slug: { type: "string", description: "URL-friendly slug" },
+                    serviceId: { type: "string", description: "Service ID" },
+                    description: {
+                      type: "string",
+                      description: "Detailed description",
+                    },
+                    address: { type: "string", description: "Service address" },
+                    days: {
+                      type: "string",
+                      description: "Comma-separated working days",
+                    },
+                    weekend: {
+                      type: "string",
+                      description: "Comma-separated weekend days",
+                    },
+                    timeSlot: {
+                      type: "string",
+                      description: "Comma-separated time slots",
+                    },
+                    basePrice: { type: "string", description: "Base price" },
+                    hourlyPrice: { type: "string", description: "Hourly rate" },
+                    dailyPrice: { type: "string", description: "Daily rate" },
+                    estimatedDuration: {
+                      type: "string",
+                      description: "Estimated duration",
+                    },
+                    images: {
+                      type: "array",
+                      items: { type: "string", format: "binary" },
+                      description:
+                        "Listing images (up to 10, jpg/png/webp, max 5MB each)",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            201: {
+              description: "Listing created successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { type: "object" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            401: { description: "Unauthorized" },
+            403: { description: "Forbidden - Seller access required" },
+          },
+        },
+      },
+      "/listings/my-listings": {
+        get: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Get my listings (Seller only)",
+          description: "Returns the authenticated seller's own listings.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "page",
+              in: "query",
+              schema: { type: "integer", default: 1 },
+            },
+            {
+              name: "limit",
+              in: "query",
+              schema: { type: "integer", default: 10, maximum: 50 },
+            },
+          ],
+          responses: {
+            200: {
+              description: "My listings fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            type: "object",
+                            properties: {
+                              listings: {
+                                type: "array",
+                                items: { $ref: "#/components/schemas/Listing" },
+                              },
+                              pagination: {
+                                $ref: "#/components/schemas/Pagination",
+                              },
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            401: { description: "Unauthorized" },
+            403: { description: "Forbidden - Seller access required" },
           },
         },
       },
