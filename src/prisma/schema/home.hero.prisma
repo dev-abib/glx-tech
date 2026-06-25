@@ -5,8 +5,9 @@ model Service {
   icon         String?
   iconPublicId String
 
-  heroId String?
-  hero   Hero?   @relation(fields: [heroId], references: [id])
+  heroId   String?
+  hero     Hero?     @relation(fields: [heroId], references: [id])
+  listings Listing[]
 }
 
 model Hero {

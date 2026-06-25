@@ -1,0 +1,37 @@
+model Media {
+  id            String  @id @default(uuid())
+  mediaLink     String
+  mediaPublicId String
+  listingId     String
+  listing       Listing @relation(fields: [listingId], references: [id])
+}
+
+model UserReview {
+  id        String  @id() @default(uuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+  rating    Float
+  review    String
+}
+
+model Listing {
+  id                String       @id @default(uuid())
+  userId            String
+  user              User         @relation(fields: [userId], references: [id])
+  title             String
+  serviceId         String
+  service           Service      @relation(fields: [serviceId], references: [id])
+  description       String
+  address           String
+  media             Media[]
+  days              String[]
+  weekend           String[]
+  timeSlot          String[]
+  basePrice         String
+  hourlyPrice       String
+  dailyPrice        String
+  estimatedDuration String
+  userReview        UserReview[]
+}
