@@ -25,6 +25,16 @@ async function seedListings(): Promise<void> {
         name: "Bob Smith",
         password: "12345678",
       },
+      {
+        email: "seller3@demo.com",
+        name: "Carol Williams",
+        password: "12345678",
+      },
+      {
+        email: "seller4@demo.com",
+        name: "David Chen",
+        password: "12345678",
+      },
     ];
 
     const createdSellers: Array<{ id: string; name: string }> = [];
@@ -57,6 +67,8 @@ async function seedListings(): Promise<void> {
       { email: "reviewer1@demo.com", name: "Charlie Brown" },
       { email: "reviewer2@demo.com", name: "Diana Prince" },
       { email: "reviewer3@demo.com", name: "Eve Adams" },
+      { email: "reviewer4@demo.com", name: "Frank Miller" },
+      { email: "reviewer5@demo.com", name: "Grace Lee" },
     ];
 
     const createdUsers: Array<{ id: string; name: string }> = [];
@@ -83,24 +95,50 @@ async function seedListings(): Promise<void> {
       createdUsers.push({ id: user.id, name: user.name });
     }
 
-    // ── 3. Get or create a service ────────────────────────────────────
+    // ── 3. Get or create services ────────────────────────────────────
 
-    let service = await prisma.service.findFirst();
+    const serviceData = [
+      {
+        name: "Web Development",
+        description:
+          "Professional web development services including frontend, backend, and full-stack solutions.",
+      },
+      {
+        name: "Graphic Design",
+        description:
+          "Creative graphic design services including logos, branding, marketing materials, and illustrations.",
+      },
+      {
+        name: "Data Science",
+        description:
+          "Data analytics, machine learning, and AI consulting services for data-driven decision making.",
+      },
+    ];
 
-    if (!service) {
-      service = await prisma.service.create({
-        data: {
-          name: "Web Development",
-          description:
-            "Professional web development services including frontend, backend, and full-stack solutions.",
-          iconPublicId: "",
-          heroId: null,
-        },
+    const createdServices: Array<{ id: string; name: string }> = [];
+    for (const sd of serviceData) {
+      let svc = await prisma.service.findFirst({
+        where: { name: sd.name },
       });
-      console.log(`  ✓ Created demo service: ${service.name}`);
-    } else {
-      console.log(`  ○ Using existing service: ${service.name}`);
+      if (!svc) {
+        svc = await prisma.service.create({
+          data: {
+            name: sd.name,
+            description: sd.description,
+            iconPublicId: "",
+            heroId: null,
+          },
+        });
+        console.log(`  ✓ Created service: ${svc.name}`);
+      } else {
+        console.log(`  ○ Using existing service: ${svc.name}`);
+      }
+      createdServices.push({ id: svc.id, name: svc.name });
     }
+
+    // Helper to pick a service by index (cyclically)
+    const getServiceId = (idx: number) =>
+      createdServices[idx % createdServices.length].id;
 
     // ── 4. Seed demo listings ─────────────────────────────────────────
 
@@ -195,6 +233,98 @@ async function seedListings(): Promise<void> {
         dailyPrice: "800",
         estimatedDuration: "1-2 weeks",
       },
+      // ── Seller 2 (Carol) — Graphic Design listings ──
+      {
+        sellerIdx: 2,
+        title: "Logo & Brand Identity Design",
+        slug: "logo-brand-identity-design",
+        description:
+          "Custom logo design and complete brand identity packages including color palettes, typography, and brand guidelines.",
+        address: "789 Design Boulevard, Austin, TX",
+        days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        weekend: [],
+        timeSlot: ["09:00", "10:00", "11:00", "14:00", "15:00"],
+        basePrice: "600",
+        hourlyPrice: "45",
+        dailyPrice: "300",
+        estimatedDuration: "1-2 weeks",
+      },
+      {
+        sellerIdx: 2,
+        title: "Social Media Graphics Pack",
+        slug: "social-media-graphics-pack",
+        description:
+          "Eye-catching social media graphics for Instagram, Facebook, LinkedIn, and Twitter. Templates included for consistent branding.",
+        address: "789 Design Boulevard, Austin, TX",
+        days: ["Monday", "Wednesday", "Friday"],
+        weekend: ["Saturday"],
+        timeSlot: ["10:00", "11:00", "13:00", "14:00"],
+        basePrice: "350",
+        hourlyPrice: "35",
+        dailyPrice: "200",
+        estimatedDuration: "3-5 days",
+      },
+      {
+        sellerIdx: 2,
+        title: "Print & Marketing Materials",
+        slug: "print-marketing-materials",
+        description:
+          "Professional print design for brochures, flyers, business cards, banners, and trade show displays.",
+        address: "789 Design Boulevard, Austin, TX",
+        days: ["Monday", "Tuesday", "Thursday", "Friday"],
+        weekend: [],
+        timeSlot: ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"],
+        basePrice: "500",
+        hourlyPrice: "40",
+        dailyPrice: "250",
+        estimatedDuration: "1-2 weeks",
+      },
+      // ── Seller 3 (David) — Data Science listings ──
+      {
+        sellerIdx: 3,
+        title: "Data Analytics & Dashboard Setup",
+        slug: "data-analytics-dashboard-setup",
+        description:
+          "End-to-end data analytics setup including data pipeline construction, cleaning, analysis, and interactive dashboards.",
+        address: "321 Data Drive, San Francisco, CA",
+        days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        weekend: ["Saturday"],
+        timeSlot: ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00"],
+        basePrice: "2800",
+        hourlyPrice: "95",
+        dailyPrice: "650",
+        estimatedDuration: "3-5 weeks",
+      },
+      {
+        sellerIdx: 3,
+        title: "Machine Learning Model Development",
+        slug: "machine-learning-model-development",
+        description:
+          "Custom ML model development for classification, regression, NLP, and computer vision tasks. Includes training, evaluation, and deployment.",
+        address: "321 Data Drive, San Francisco, CA",
+        days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        weekend: [],
+        timeSlot: ["09:00", "10:00", "11:00", "14:00", "15:00"],
+        basePrice: "4500",
+        hourlyPrice: "130",
+        dailyPrice: "900",
+        estimatedDuration: "4-8 weeks",
+      },
+      {
+        sellerIdx: 3,
+        title: "Business Intelligence Consulting",
+        slug: "business-intelligence-consulting",
+        description:
+          "Strategic BI consulting to help your organization leverage data for better decision-making. Includes KPI definition and reporting.",
+        address: "321 Data Drive, San Francisco, CA",
+        days: ["Monday", "Wednesday", "Friday"],
+        weekend: [],
+        timeSlot: ["10:00", "11:00", "14:00", "15:00"],
+        basePrice: "1800",
+        hourlyPrice: "80",
+        dailyPrice: "550",
+        estimatedDuration: "2-3 weeks",
+      },
     ];
 
     const createdListings: Array<{
@@ -203,7 +333,7 @@ async function seedListings(): Promise<void> {
       slug: string;
     }> = [];
 
-    for (const listing of listingData) {
+    for (const [i, listing] of listingData.entries()) {
       const exists = await prisma.listing.findUnique({
         where: { slug: listing.slug },
       });
@@ -225,7 +355,7 @@ async function seedListings(): Promise<void> {
           userId: seller.id,
           title: listing.title,
           slug: listing.slug,
-          serviceId: service.id,
+          serviceId: getServiceId(i),
           description: listing.description,
           address: listing.address,
           media: [],
@@ -252,6 +382,7 @@ async function seedListings(): Promise<void> {
     // ── 5. Seed user reviews ──────────────────────────────────────────
 
     const reviewData = [
+      // ── Original reviews ──
       {
         listingIdx: 0,
         userIdx: 0,
@@ -307,6 +438,200 @@ async function seedListings(): Promise<void> {
         rating: 4,
         review:
           "Comprehensive security audit. Found several vulnerabilities we weren't aware of and provided clear remediation steps.",
+      },
+      // ── New reviews: lower ratings for realism ──
+      {
+        listingIdx: 1,
+        userIdx: 3,
+        rating: 3,
+        review:
+          "The app works well but the development took longer than promised. Communication could have been better during the process.",
+      },
+      {
+        listingIdx: 2,
+        userIdx: 4,
+        rating: 2.5,
+        review:
+          "The UI/UX consultation was decent but the deliverables felt generic. Expected more tailored recommendations for our specific industry.",
+      },
+      {
+        listingIdx: 4,
+        userIdx: 3,
+        rating: 2,
+        review:
+          "DevOps setup had several issues post-deployment. The automation scripts broke twice in the first week. Had to bring in another team to fix things.",
+      },
+      // ── New reviews: Graphic Design listings ──
+      {
+        listingIdx: 6,
+        userIdx: 0,
+        rating: 5,
+        review:
+          "Incredible logo design! Carol really understood our vision and delivered something beyond what we imagined. The brand guidelines were thorough.",
+      },
+      {
+        listingIdx: 6,
+        userIdx: 4,
+        rating: 4,
+        review:
+          "Great brand identity package. The color palette and typography choices were spot-on. Would have liked more iterations on the logo.",
+      },
+      {
+        listingIdx: 7,
+        userIdx: 1,
+        rating: 3.5,
+        review:
+          "Social media graphics look good overall. Some templates needed minor adjustments but customer service was responsive.",
+      },
+      {
+        listingIdx: 8,
+        userIdx: 2,
+        rating: 4,
+        review:
+          "Professional print materials delivered on time. The business cards and brochures look fantastic. Great attention to detail.",
+      },
+      {
+        listingIdx: 8,
+        userIdx: 3,
+        rating: 1.5,
+        review:
+          "Disappointed with the print work. Colors came out different from what was shown in the proof. Had to get them reprinted elsewhere.",
+      },
+      // ── New reviews: Data Science listings ──
+      {
+        listingIdx: 9,
+        userIdx: 0,
+        rating: 5,
+        review:
+          "The dashboard transformed how we view our business data. David set up everything from data pipelines to beautiful visualizations. Outstanding work!",
+      },
+      {
+        listingIdx: 9,
+        userIdx: 2,
+        rating: 4.5,
+        review:
+          "Excellent analytics setup. The dashboards are intuitive and insightful. Slight delay in delivery but the quality made up for it.",
+      },
+      {
+        listingIdx: 10,
+        userIdx: 1,
+        rating: 4,
+        review:
+          "The ML model performs well in production. Accuracy exceeded our benchmarks. Documentation was clear and deployment was smooth.",
+      },
+      {
+        listingIdx: 10,
+        userIdx: 4,
+        rating: 3,
+        review:
+          "Model works but the training pipeline was complex to understand. Could have benefited from better documentation and simpler architecture.",
+      },
+      {
+        listingIdx: 11,
+        userIdx: 3,
+        rating: 5,
+        review:
+          "BI consulting was eye-opening. Helped us identify key metrics we weren't tracking. The reporting setup has already paid for itself.",
+      },
+      {
+        listingIdx: 11,
+        userIdx: 0,
+        rating: 4,
+        review:
+          "Solid BI consulting engagement. Good strategic recommendations and clean report designs. Would work with David again.",
+      },
+      // ── Extra reviews for listings with only 1 review ──
+      {
+        listingIdx: 5,
+        userIdx: 2,
+        rating: 4.5,
+        review:
+          "Security audit was very thorough! The team found issues we overlooked and provided a detailed remediation roadmap. Worth every penny.",
+      },
+      {
+        listingIdx: 5,
+        userIdx: 4,
+        rating: 3.5,
+        review:
+          "Good security assessment overall. The report was comprehensive but took longer to deliver than initially estimated.",
+      },
+      {
+        listingIdx: 7,
+        userIdx: 0,
+        rating: 4,
+        review:
+          "Social media templates saved us so much time! Consistent branding across all platforms now. Would recommend for small businesses.",
+      },
+      {
+        listingIdx: 7,
+        userIdx: 2,
+        rating: 3,
+        review:
+          "Decent graphics pack but the templates needed some tweaking for our brand colors. Good starting point though.",
+      },
+      {
+        listingIdx: 7,
+        userIdx: 4,
+        rating: 4.5,
+        review:
+          "Love the social media designs! Our engagement went up significantly after using these templates. Carol has a great eye for design.",
+      },
+      // ── Extra reviews for more diversity ──
+      {
+        listingIdx: 0,
+        userIdx: 3,
+        rating: 4,
+        review:
+          "Solid web development work. The site performs well and the code quality is excellent. Minor delays in the review phase but overall great.",
+      },
+      {
+        listingIdx: 0,
+        userIdx: 4,
+        rating: 5,
+        review:
+          "Alice and her team are fantastic! They built our entire SaaS platform from scratch. Modern tech stack, clean code, and great UI.",
+      },
+      {
+        listingIdx: 3,
+        userIdx: 0,
+        rating: 4.5,
+        review:
+          "Cloud migration was handled professionally. Minimal downtime and great documentation. Bob really knows his AWS stuff.",
+      },
+      {
+        listingIdx: 3,
+        userIdx: 3,
+        rating: 5,
+        review:
+          "Incredible cloud architecture setup! Our infrastructure costs dropped by 40% after the migration. Absolutely recommend Bob's services.",
+      },
+      {
+        listingIdx: 6,
+        userIdx: 1,
+        rating: 4.5,
+        review:
+          "Carol's logo design completely transformed our brand. We've received so many compliments. The brand guidelines made implementation easy.",
+      },
+      {
+        listingIdx: 6,
+        userIdx: 2,
+        rating: 5,
+        review:
+          "Best branding investment we've made! The complete identity package was worth every dollar. Professional, creative, and timely delivery.",
+      },
+      {
+        listingIdx: 9,
+        userIdx: 1,
+        rating: 4,
+        review:
+          "Data dashboards are clean and insightful. David helped us identify key metrics we weren't tracking before. Highly skilled analyst.",
+      },
+      {
+        listingIdx: 9,
+        userIdx: 4,
+        rating: 5,
+        review:
+          "Game-changing analytics setup! The real-time dashboards transformed how our management team makes decisions. Outstanding work!",
       },
     ];
 

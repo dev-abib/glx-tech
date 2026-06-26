@@ -2,6 +2,9 @@ import { Request, RequestHandler, Response } from "express";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { ApiResponse } from "../../utils/api-response.js";
 import { AdminService } from "./admin.service.js";
+import { ListingService } from "../listing/listing.service.js";
+
+const listingService = new ListingService();
 import type {
   AdminLoginInput,
   CreateAdminInput,
@@ -266,3 +269,78 @@ export const adminUpdateAdmin: RequestHandler<
     .status(200)
     .json(new ApiResponse(200, "Admin updated successfully", admin));
 });
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADMIN LISTING & REVIEW VIEWS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Get all listings (admin view only)
+export const adminGetAllListings: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await listingService.getAllListings({
+      page: Number(req.query.page) || 1,
+      limit: Number(req.query.limit) || 10,
+      search: req.query.search as string | undefined,
+      serviceId: req.query.serviceId as string | undefined,
+      sortBy: (req.query.sortBy as string) || "createdAt",
+      sortOrder: (req.query.sortOrder as "asc" | "desc") || "desc",
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Listings fetched successfully", result));
+  }
+);
+
+// Get listing by slug (admin view only)
+export const adminGetListingBySlug: RequestHandler<{ slug: string }> = asyncHandler(
+  async (req: Request, res: Response) => {
+    const slug = req.params.slug as string;
+    const listing = await listingService.getListingBySlug(slug);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Listing fetched successfully", listing));
+  }
+);
+
+// Get reviews for a listing (admin view only)
+export const adminGetListingReviews: RequestHandler<
+  { listingId: string }
+> = asyncHandler(async (req: Request, res: Response) => {
+  const listingId = req.params.listingId as string;
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 10;
+
+  const result = await listingService.getListingReviews(listingId, page, limit);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Reviews fetched successfully", result));
+});
+
+// Get dashboard trends (admin only)
+export const adminGetDashboardTrends: RequestHandler = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const result = await adminService.getDashboardTrends();
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Dashboard trends fetched successfully", result));
+  }
+);
+
+// Get all reviews across all listings (admin view only)
+export const adminGetAllReviews: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const search = req.query.search as string | undefined;
+
+    const result = await listingService.getAllUserReviews(page, limit, search);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Reviews fetched successfully", result));
+  }
+);

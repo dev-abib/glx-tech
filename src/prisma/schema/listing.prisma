@@ -1,11 +1,13 @@
 model UserReview {
-  id        String  @id() @default(uuid())
+  id        String   @id() @default(uuid())
   userId    String
-  user      User    @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
   listingId String
-  listing   Listing @relation(fields: [listingId], references: [id])
+  listing   Listing  @relation(fields: [listingId], references: [id])
   rating    Float
   review    String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 }
 
 model Listing {
@@ -26,5 +28,7 @@ model Listing {
   hourlyPrice       String
   dailyPrice        String
   estimatedDuration String
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
   userReview        UserReview[]
 }

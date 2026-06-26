@@ -15,6 +15,11 @@ import {
   adminUpdateAdmin,
   adminGetUserById,
   adminRefreshToken,
+  adminGetAllListings,
+  adminGetListingBySlug,
+  adminGetListingReviews,
+  adminGetAllReviews,
+  adminGetDashboardTrends,
 } from "./admin.controller.js";
 import {
   adminLoginSchema,
@@ -89,5 +94,31 @@ router
 router
   .route("/delete-user/:id")
   .delete(authenticate({ type: "admin" }), adminDeleteUser);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LISTING & REVIEW VIEWS (admin read-only)
+// ═══════════════════════════════════════════════════════════════════════════
+
+router
+  .route("/listings")
+  .get(authenticate({ type: "admin" }), adminGetAllListings);
+
+router
+  .route("/listings/listing/:slug")
+  .get(authenticate({ type: "admin" }), adminGetListingBySlug);
+
+router
+  .route("/listings/:listingId/reviews")
+  .get(authenticate({ type: "admin" }), adminGetListingReviews);
+
+router
+  .route("/reviews")
+  .get(authenticate({ type: "admin" }), adminGetAllReviews);
+
+// ── Dashboard Trends ──────────────────────────────────────────────────────
+
+router
+  .route("/dashboard-trends")
+  .get(authenticate({ type: "admin" }), adminGetDashboardTrends);
 
 export default router;

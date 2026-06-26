@@ -475,4 +475,125 @@ export class AdminService {
       updatedAt: updated.updatedAt,
     };
   }
+
+  // ── Dashboard Trends (month-over-month growth) ────────────────────────
+
+  async getDashboardTrends() {
+    const now = new Date();
+
+    // Start of current month
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Start of previous month
+    const previousMonthStart = new Date(
+      now.getFullYear(),
+      now.getMonth() - 1,
+      1
+    );
+
+    // Helper to get count in a date range
+    const countInRange = async (
+      model: "user" | "listing" | "userReview",
+      start: Date,
+      end: Date
+    ) => {
+      const where: Record<string, unknown> = {
+        createdAt: { gte: start, lt: end },
+      };
+
+      if (model === "user") {
+        return prisma.user.count({ where });
+      }
+      if (model === "listing") {
+        return prisma.listing.count({ where });
+      }
+      return prisma.userReview.count({ where });
+    };
+
+    // Count admin users (role-based, not createdAt-based for total)
+    const countAdminInRange = async (start: Date, end: Date) => {
+      return prisma.user.count({
+        where: {
+          role: { in: ["admin", "super_admin"] },
+          createdAt: { gte: start, lt: end },
+        },
+      });
+    };
+
+    const [
+      usersThisMonth,
+      usersLastMonth,
+      adminsThisMonth,
+      adminsLastMonth,
+      listingsThisMonth,
+      listingsLastMonth,
+      reviewsThisMonth,
+      reviewsLastMonth,
+    ] = await Promise.all([
+      countInRange("user", currentMonthStart, now),
+      countInRange("user", previousMonthStart, currentMonthStart),
+      countAdminInRange(currentMonthStart, now),
+      countAdminInRange(previousMonthStart, currentMonthStart),
+      countInRange("listing", currentMonthStart, now),
+      countInRange("listing", previousMonthStart, currentMonthStart),
+      countInRange("userReview", currentMonthStart, now),
+      countInRange("userReview", previousMonthStart, currentMonthStart),
+    ]);
+
+    // Also get total counts
+    const [
+      totalUsers,
+      totalAdmins,
+      activeUsers,
+      verifiedUsers,
+      totalListings,
+      totalReviews,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.user.count({ where: { role: { in: ["admin", "super_admin"] } } }),
+      prisma.user.count({ where: { isActive: true } }),
+      prisma.user.count({ where: { isEmailVerified: true } }),
+      prisma.listing.count(),
+      prisma.userReview.count(),
+    ]);
+
+    const calcTrend = (current: number, previous: number) => {
+      if (previous === 0) {
+        return current > 0 ? "+100%" : "0%";
+      }
+      const change = ((current - previous) / previous) * 100;
+      const sign = change >= 0 ? "+" : "";
+      return `${sign}${change.toFixed(0)}%`;
+    };
+
+    return {
+      trends: {
+        users: {
+          value: calcTrend(usersThisMonth, usersLastMonth),
+          positive: usersThisMonth >= usersLastMonth,
+        },
+        admins: {
+          value: calcTrend(adminsThisMonth, adminsLastMonth),
+          positive: adminsThisMonth >= adminsLastMonth,
+        },
+
+        listings: {
+          value: calcTrend(listingsThisMonth, listingsLastMonth),
+          positive: listingsThisMonth >= listingsLastMonth,
+        },
+        reviews: {
+          value: calcTrend(reviewsThisMonth, reviewsLastMonth),
+          positive: reviewsThisMonth >= reviewsLastMonth,
+        },
+      },
+      totals: {
+        totalUsers,
+        totalAdmins,
+        activeUsers,
+        verifiedUsers,
+        totalListings,
+        totalReviews,
+      },
+    };
+  }
 }

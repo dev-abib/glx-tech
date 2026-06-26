@@ -470,6 +470,59 @@ export class ListingService {
     return updated;
   }
 
+  // get all user reviews across all listings (admin only)
+  async getAllUserReviews(
+    page: number = 1,
+    limit: number = 10,
+    search?: string
+  ) {
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {};
+    if (search) {
+      where.OR = [
+        { review: { contains: search, mode: "insensitive" } },
+        { user: { name: { contains: search, mode: "insensitive" } } },
+      ];
+    }
+
+    const [reviews, total] = await Promise.all([
+      prisma.userReview.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { id: "desc" },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              avatar: true,
+            },
+          },
+          listing: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+            },
+          },
+        },
+      }),
+      prisma.userReview.count({ where }),
+    ]);
+
+    return {
+      reviews,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   // delete user review
   async deleteUserReview(reviewId: string, userId: string) {
     const review = await prisma.userReview.findUnique({
