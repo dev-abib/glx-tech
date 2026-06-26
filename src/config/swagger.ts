@@ -3984,12 +3984,6 @@ Error responses:
           },
         },
       },
-    },
-  },
-  
-      // ═══════════════════════════════════════════════════════════════
-      // LISTINGS — Seller (Update & Delete)
-      // ═══════════════════════════════════════════════════════════════
 
       "/listings/update-listing/{id}": {
         put: {
@@ -4077,7 +4071,6 @@ Error responses:
           },
         },
       },
-
       "/listings/delete-listing/{id}": {
         delete: {
           tags: ["14 — Listings & Reviews"],
@@ -4121,10 +4114,7 @@ Error responses:
           },
         },
       },
-
-// ═══════════════════════════════════════════════════════════════
       // USER REVIEWS — Public
-      // ═══════════════════════════════════════════════════════════════
 
       "/listings/listing/{listingId}/reviews": {
         get: {
@@ -4188,7 +4178,6 @@ Error responses:
           },
         },
       },
-
       "/listings/review/{reviewId}": {
         get: {
           tags: ["14 — Listings & Reviews"],
@@ -4226,10 +4215,7 @@ Error responses:
           },
         },
       },
-
-      // ═══════════════════════════════════════════════════════════════
       // USER REVIEWS — Authenticated User
-      // ═══════════════════════════════════════════════════════════════
 
       "/listings/listing/{listingId}/create-review": {
         post: {
@@ -4281,7 +4267,6 @@ Error responses:
           },
         },
       },
-
       "/listings/update-review/{reviewId}": {
         put: {
           tags: ["14 — Listings & Reviews"],
@@ -4333,7 +4318,6 @@ Error responses:
           },
         },
       },
-
       "/listings/delete-review/{reviewId}": {
         delete: {
           tags: ["14 — Listings & Reviews"],
@@ -4377,7 +4361,9 @@ Error responses:
           },
         },
       },
-apis: [],
+    },
+  },
+  apis: [],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
