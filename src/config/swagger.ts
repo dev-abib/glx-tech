@@ -3986,7 +3986,398 @@ Error responses:
       },
     },
   },
-  apis: [],
+  
+      // ═══════════════════════════════════════════════════════════════
+      // LISTINGS — Seller (Update & Delete)
+      // ═══════════════════════════════════════════════════════════════
+
+      "/listings/update-listing/{id}": {
+        put: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Update listing (Seller only)",
+          description:
+            "Updates an existing listing by ID. Supports up to 10 new image uploads (multipart/form-data). Only the listing owner can update it.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Listing ID",
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "multipart/form-data": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    title: { type: "string", description: "Listing title" },
+                    slug: { type: "string", description: "URL-friendly slug" },
+                    serviceId: { type: "string", description: "Service ID" },
+                    description: {
+                      type: "string",
+                      description: "Detailed description",
+                    },
+                    address: { type: "string", description: "Service address" },
+                    days: {
+                      type: "string",
+                      description: "Comma-separated working days",
+                    },
+                    weekend: {
+                      type: "string",
+                      description: "Comma-separated weekend days",
+                    },
+                    timeSlot: {
+                      type: "string",
+                      description: "Comma-separated time slots",
+                    },
+                    basePrice: { type: "string", description: "Base price" },
+                    hourlyPrice: { type: "string", description: "Hourly rate" },
+                    dailyPrice: { type: "string", description: "Daily rate" },
+                    estimatedDuration: {
+                      type: "string",
+                      description: "Estimated duration",
+                    },
+                    images: {
+                      type: "array",
+                      items: { type: "string", format: "binary" },
+                      description:
+                        "New listing images (up to 10, replaces old ones)",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Listing updated successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { type: "object" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            400: { description: "Validation error" },
+            401: { description: "Unauthorized" },
+            403: { description: "Forbidden - Not the listing owner" },
+            404: { description: "Listing not found" },
+          },
+        },
+      },
+
+      "/listings/delete-listing/{id}": {
+        delete: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Delete listing (Seller only)",
+          description:
+            "Deletes a listing by ID. Only the listing owner can delete it.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "id",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Listing ID",
+            },
+          ],
+          responses: {
+            200: {
+              description: "Listing deleted successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            type: "object",
+                            nullable: true,
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            401: { description: "Unauthorized" },
+            403: { description: "Forbidden - Not the listing owner" },
+            404: { description: "Listing not found" },
+          },
+        },
+      },
+
+// ═══════════════════════════════════════════════════════════════
+      // USER REVIEWS — Public
+      // ═══════════════════════════════════════════════════════════════
+
+      "/listings/listing/{listingId}/reviews": {
+        get: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Get listing reviews (Public)",
+          description:
+            "Returns a paginated list of user reviews for a specific listing.",
+          parameters: [
+            {
+              name: "listingId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Listing ID",
+            },
+            {
+              name: "page",
+              in: "query",
+              schema: { type: "integer", default: 1 },
+              description: "Page number",
+            },
+            {
+              name: "limit",
+              in: "query",
+              schema: { type: "integer", default: 10, maximum: 50 },
+              description: "Items per page",
+            },
+          ],
+          responses: {
+            200: {
+              description: "Reviews fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            type: "object",
+                            properties: {
+                              reviews: {
+                                type: "array",
+                                items: {
+                                  $ref: "#/components/schemas/UserReview",
+                                },
+                              },
+                              pagination: {
+                                $ref: "#/components/schemas/Pagination",
+                              },
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Listing not found" },
+          },
+        },
+      },
+
+      "/listings/review/{reviewId}": {
+        get: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Get user review by ID (Public)",
+          description:
+            "Returns a single user review by its ID.",
+          parameters: [
+            {
+              name: "reviewId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Review ID",
+            },
+          ],
+          responses: {
+            200: {
+              description: "Review fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/UserReview" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Review not found" },
+          },
+        },
+      },
+
+      // ═══════════════════════════════════════════════════════════════
+      // USER REVIEWS — Authenticated User
+      // ═══════════════════════════════════════════════════════════════
+
+      "/listings/listing/{listingId}/create-review": {
+        post: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Create a user review (Authenticated user)",
+          description:
+            "Creates a new review for a listing. Requires a valid user authentication token.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "listingId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Listing ID",
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/CreateUserReviewInput",
+                },
+              },
+            },
+          },
+          responses: {
+            201: {
+              description: "Review created successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/UserReview" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            400: { description: "Validation error" },
+            401: { description: "Unauthorized" },
+            404: { description: "Listing not found" },
+          },
+        },
+      },
+
+      "/listings/update-review/{reviewId}": {
+        put: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Update a user review (Authenticated user)",
+          description:
+            "Updates an existing review. Only the review owner can update it.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "reviewId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Review ID",
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UpdateUserReviewInput",
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "Review updated successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: { $ref: "#/components/schemas/UserReview" },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            400: { description: "Validation error" },
+            401: { description: "Unauthorized" },
+            403: { description: "Forbidden - Not the review owner" },
+            404: { description: "Review not found" },
+          },
+        },
+      },
+
+      "/listings/delete-review/{reviewId}": {
+        delete: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Delete a user review (Authenticated user)",
+          description:
+            "Deletes a review by ID. Only the review owner can delete it.",
+          security: [{ bearerAuth: [] }],
+          parameters: [
+            {
+              name: "reviewId",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Review ID",
+            },
+          ],
+          responses: {
+            200: {
+              description: "Review deleted successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            type: "object",
+                            nullable: true,
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            401: { description: "Unauthorized" },
+            403: { description: "Forbidden - Not the review owner" },
+            404: { description: "Review not found" },
+          },
+        },
+      },
+apis: [],
 };
 
 export const swaggerSpec = swaggerJsdoc(options);
