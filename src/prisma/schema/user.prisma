@@ -16,6 +16,26 @@ enum Plan {
   premium
 }
 
+enum Insurance {
+  yes
+  no
+  not_applicable
+}
+
+model SellerInfo {
+  id              String    @id @default(uuid())
+  storeName       String
+  servicesId      String[]
+  insuranceStatus Insurance
+  socialLInk      String
+  businessNumber  String
+  businessEmail   String
+  streetAddress   String
+  city            String
+  state           String
+  zipCode         String
+}
+
 model User {
   id              String       @id @default(uuid())
   name            String
@@ -43,6 +63,7 @@ model User {
   plan            Plan         @default(free)
   listings        Listing[]
   userReview      UserReview[]
+  isSeller        Boolean      @default(false)
 
   @@map("users")
 }
