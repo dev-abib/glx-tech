@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Listing" ALTER COLUMN "latitude" DROP DEFAULT,
+ALTER COLUMN "longitude" DROP DEFAULT;

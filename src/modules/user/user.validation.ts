@@ -13,7 +13,7 @@ export const createUserSchema = z
         "Password must include uppercase, lowercase, number, and special character"
       ),
     confirmPassword: z.string(),
-    phone: z.string().regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number"),
+    phone: z.string().regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number").optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

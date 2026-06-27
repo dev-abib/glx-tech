@@ -24,19 +24,12 @@ import { uploadMultiple } from "../../middlewares/file-validation.middleware.js"
 
 const router = express.Router();
 
-// ═══════════════════════════════════════════════════════════════════════════
-// LISTINGS — Public
-// ═══════════════════════════════════════════════════════════════════════════
-
 // Get all listings (public)
-router.route("/gt-all-listings").get(getAllListings);
+router.route("/get-all-listings").get(getAllListings);
 
 // Get listing by slug (public)
 router.route("/listing/:slug").get(getListingBySlug);
 
-// ═══════════════════════════════════════════════════════════════════════════
-// LISTINGS — Seller
-// ═══════════════════════════════════════════════════════════════════════════
 
 // Create listing (seller only)
 router

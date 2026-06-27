@@ -9,16 +9,14 @@ import type {
   CreateUserReviewInput,
   UpdateUserReviewInput,
 } from "./listing.validation.js";
+import { env } from "../../config/env.js";
+import axios from "axios";
 
 const cloudinary = new CloudinaryService();
 const prisma = getPrismaClient();
 const userRepo = new UserRepository();
 
 export class ListingService {
-  // ════════════════════════════════════════════════════════════════════════
-  // LISTINGS
-  // ════════════════════════════════════════════════════════════════════════
-
   // create listing service
   async createListing(
     data: CreateListingInput,
@@ -27,6 +25,52 @@ export class ListingService {
   ) {
     // checking if user exists
     await userRepo.findUser("id", userId, true);
+
+    const key = env.LOCATIONIQ_KEY;
+
+    const url = "https://us1.locationiq.com/v1/search";
+
+    const response = await axios
+      .get(url, {
+        params: {
+          key,
+          q: data.address,
+          format: "json",
+          limit: 1,
+          addressdetails: 1,
+          normalizecity: 1,
+        },
+        timeout: 10000,
+      })
+      .catch((error) => {
+        if (error.response) {
+          throw new ApiError(
+            error.response.status,
+            `${error.response.data.error} address`
+          );
+        } else if (error.request) {
+          throw new ApiError(
+            500,
+            "Network error or no response from the geocoding service."
+          );
+        } else {
+          throw new ApiError(
+            500,
+            error.message || "An unknown error occurred during geocoding."
+          );
+        }
+      });
+
+    if (!response?.data || response.data.length === 0) {
+      throw new ApiError(400, "Unable to geocode the provided address");
+    }
+
+    const lat = Number(response.data[0].lat);
+    const lng = Number(response.data[0].lon);
+
+    if (!lat || !lng) {
+      throw new ApiError(400, "Unable to geocode the provided address");
+    }
 
     const uploadedImages = [] as Array<{ url: string; publicId: string }>;
 
@@ -53,6 +97,9 @@ export class ListingService {
         hourlyPrice: data.hourlyPrice,
         dailyPrice: data.dailyPrice,
         estimatedDuration: data.estimatedDuration,
+        isAvailable: data.isAvailable,
+        latitude: lat,
+        longitude: lng,
         media: uploadedImages.map((image) => ({
           url: image.url,
           publicId: image.publicId,

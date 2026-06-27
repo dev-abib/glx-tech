@@ -34,6 +34,7 @@ export interface EnvConfig {
   readonly SITE_NAME: string;
   readonly SITE_URL: string;
   readonly APP_URL: string;
+  readonly LOCATIONIQ_KEY: string;
 }
 
 // ─── Critical env var validation ─────────────────────────────────────────
@@ -62,9 +63,21 @@ const criticalEnvVars: Array<{
   { key: "JWT_RESET_SECRET", label: "JWT_RESET_SECRET", group: "JWT" },
 
   // Mail
-  { key: "CLOUDINARY_CLOUD_NAME", label: "CLOUDINARY_CLOUD_NAME", group: "Cloudinary" },
-  { key: "CLOUDINARY_API_KEY", label: "CLOUDINARY_API_KEY", group: "Cloudinary" },
-  { key: "CLOUDINARY_API_SECRET", label: "CLOUDINARY_API_SECRET", group: "Cloudinary" },
+  {
+    key: "CLOUDINARY_CLOUD_NAME",
+    label: "CLOUDINARY_CLOUD_NAME",
+    group: "Cloudinary",
+  },
+  {
+    key: "CLOUDINARY_API_KEY",
+    label: "CLOUDINARY_API_KEY",
+    group: "Cloudinary",
+  },
+  {
+    key: "CLOUDINARY_API_SECRET",
+    label: "CLOUDINARY_API_SECRET",
+    group: "Cloudinary",
+  },
 
   { key: "MAIL_HOST", label: "MAIL_HOST", group: "Mail" },
   { key: "MAIL_PORT", label: "MAIL_PORT", group: "Mail" },
@@ -75,6 +88,13 @@ const criticalEnvVars: Array<{
     key: "MAIL_FROM_ADDRESS",
     label: "MAIL_FROM_ADDRESS",
     group: "Mail",
+  },
+
+  // location iq key
+  {
+    key: "LOCATIONIQ_KEY",
+    label: "LOCATIONIQ_KEY",
+    group: "location",
   },
 ];
 
@@ -127,7 +147,8 @@ export const env = {
   JWT_ADMIN_SECRET: process.env.JWT_ADMIN_SECRET || "",
   JWT_ADMIN_EXPIRES_IN: process.env.JWT_ADMIN_EXPIRES_IN || "15m",
   JWT_ADMIN_REFRESH_SECRET: process.env.JWT_ADMIN_REFRESH_SECRET || "",
-  JWT_ADMIN_REFRESH_EXPIRES_IN: process.env.JWT_ADMIN_REFRESH_EXPIRES_IN || "7d",
+  JWT_ADMIN_REFRESH_EXPIRES_IN:
+    process.env.JWT_ADMIN_REFRESH_EXPIRES_IN || "7d",
 
   // JWT — Password reset
   JWT_RESET_SECRET: process.env.JWT_RESET_SECRET || "",
@@ -151,6 +172,7 @@ export const env = {
   SITE_NAME: process.env.SITE_NAME || "Verep",
   SITE_URL: process.env.SITE_URL || "#",
   APP_URL: process.env.APP_URL || "#",
+  LOCATIONIQ_KEY: process.env.LOCATIONIQ_KEY || "#",
 } as const satisfies EnvConfig;
 
 // Validate at startup

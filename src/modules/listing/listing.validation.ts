@@ -45,6 +45,7 @@ export const CreateListingSchema = z.looseObject({
   dailyPrice: z.string(),
   estimatedDuration: z.string(),
   genericData: GenericDataSchema,
+  isAvailable: z.boolean(),
 });
 
 export type CreateListingInput = z.infer<typeof CreateListingSchema>;

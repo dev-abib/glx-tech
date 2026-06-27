@@ -1100,6 +1100,9 @@ Error responses:
             hourlyPrice: { type: "string", example: "50" },
             dailyPrice: { type: "string", example: "200" },
             estimatedDuration: { type: "string", example: "2 weeks" },
+            latitude: { type: "number", example: 40.7128 },
+            longitude: { type: "number", example: -74.006 },
+            isAvailable: { type: "boolean", example: true },
             createdAt: { type: "string", format: "date-time" },
             updatedAt: { type: "string", format: "date-time" },
           },
@@ -1119,6 +1122,7 @@ Error responses:
             "hourlyPrice",
             "dailyPrice",
             "estimatedDuration",
+            "isAvailable",
           ],
           properties: {
             title: { type: "string", example: "Professional Web Development" },
@@ -1148,6 +1152,7 @@ Error responses:
             hourlyPrice: { type: "string", example: "50" },
             dailyPrice: { type: "string", example: "200" },
             estimatedDuration: { type: "string", example: "2 weeks" },
+            isAvailable: { type: "boolean", example: true },
           },
         },
         UpdateListingInput: {
@@ -1165,6 +1170,7 @@ Error responses:
             hourlyPrice: { type: "string", example: "60" },
             dailyPrice: { type: "string", example: "250" },
             estimatedDuration: { type: "string", example: "3 weeks" },
+            isAvailable: { type: "boolean", example: true },
           },
         },
         UserReview: {
@@ -3727,7 +3733,7 @@ Error responses:
           },
         },
       },
-      "/listings/gt-all-listings": {
+      "/listings/get-all-listings": {
         get: {
           tags: ["14 — Listings & Reviews"],
           summary: "Get all listings (Public)",
@@ -3814,7 +3820,7 @@ Error responses:
             "Returns a single listing with full details including user info, service info, and reviews.",
           parameters: [
             {
-              name: "id",
+              name: "slug",
               in: "path",
               required: true,
               schema: { type: "string" },
@@ -3869,6 +3875,7 @@ Error responses:
                     "hourlyPrice",
                     "dailyPrice",
                     "estimatedDuration",
+                    "isAvailable",
                   ],
                   properties: {
                     title: { type: "string", description: "Listing title" },
@@ -3897,6 +3904,10 @@ Error responses:
                     estimatedDuration: {
                       type: "string",
                       description: "Estimated duration",
+                    isAvailable: {
+                      type: "string",
+                      description: "Whether the listing is available (true/false)",
+                    },
                     },
                     images: {
                       type: "array",
@@ -4034,6 +4045,10 @@ Error responses:
                     estimatedDuration: {
                       type: "string",
                       description: "Estimated duration",
+                    isAvailable: {
+                      type: "string",
+                      description: "Whether the listing is available (true/false)",
+                    },
                     },
                     images: {
                       type: "array",
