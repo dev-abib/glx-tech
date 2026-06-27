@@ -27,6 +27,21 @@ const parseStringToArray = (val: unknown): unknown => {
   return val;
 };
 
+/**
+ * Preprocessor that accepts a string "true"/"false" or a boolean
+ * and normalises it to a boolean.
+ * This is needed because multer/multipart form-data sends all fields
+ * as strings, so booleans arrive as "true" or "false" from Swagger UI.
+ */
+const parseBoolean = (val: unknown): unknown => {
+  if (typeof val === "boolean") return val;
+  if (val === "true") return true;
+  if (val === "false") return false;
+  return val;
+};
+
+const BooleanField = () => z.preprocess(parseBoolean, z.boolean());
+
 const ArrayField = () => z.preprocess(parseStringToArray, z.array(z.string()));
 const ArrayFieldOptional = () =>
   z.preprocess(parseStringToArray, z.array(z.string()).optional());
@@ -45,7 +60,7 @@ export const CreateListingSchema = z.looseObject({
   dailyPrice: z.string(),
   estimatedDuration: z.string(),
   genericData: GenericDataSchema,
-  isAvailable: z.boolean(),
+  isAvailable: BooleanField(),
 });
 
 export type CreateListingInput = z.infer<typeof CreateListingSchema>;
@@ -68,14 +83,37 @@ export const UpdateListingSchema = z.looseObject({
 
 export type UpdateListingInput = z.infer<typeof UpdateListingSchema>;
 
-export const GetListingsQuerySchema = z.object({
-  page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(50).default(10),
-  search: z.string().optional(),
-  serviceId: z.string().optional(),
-  sortBy: z.string().default("createdAt"),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
-});
+export const GetListingsQuerySchema = z
+  .object({
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(50).default(10),
+    search: z.string().optional(),
+    serviceId: z.string().optional(),
+    serviceName: z.string().optional(),
+    address: z.string().optional(),
+    radius: z.coerce.number().positive().max(30).optional(),
+    minRating: z.coerce.number().min(1).max(5).optional(),
+    isAvailable: z
+      .preprocess((val) => {
+        if (typeof val === "boolean") return val;
+        if (val === "true") return true;
+        if (val === "false") return false;
+        return undefined;
+      }, z.boolean())
+      .optional(),
+    sortBy: z.string().default("createdAt"),
+    sortOrder: z.enum(["asc", "desc"]).default("desc"),
+  })
+  .refine((data) => {
+    if (data.radius !== undefined && !data.address) {
+      return false;
+    }
+    return true;
+  }, {
+    message:
+      "Radius requires an address. Please provide the 'address' query parameter when using 'radius'.",
+    path: ["radius"],
+  });
 
 export type GetListingsQueryInput = z.infer<typeof GetListingsQuerySchema>;
 

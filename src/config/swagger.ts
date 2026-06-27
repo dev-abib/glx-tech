@@ -1103,6 +1103,7 @@ Error responses:
             latitude: { type: "number", example: 40.7128 },
             longitude: { type: "number", example: -74.006 },
             isAvailable: { type: "boolean", example: true },
+            avgRating: { type: "number", example: 4.5, description: "Average user rating (0 if no reviews)" },
             createdAt: { type: "string", format: "date-time" },
             updatedAt: { type: "string", format: "date-time" },
           },
@@ -3738,7 +3739,7 @@ Error responses:
           tags: ["14 — Listings & Reviews"],
           summary: "Get all listings (Public)",
           description:
-            "Returns a paginated list of all listings with optional search and filtering by service.",
+            "Returns a paginated list of all listings with optional search, filtering by service, location-based proximity, minimum rating, and availability.",
           parameters: [
             {
               name: "page",
@@ -3762,7 +3763,41 @@ Error responses:
               name: "serviceId",
               in: "query",
               schema: { type: "string" },
-              description: "Filter by service ID",
+              description: "Filter by exact service ID",
+            },
+            {
+              name: "serviceName",
+              in: "query",
+              schema: { type: "string" },
+              description:
+                "Filter by service name (case-insensitive partial match)",
+            },
+            {
+              name: "address",
+              in: "query",
+              schema: { type: "string" },
+              description:
+                "Address for location-based filtering (required when using 'radius')",
+            },
+            {
+              name: "radius",
+              in: "query",
+              schema: { type: "number", minimum: 1, maximum: 30 },
+              description:
+                "Search radius in miles (5/10/15/20/30). Requires 'address' parameter.",
+            },
+            {
+              name: "minRating",
+              in: "query",
+              schema: { type: "number", minimum: 1, maximum: 5 },
+              description:
+                "Minimum average rating filter (listings with avg rating >= this value)",
+            },
+            {
+              name: "isAvailable",
+              in: "query",
+              schema: { type: "boolean" },
+              description: "Filter by availability (true/false)",
             },
             {
               name: "sortBy",
@@ -3812,6 +3847,10 @@ Error responses:
           },
         },
       },
+            400: {
+              description:
+                "Validation error (e.g., radius provided without address, or invalid parameter values)",
+            },
       "/listings/listing/{slug}": {
         get: {
           tags: ["14 — Listings & Reviews"],
@@ -3846,6 +3885,78 @@ Error responses:
               },
             },
             404: { description: "Listing not found" },
+          },
+        },
+      },
+      "/listings/listing/{slug}/related": {
+        get: {
+          tags: ["14 — Listings & Reviews"],
+          summary: "Get related listings by service type (Public)",
+          description:
+            "Returns a curated list of listings that share the same service type as the given listing slug. Excludes the source listing itself. Useful for showing 'More like this' sections.",
+          parameters: [
+            {
+              name: "slug",
+              in: "path",
+              required: true,
+              schema: { type: "string" },
+              description: "Slug of the source listing",
+            },
+            {
+              name: "page",
+              in: "query",
+              schema: { type: "integer", default: 1 },
+              description: "Page number",
+            },
+            {
+              name: "limit",
+              in: "query",
+              schema: { type: "integer", default: 6, maximum: 20 },
+              description: "Maximum number of related listings per page",
+            },
+          ],
+          responses: {
+            200: {
+              description: "Related listings fetched successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            type: "object",
+                            properties: {
+                              service: {
+                                type: "object",
+                                properties: {
+                                  id: { type: "string", example: "uuid" },
+                                  name: {
+                                    type: "string",
+                                    nullable: true,
+                                    example: "Web Development",
+                                  },
+                                },
+                              },
+                              listings: {
+                                type: "array",
+                                items: { $ref: "#/components/schemas/Listing" },
+                              },
+                              pagination: {
+                                $ref: "#/components/schemas/Pagination",
+                              },
+
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            404: { description: "Source listing not found" },
           },
         },
       },
@@ -3904,10 +4015,10 @@ Error responses:
                     estimatedDuration: {
                       type: "string",
                       description: "Estimated duration",
-                    isAvailable: {
-                      type: "string",
-                      description: "Whether the listing is available (true/false)",
                     },
+                    isAvailable: {
+                      type: "boolean",
+                      description: "Whether the listing is available (true/false)",
                     },
                     images: {
                       type: "array",
@@ -4045,10 +4156,10 @@ Error responses:
                     estimatedDuration: {
                       type: "string",
                       description: "Estimated duration",
-                    isAvailable: {
-                      type: "string",
-                      description: "Whether the listing is available (true/false)",
                     },
+                    isAvailable: {
+                      type: "boolean",
+                      description: "Whether the listing is available (true/false)",
                     },
                     images: {
                       type: "array",

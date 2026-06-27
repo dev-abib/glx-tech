@@ -15,6 +15,7 @@ import {
   deleteListing,
   createUserReview,
   getListingReviews,
+  getRelatedListings,
   getUserReview,
   updateUserReview,
   deleteUserReview,
@@ -29,6 +30,9 @@ router.route("/get-all-listings").get(getAllListings);
 
 // Get listing by slug (public)
 router.route("/listing/:slug").get(getListingBySlug);
+
+// Get related listings by same service type (public)
+router.route("/listing/:slug/related").get(getRelatedListings);
 
 
 // Create listing (seller only)

@@ -26,51 +26,7 @@ export class ListingService {
     // checking if user exists
     await userRepo.findUser("id", userId, true);
 
-    const key = env.LOCATIONIQ_KEY;
-
-    const url = "https://us1.locationiq.com/v1/search";
-
-    const response = await axios
-      .get(url, {
-        params: {
-          key,
-          q: data.address,
-          format: "json",
-          limit: 1,
-          addressdetails: 1,
-          normalizecity: 1,
-        },
-        timeout: 10000,
-      })
-      .catch((error) => {
-        if (error.response) {
-          throw new ApiError(
-            error.response.status,
-            `${error.response.data.error} address`
-          );
-        } else if (error.request) {
-          throw new ApiError(
-            500,
-            "Network error or no response from the geocoding service."
-          );
-        } else {
-          throw new ApiError(
-            500,
-            error.message || "An unknown error occurred during geocoding."
-          );
-        }
-      });
-
-    if (!response?.data || response.data.length === 0) {
-      throw new ApiError(400, "Unable to geocode the provided address");
-    }
-
-    const lat = Number(response.data[0].lat);
-    const lng = Number(response.data[0].lon);
-
-    if (!lat || !lng) {
-      throw new ApiError(400, "Unable to geocode the provided address");
-    }
+    const { lat, lng } = await this.geocodeAddress(data.address);
 
     const uploadedImages = [] as Array<{ url: string; publicId: string }>;
 
@@ -118,13 +74,107 @@ export class ListingService {
     };
   }
 
+  /**
+   * Calculate the great-circle distance between two points
+   * on the Earth using the Haversine formula.
+   * @returns distance in miles
+   */
+  private calculateDistanceInMiles(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number
+  ): number {
+    const R = 3959; // Earth's radius in miles
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) *
+        Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) *
+        Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  /**
+   * Geocode an address string to { lat, lng } using LocationIQ.
+   */
+  private async geocodeAddress(
+    address: string
+  ): Promise<{ lat: number; lng: number }> {
+    const key = env.LOCATIONIQ_KEY;
+    const url = "https://us1.locationiq.com/v1/search";
+
+    const response = await axios
+      .get(url, {
+        params: {
+          key,
+          q: address,
+          format: "json",
+          limit: 1,
+          addressdetails: 1,
+          normalizecity: 1,
+        },
+        timeout: 10000,
+      })
+      .catch((error) => {
+        if (error.response) {
+          throw new ApiError(
+            error.response.status,
+            `${error.response.data.error} address`
+          );
+        } else if (error.request) {
+          throw new ApiError(
+            500,
+            "Network error or no response from the geocoding service."
+          );
+        } else {
+          throw new ApiError(
+            500,
+            error.message || "An unknown error occurred during geocoding."
+          );
+        }
+      });
+
+    if (!response?.data || response.data.length === 0) {
+      throw new ApiError(400, "Unable to geocode the provided address");
+    }
+
+    const lat = Number(response.data[0].lat);
+    const lng = Number(response.data[0].lon);
+
+    if (!lat || !lng) {
+      throw new ApiError(400, "Unable to geocode the provided address");
+    }
+
+    return { lat, lng };
+  }
+
   // get all listings (public)
   async getAllListings(query: GetListingsQueryInput) {
-    const { page, limit, search, serviceId, sortBy, sortOrder } = query;
+    const {
+      page,
+      limit,
+      search,
+      serviceId,
+      serviceName,
+      address,
+      radius,
+      minRating,
+      isAvailable,
+      sortBy,
+      sortOrder,
+    } = query;
     const skip = (page - 1) * limit;
 
+    // ── Build the Prisma where clause (DB-level filters) ────────────
     const where: Record<string, unknown> = {};
 
+    // Text search
     if (search) {
       where.OR = [
         { slug: { contains: search, mode: "insensitive" } },
@@ -133,16 +183,205 @@ export class ListingService {
       ];
     }
 
+    // Filter by exact serviceId
     if (serviceId) {
       where.serviceId = serviceId;
     }
 
+    // Filter by service name (case-insensitive lookup on Service model)
+    if (serviceName && !serviceId) {
+      const services = await prisma.service.findMany({
+        where: { name: { contains: serviceName, mode: "insensitive" } },
+        select: { id: true },
+      });
+
+      if (services.length > 0) {
+        where.serviceId = { in: services.map((s) => s.id) };
+      } else {
+        // No services match the name — return empty result early
+        return {
+          listings: [],
+          pagination: {
+            page,
+            limit,
+            total: 0,
+            totalPages: 0,
+          },
+        };
+      }
+    }
+
+    // Filter by availability
+    if (isAvailable !== undefined) {
+      where.isAvailable = isAvailable;
+    }
+
+    // ── Geocode address only when both address AND radius are provided ──
+    let originCoords: { lat: number; lng: number } | null = null;
+    if (address && radius !== undefined) {
+      originCoords = await this.geocodeAddress(address);
+    }
+
+    // Determine if we need to do any post-fetch (in-memory) filtering
+    const needsInMemoryFiltering =
+      originCoords !== null || minRating !== undefined;
+
+    // ── Common Prisma include (always includes ratings for avgRating) ──
+    const includeWithRatings = {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          avatar: true,
+        },
+      },
+      service: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      userReview: {
+        select: { rating: true },
+      },
+      _count: {
+        select: { userReview: true },
+      },
+    } as const;
+
+    // ── Helper to compute avgRating from userReview array ───────────
+    const computeAvgRating = (
+      reviews: { rating: number }[]
+    ): number => {
+      if (reviews.length === 0) return 0;
+      return parseFloat(
+        (
+          reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        ).toFixed(1)
+      );
+    };
+
+    // If we need in-memory filtering (radius or minRating),
+    // fetch ALL matching records first, then filter + paginate after.
+    if (needsInMemoryFiltering) {
+      let allListings = await prisma.listing.findMany({
+        where,
+        orderBy: { [sortBy]: sortOrder },
+        include: includeWithRatings,
+      });
+
+      // Filter by radius (Haversine)
+      if (originCoords !== null) {
+        allListings = allListings.filter((listing) => {
+          const distance = this.calculateDistanceInMiles(
+            originCoords!.lat,
+            originCoords!.lng,
+            listing.latitude,
+            listing.longitude
+          );
+          return distance <= radius!;
+        });
+      }
+
+      // Filter by minimum average rating
+      if (minRating) {
+        allListings = allListings.filter((listing) => {
+          const reviews = listing.userReview;
+          if (!reviews || reviews.length === 0) return false;
+          const avg =
+            reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
+          return avg >= minRating!;
+        });
+      }
+
+      const total = allListings.length;
+      const paginatedListings = allListings.slice(skip, skip + limit);
+
+      const listings = paginatedListings.map(
+        ({ userReview, ...rest }) => ({
+          ...rest,
+          avgRating: computeAvgRating(userReview),
+        })
+      );
+
+      return {
+        listings,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      };
+    }
+
+    // ── Standard DB-paginated path (no in-memory filters) ───────────
+    // Always include avgRating for consistent response structure
     const [listings, total] = await Promise.all([
       prisma.listing.findMany({
         where,
         skip,
         take: limit,
         orderBy: { [sortBy]: sortOrder },
+        include: includeWithRatings,
+      }),
+      prisma.listing.count({ where }),
+    ]);
+
+    const enrichedListings = listings.map(
+      ({ userReview, ...rest }) => ({
+        ...rest,
+        avgRating: computeAvgRating(userReview),
+      })
+    );
+
+    return {
+      listings: enrichedListings,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  // get related listings by service type (public)
+  async getRelatedListings(
+    slug: string,
+    page: number = 1,
+    limit: number = 6
+  ) {
+    const skip = (page - 1) * limit;
+
+    // Find the source listing to get its serviceId
+    const sourceListing = await prisma.listing.findUnique({
+      where: { slug },
+      select: {
+        id: true,
+        serviceId: true,
+        service: {
+          select: { name: true },
+        },
+      },
+    });
+
+    if (!sourceListing) {
+      throw new ApiError(404, "Listing not found");
+    }
+
+    const where = {
+      serviceId: sourceListing.serviceId,
+      id: { not: sourceListing.id },
+    };
+
+    // Fetch other listings with the same serviceId, excluding the current one
+    const [relatedListings, total] = await Promise.all([
+      prisma.listing.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
         include: {
           user: {
             select: {
@@ -157,6 +396,9 @@ export class ListingService {
               name: true,
             },
           },
+          userReview: {
+            select: { rating: true },
+          },
           _count: {
             select: { userReview: true },
           },
@@ -165,8 +407,28 @@ export class ListingService {
       prisma.listing.count({ where }),
     ]);
 
+    // Compute avgRating for each related listing
+    const enrichedListings = relatedListings.map(
+      ({ userReview, ...rest }) => ({
+        ...rest,
+        avgRating:
+          userReview.length > 0
+            ? parseFloat(
+                (
+                  userReview.reduce((sum, r) => sum + r.rating, 0) /
+                  userReview.length
+                ).toFixed(1)
+              )
+            : 0,
+      })
+    );
+
     return {
-      listings,
+      service: {
+        id: sourceListing.serviceId,
+        name: sourceListing.service?.name ?? null,
+      },
+      listings: enrichedListings,
       pagination: {
         page,
         limit,

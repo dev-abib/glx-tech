@@ -42,6 +42,17 @@ export const getAllListings: RequestHandler = asyncHandler(
       limit: Number(req.query.limit) || 10,
       search: req.query.search as string | undefined,
       serviceId: req.query.serviceId as string | undefined,
+      serviceName: req.query.serviceName as string | undefined,
+      address: req.query.address as string | undefined,
+      radius: req.query.radius ? Number(req.query.radius) : undefined,
+      minRating: req.query.minRating
+        ? Number(req.query.minRating)
+        : undefined,
+      isAvailable: req.query.isAvailable === "true"
+        ? true
+        : req.query.isAvailable === "false"
+          ? false
+          : undefined,
       sortBy: (req.query.sortBy as string) || "createdAt",
       sortOrder: (req.query.sortOrder as "asc" | "desc") || "desc",
     });
@@ -157,7 +168,21 @@ export const getListingReviews: RequestHandler<{ listingId: string }> =
       .json(new ApiResponse(200, "Reviews fetched successfully", result));
   });
 
-  // get user review
+// get related listings (by same service type)
+export const getRelatedListings: RequestHandler<{ slug: string }> =
+  asyncHandler(async (req: Request, res: Response) => {
+    const slug = req.params.slug as string;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 6;
+
+    const result = await listingService.getRelatedListings(slug, page, limit);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Related listings fetched successfully", result));
+  });
+
+// get user review
 export const getUserReview: RequestHandler<{ reviewId: string }> =
   asyncHandler(async (req: Request, res: Response) => {
     const reviewId = req.params.reviewId as string;
