@@ -71,4 +71,7 @@ router.route("/switch-role").post(authenticate(), validate(switchRoleSchema), sw
 // Admin routes
 router.route("/gt-all-users").get(authenticate({ type: "admin" }), getAllUsers);
 
+// update user to seller
+router.route("/update-as-seller").post(authenticate({type:'user'}),)
+
 export default router;

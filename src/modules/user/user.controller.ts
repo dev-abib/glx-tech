@@ -11,6 +11,7 @@ import {
   ResendOtpInput,
   ResetPasswordInput,
   SwitchRoleInput,
+  UpdateUserAsSellerInput,
   UpdateUserInput,
   VerifyUserAccountInput,
 } from "./user.validation.js";
@@ -188,6 +189,16 @@ export const updateUser: RequestHandler<
     .json(new ApiResponse<SafeUser>(200, "Profile updated successfully", user));
 });
 
+// update user to seller
+export const updateAsSeller: RequestHandler<
+  {},
+  ApiResponse<{ message: string }>,
+  UpdateUserAsSellerInput
+> = asyncHandler(async(req: Request, res: Response) => {
+  const userId = req.user!.id;
+  await userService.updateUserAsSeller(userId,req.body);
+});
+
 // delete user
 export const deleteUser: RequestHandler<{}, ApiResponse<null>> = asyncHandler(
   async (req: Request, res: Response) => {
@@ -227,9 +238,7 @@ export const switchRole: RequestHandler<
 
   return res
     .status(200)
-    .json(
-      new ApiResponse(200, result.message, result.data)
-    );
+    .json(new ApiResponse(200, result.message, result.data));
 });
 
 // refresh token controller

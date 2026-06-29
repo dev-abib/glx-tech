@@ -8,13 +8,11 @@ import {
   RefreshTokenInput,
   ResendOtpInput,
   ResetPasswordInput,
+  UpdateUserAsSellerInput,
   UpdateUserInput,
   VerifyUserAccountInput,
 } from "./user.validation.js";
-import type {
-  LoginResponseData,
-  SafeUser,
-} from "./user.interface.js";
+import type { LoginResponseData, SafeUser } from "./user.interface.js";
 
 const userRepo = new UserRepository();
 
@@ -32,9 +30,7 @@ export class UserService {
   }
 
   // login user service
-  async loginUserAccount(
-    payload: LoginUserInput
-  ): Promise<{
+  async loginUserAccount(payload: LoginUserInput): Promise<{
     message: string;
     data: LoginResponseData;
   }> {
@@ -109,6 +105,14 @@ export class UserService {
     return userRepo.updateUser(userId, data, avatarBuffer);
   }
 
+  // update user as seller
+  async updateUserAsSeller(
+    userId: string,
+    data: UpdateUserAsSellerInput
+  ): Promise<{ message: string }> {
+    return userRepo.updateUserAsSeller(userId, data);
+  }
+
   // delete user
   async deleteUser(userId: string): Promise<{ message: string }> {
     return userRepo.deleteUser(userId);
@@ -120,9 +124,7 @@ export class UserService {
   }
 
   // switch role between user and seller
-  async switchRole(
-    userId: string
-  ): Promise<{
+  async switchRole(userId: string): Promise<{
     message: string;
     data: { accessToken: string; refreshToken: string; role: string };
   }> {
@@ -138,9 +140,7 @@ export class UserService {
   }
 
   // refresh token service
-  async refreshToken(
-    refreshToken: RefreshTokenInput["refreshToken"]
-  ): Promise<{
+  async refreshToken(refreshToken: RefreshTokenInput["refreshToken"]): Promise<{
     message: string;
     data: { accessToken: string; refreshToken: string };
   }> {

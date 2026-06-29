@@ -13,7 +13,10 @@ export const createUserSchema = z
         "Password must include uppercase, lowercase, number, and special character"
       ),
     confirmPassword: z.string(),
-    phone: z.string().regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number").optional(),
+    phone: z
+      .string()
+      .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")
+      .optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -145,3 +148,21 @@ export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export const switchRoleSchema = z.object({}).strict().default({});
 
 export type SwitchRoleInput = z.infer<typeof switchRoleSchema>;
+
+export const updateUserAsSellerSchema = z
+  .object({
+    storeName: z.string(),
+    servicesId: z.object([]),
+    insuranceStatus: z.enum(["yes", "no", "not_applicable"]),
+    socialLInk: z.string(),
+    businessNumber: z.string(),
+    businessEmail: z.string(),
+    streetAddress: z.string(),
+    city: z.string(),
+    state: z.string(),
+    zipCode: z.string(),
+  })
+
+  .strict();
+
+export type UpdateUserAsSellerInput = z.infer<typeof updateUserAsSellerSchema>;

@@ -7,6 +7,7 @@ import {
   LoginUserInput,
   ResendOtpInput,
   ResetPasswordInput,
+  UpdateUserAsSellerInput,
   UpdateUserInput,
   VerifyUserAccountInput,
 } from "./user.validation.js";
@@ -609,6 +610,49 @@ export class UserRepository {
     return safeUser;
   }
 
+  // update user as seller repo
+  async updateUserAsSeller(
+    userId: string,
+    data: UpdateUserAsSellerInput
+  ): Promise<{ message: string }> {
+    const user = await this.findUser("id", userId, true);
+
+    if (user.isSeller) {
+      throw new ApiError(400, "User already marked as a seller");
+    }
+
+    if (
+      !Array.isArray(data.servicesId) ||
+      !data.servicesId.every((service) => typeof service === "string")
+    ) {
+      throw new ApiError(400, "servicesId must be an array of strings");
+    }
+
+    await prisma.$transaction([
+      prisma.sellerInfo.create({
+        data: {
+          userId: userId,
+          storeName: data.storeName,
+          servicesId: data.servicesId as string[],
+          insuranceStatus: data.insuranceStatus,
+          socialLInk: data.socialLInk,
+          businessNumber: data.businessNumber,
+          businessEmail: data.businessEmail,
+          streetAddress: data.streetAddress,
+          city: data.city,
+          state: data.state,
+          zipCode: data.zipCode,
+        },
+      }),
+      prisma.user.update({
+        where: { id: userId },
+        data: { isSeller: true },
+      }),
+    ]);
+
+    return { message: "User updated as seller successfully" };
+  }
+
   // delete user (hard delete)
   async deleteUser(userId: string) {
     const user = await this.findUser("id", userId, true);
@@ -654,7 +698,17 @@ export class UserRepository {
     const user = await this.findUser("id", userId, true);
 
     if (user.role !== "user" && user.role !== "seller") {
-      throw new ApiError(400, "Only users can switch between user and seller roles");
+      throw new ApiError(
+        400,
+        "Only users can switch between user and seller roles"
+      );
+    }
+
+    if (user.role === "user" && !user.isSeller) {
+      throw new ApiError(
+        401,
+        "To switch role as seller, you must have setup your business."
+      );
     }
 
     const newRole = user.role === "user" ? "seller" : "user";

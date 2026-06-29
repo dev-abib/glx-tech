@@ -24,6 +24,8 @@ enum Insurance {
 
 model SellerInfo {
   id              String    @id @default(uuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id])
   storeName       String
   servicesId      String[]
   insuranceStatus Insurance
@@ -34,6 +36,8 @@ model SellerInfo {
   city            String
   state           String
   zipCode         String
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 }
 
 model User {
@@ -64,6 +68,7 @@ model User {
   listings        Listing[]
   userReview      UserReview[]
   isSeller        Boolean      @default(false)
+  sellerInfo      SellerInfo?
 
   @@map("users")
 }
