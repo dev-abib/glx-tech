@@ -1220,6 +1220,76 @@ Error responses:
             },
           },
         },
+        UpdateUserAsSellerInput: {
+          type: "object",
+          required: [
+            "storeName",
+            "servicesId",
+            "insuranceStatus",
+            "socialLInk",
+            "businessNumber",
+            "businessEmail",
+            "streetAddress",
+            "city",
+            "state",
+            "zipCode",
+          ],
+          properties: {
+            storeName: {
+              type: "string",
+              example: "GLX-Tech Store",
+              description: "Name of the store/business",
+            },
+            servicesId: {
+              type: "array",
+              items: { type: "string" },
+              example: ["uuid-1", "uuid-2"],
+              description: "Array of service IDs the seller offers",
+            },
+            insuranceStatus: {
+              type: "string",
+              enum: ["yes", "no", "not_applicable"],
+              example: "yes",
+              description: "Insurance status",
+            },
+            socialLInk: {
+              type: "string",
+              example: "https://facebook.com/glxtech",
+              description: "Social media profile link",
+            },
+            businessNumber: {
+              type: "string",
+              example: "+1234567890",
+              description: "Business phone number",
+            },
+            businessEmail: {
+              type: "string",
+              format: "email",
+              example: "business@glxtech.com",
+              description: "Business email address",
+            },
+            streetAddress: {
+              type: "string",
+              example: "123 Tech Street, Suite 100",
+              description: "Street address of the business",
+            },
+            city: {
+              type: "string",
+              example: "San Francisco",
+              description: "City of the business",
+            },
+            state: {
+              type: "string",
+              example: "California",
+              description: "State of the business",
+            },
+            zipCode: {
+              type: "string",
+              example: "94105",
+              description: "ZIP / postal code of the business",
+            },
+          },
+        },
       },
     },
     tags: [
@@ -1665,6 +1735,55 @@ Error responses:
               },
             },
             400: { description: "Validation error" },
+            401: { description: "Unauthorized" },
+          },
+        },
+      },
+      "/users/update-as-seller": {
+        post: {
+          tags: ["04 — Users — Role"],
+          summary: "Update user profile as seller",
+          description:
+            "Marks the authenticated user as a seller by creating their seller profile (SellerInfo record). Requires an authenticated user role. Creates a seller business profile with store details, services, and contact information.",
+          security: [{ bearerAuth: [] }],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  $ref: "#/components/schemas/UpdateUserAsSellerInput",
+                },
+              },
+            },
+          },
+          responses: {
+            200: {
+              description: "User updated as seller successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    allOf: [
+                      { $ref: "#/components/schemas/ApiResponse" },
+                      {
+                        properties: {
+                          data: {
+                            type: "object",
+                            properties: {
+                              message: {
+                                type: "string",
+                                example:
+                                  "User updated as seller successfully",
+                              },
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+            400: { description: "User already marked as a seller or validation error" },
             401: { description: "Unauthorized" },
           },
         },

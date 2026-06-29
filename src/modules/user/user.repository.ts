@@ -707,7 +707,7 @@ export class UserRepository {
     if (user.role === "user" && !user.isSeller) {
       throw new ApiError(
         401,
-        "To switch role as seller, you must have setup your business."
+        "To switch roles, you must have to setup your business account."
       );
     }
 

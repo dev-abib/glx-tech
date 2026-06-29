@@ -196,7 +196,11 @@ export const updateAsSeller: RequestHandler<
   UpdateUserAsSellerInput
 > = asyncHandler(async(req: Request, res: Response) => {
   const userId = req.user!.id;
-  await userService.updateUserAsSeller(userId,req.body);
+  const result = await userService.updateUserAsSeller(userId,req.body);
+
+  return res
+    .status(200)
+    .json(new ApiResponse<{ message: string }>(200, result.message, result));
 });
 
 // delete user
