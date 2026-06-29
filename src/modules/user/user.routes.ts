@@ -13,6 +13,7 @@ import {
   resetPassword,
   switchRole,
   updateUser,
+  updateAsSeller,
   verifyResetOtp,
   verifyUserAccount,
 } from "./user.controller.js";
@@ -27,6 +28,7 @@ import {
   resendOtpSchema,
   resetPasswordSchema,
   switchRoleSchema,
+  updateUserAsSellerSchema,
   updateUserSchema,
   verifyUserAccountSchema,
 } from "./user.validation.js";
@@ -72,6 +74,6 @@ router.route("/switch-role").post(authenticate(), validate(switchRoleSchema), sw
 router.route("/gt-all-users").get(authenticate({ type: "admin" }), getAllUsers);
 
 // update user to seller
-router.route("/update-as-seller").post(authenticate({type:'user'}),)
+router.route("/update-as-seller").post(authenticate({type:'user'}), validate(updateUserAsSellerSchema), updateAsSeller)
 
 export default router;
