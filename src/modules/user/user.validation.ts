@@ -152,7 +152,7 @@ export type SwitchRoleInput = z.infer<typeof switchRoleSchema>;
 export const updateUserAsSellerSchema = z
   .object({
     storeName: z.string(),
-    servicesId: z.object([]),
+    servicesId: z.array(z.string()),
     insuranceStatus: z.enum(["yes", "no", "not_applicable"]),
     socialLInk: z.string(),
     businessNumber: z.string(),
