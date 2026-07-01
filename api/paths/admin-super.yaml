@@ -1,0 +1,178 @@
+create-admin:
+  post:
+    tags: ["08 — Admin — Super Admin"]
+    summary: Create admin (Super Admin only)
+    description: Creates a new admin or super_admin user. Only accessible by super_admin role.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/admin.yaml#/CreateAdminInput"
+    responses:
+      "201":
+        description: Admin created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        email:
+                          type: string
+                        role:
+                          type: string
+                        isEmailVerified:
+                          type: boolean
+                        isActive:
+                          type: boolean
+                        createdAt:
+                          type: string
+                          format: date-time
+      "400":
+        description: Validation error
+      "403":
+        description: Forbidden — Super admin access required
+gt-all-users:
+  get:
+    tags: ["08 — Admin — Super Admin"]
+    summary: Get all users (Super Admin only)
+    description: Returns a paginated list of all users across all roles. Super admin only.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+    responses:
+      "200":
+        description: Users fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        users:
+                          type: array
+                          items:
+                            $ref: "../components/schemas/admin.yaml#/AdminProfile"
+                        pagination:
+                          $ref: "../components/schemas/common.yaml#/Pagination"
+      "403":
+        description: Forbidden
+gt-all-admins:
+  get:
+    tags: ["08 — Admin — Super Admin"]
+    summary: Get all admins (Super Admin only)
+    description: Returns a paginated list of all admin and super_admin users.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+    responses:
+      "200":
+        description: Admins fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        admins:
+                          type: array
+                          items:
+                            $ref: "../components/schemas/admin.yaml#/AdminProfile"
+                        pagination:
+                          $ref: "../components/schemas/common.yaml#/Pagination"
+      "403":
+        description: Forbidden
+delete-admin:
+  delete:
+    tags: ["08 — Admin — Super Admin"]
+    summary: Delete an admin (Super Admin only)
+    description: Deletes an admin or super_admin user by ID. A super admin cannot delete their own account through this endpoint.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Admin ID to delete
+    responses:
+      "200":
+        description: Admin deleted successfully
+      "400":
+        description: Cannot delete own account or target is not an admin
+      "403":
+        description: Forbidden
+update-admin:
+  put:
+    tags: ["08 — Admin — Super Admin"]
+    summary: Update an admin (Super Admin only)
+    description: Updates an admin/super_admin user's details including name, email, role, and active status.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Admin ID to update
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/admin.yaml#/AdminUpdateUserInput"
+    responses:
+      "200":
+        description: Admin updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/admin.yaml#/AdminProfile"
+      "400":
+        description: Cannot demote the last super admin
+      "403":
+        description: Forbidden

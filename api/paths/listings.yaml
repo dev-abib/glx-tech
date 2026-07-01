@@ -1,0 +1,387 @@
+create-listing:
+  post:
+    tags: ["14 — Listings & Reviews"]
+    summary: Create a new listing (Seller only)
+    description: Creates a new seller listing. Supports media file uploads (multipart/form-data).
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+              - title
+              - slug
+              - serviceId
+              - description
+              - address
+              - days
+              - weekend
+              - timeSlot
+              - basePrice
+              - hourlyPrice
+              - dailyPrice
+              - estimatedDuration
+              - isAvailable
+            properties:
+              title:
+                type: string
+                description: Listing title
+              slug:
+                type: string
+                description: URL-friendly slug
+              serviceId:
+                type: string
+                description: Service ID
+              description:
+                type: string
+                description: Listing description
+              address:
+                type: string
+                description: Address
+              days:
+                type: array
+                items:
+                  type: string
+                description: Available weekdays
+              weekend:
+                type: array
+                items:
+                  type: string
+                description: Available weekend days
+              timeSlot:
+                type: array
+                items:
+                  type: string
+                description: Available time slots
+              basePrice:
+                type: string
+                description: Base price
+              hourlyPrice:
+                type: string
+                description: Hourly price
+              dailyPrice:
+                type: string
+                description: Daily price
+              estimatedDuration:
+                type: string
+                description: Estimated duration
+              isAvailable:
+                type: string
+                description: "Availability status (true/false)"
+              media:
+                type: array
+                items:
+                  type: string
+                  format: binary
+                description: Media files to upload
+    responses:
+      "201":
+        description: Listing created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/listing.yaml#/Listing"
+      "400":
+        description: Validation error
+      "401":
+        description: Unauthorized
+get-all-listings:
+  get:
+    tags: ["14 — Listings & Reviews"]
+    summary: Get all listings (Public)
+    description: Returns a paginated list of all available listings.
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Search keyword for title or description
+      - name: serviceId
+        in: query
+        schema:
+          type: string
+        description: Filter by service ID
+      - name: minPrice
+        in: query
+        schema:
+          type: number
+        description: Minimum price filter
+      - name: maxPrice
+        in: query
+        schema:
+          type: number
+        description: Maximum price filter
+      - name: lat
+        in: query
+        schema:
+          type: number
+        description: Latitude for location-based search
+      - name: lng
+        in: query
+        schema:
+          type: number
+        description: Longitude for location-based search
+      - name: radius
+        in: query
+        schema:
+          type: number
+          default: 10
+        description: Search radius in km
+    responses:
+      "200":
+        description: Listings fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        listings:
+                          type: array
+                          items:
+                            $ref: "../components/schemas/listing.yaml#/Listing"
+                        pagination:
+                          $ref: "../components/schemas/common.yaml#/Pagination"
+get-listing:
+  get:
+    tags: ["14 — Listings & Reviews"]
+    summary: Get listing by slug
+    description: Returns a single listing by its slug.
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing slug
+    responses:
+      "200":
+        description: Listing fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/listing.yaml#/Listing"
+      "404":
+        description: Listing not found
+update-listing:
+  put:
+    tags: ["14 — Listings & Reviews"]
+    summary: Update listing (Owner/Seller only)
+    description: Updates a listing by ID. Only the listing owner can update.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing ID
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+              slug:
+                type: string
+              serviceId:
+                type: string
+              description:
+                type: string
+              address:
+                type: string
+              days:
+                type: array
+                items:
+                  type: string
+              weekend:
+                type: array
+                items:
+                  type: string
+              timeSlot:
+                type: array
+                items:
+                  type: string
+              basePrice:
+                type: string
+              hourlyPrice:
+                type: string
+              dailyPrice:
+                type: string
+              estimatedDuration:
+                type: string
+              isAvailable:
+                type: string
+              media:
+                type: array
+                items:
+                  type: string
+                  format: binary
+    responses:
+      "200":
+        description: Listing updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/listing.yaml#/Listing"
+      "403":
+        description: Forbidden — Not the listing owner
+      "404":
+        description: Listing not found
+delete-listing:
+  delete:
+    tags: ["14 — Listings & Reviews"]
+    summary: Delete listing (Owner/Seller only)
+    description: Deletes a listing by ID. Only the listing owner can delete.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing ID
+    responses:
+      "200":
+        description: Listing deleted successfully
+      "403":
+        description: Forbidden — Not the listing owner
+      "404":
+        description: Listing not found
+create-review:
+  post:
+    tags: ["14 — Listings & Reviews"]
+    summary: Create a review for a listing
+    description: Creates a new review for a listing. Requires authentication.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/listing.yaml#/CreateUserReviewInput"
+    responses:
+      "201":
+        description: Review created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/listing.yaml#/UserReview"
+      "400":
+        description: Validation error
+      "401":
+        description: Unauthorized
+update-review:
+  put:
+    tags: ["14 — Listings & Reviews"]
+    summary: Update a review
+    description: Updates an existing review. Only the review author can update.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing ID
+      - name: reviewId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Review ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/listing.yaml#/UpdateUserReviewInput"
+    responses:
+      "200":
+        description: Review updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/listing.yaml#/UserReview"
+      "403":
+        description: Forbidden — Not the review author
+      "404":
+        description: Review not found
+delete-review:
+  delete:
+    tags: ["14 — Listings & Reviews"]
+    summary: Delete a review
+    description: Deletes a review by ID. Only the review author or admin can delete.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing ID
+      - name: reviewId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Review ID
+    responses:
+      "200":
+        description: Review deleted successfully
+      "403":
+        description: Forbidden
+      "404":
+        description: Review not found

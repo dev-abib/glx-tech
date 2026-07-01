@@ -1,0 +1,55 @@
+AboutUs:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    title:
+      type: string
+      example: About Our Company
+    description:
+      type: string
+      example: We are a leading technology company...
+    image1:
+      type: string
+      nullable: true
+      example: https://res.cloudinary.com/...
+    image1PublicId:
+      type: string
+      nullable: true
+    image2:
+      type: string
+      nullable: true
+      example: https://res.cloudinary.com/...
+    image2PublicId:
+      type: string
+      nullable: true
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+CreateAboutInput:
+  type: object
+  required: [title, description]
+  properties:
+    title:
+      type: string
+      example: About Our Company
+      maxLength: 300
+    description:
+      type: string
+      example: We are a leading technology company...
+      maxLength: 10000
+UpdateAboutInput:
+  type: object
+  properties:
+    title:
+      type: string
+      example: Updated About Title
+      maxLength: 300
+    description:
+      type: string
+      example: Updated company description...
+      maxLength: 10000

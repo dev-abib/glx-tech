@@ -1,0 +1,215 @@
+submit-inquiry:
+  post:
+    tags: ["10 — CMS — Contact"]
+    summary: Submit contact inquiry (Public)
+    description: Submits a new contact inquiry. Sends a notification email to the site owner.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/cms-contact.yaml#/CreateContactInput"
+    responses:
+      "201":
+        description: Inquiry submitted successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        message:
+                          type: string
+      "400":
+        description: Validation error
+gt-all-inquiries:
+  get:
+    tags: ["10 — CMS — Contact"]
+    summary: Get all inquiries (Admin only)
+    description: Returns a paginated, filterable list of all contact inquiries.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+      - name: sortBy
+        in: query
+        schema:
+          type: string
+          default: createdAt
+        description: Sort field
+      - name: sortOrder
+        in: query
+        schema:
+          type: string
+          enum: [asc, desc]
+          default: desc
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Search keyword for name, email, subject, or message
+      - name: status
+        in: query
+        schema:
+          type: string
+          enum: [all, unread, replied]
+          default: all
+    responses:
+      "200":
+        description: Inquiries fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        inquiries:
+                          type: array
+                          items:
+                            $ref: "../components/schemas/cms-contact.yaml#/ContactInquiry"
+                        pagination:
+                          $ref: "../components/schemas/common.yaml#/Pagination"
+      "401":
+        description: Unauthorized
+get-inquiry-stats:
+  get:
+    tags: ["10 — CMS — Contact"]
+    summary: Get inquiry statistics (Admin only)
+    description: Returns total, unread, and replied inquiry counts.
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Inquiry stats fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-contact.yaml#/InquiryStats"
+get-inquiry:
+  get:
+    tags: ["10 — CMS — Contact"]
+    summary: Get inquiry by ID (Admin only)
+    description: Returns a single contact inquiry by its ID.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Inquiry ID
+    responses:
+      "200":
+        description: Inquiry fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-contact.yaml#/ContactInquiry"
+      "404":
+        description: Inquiry not found
+mark-inquiry-read:
+  patch:
+    tags: ["10 — CMS — Contact"]
+    summary: Mark inquiry as read (Admin only)
+    description: Marks a contact inquiry as read.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Inquiry ID
+    responses:
+      "200":
+        description: Inquiry marked as read
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-contact.yaml#/ContactInquiry"
+      "404":
+        description: Inquiry not found
+reply-inquiry:
+  post:
+    tags: ["10 — CMS — Contact"]
+    summary: Reply to inquiry (Admin only)
+    description: Sends a reply to a contact inquiry and emails the response to the inquirer.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Inquiry ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/cms-contact.yaml#/ReplyContactInput"
+    responses:
+      "200":
+        description: Reply sent successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-contact.yaml#/ContactInquiry"
+      "404":
+        description: Inquiry not found
+delete-inquiry:
+  delete:
+    tags: ["10 — CMS — Contact"]
+    summary: Delete inquiry (Admin only)
+    description: Permanently deletes a contact inquiry.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Inquiry ID
+    responses:
+      "200":
+        description: Inquiry deleted successfully
+      "404":
+        description: Inquiry not found

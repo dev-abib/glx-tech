@@ -1,0 +1,175 @@
+create-user:
+  post:
+    tags: ["02 — Users — Authentication"]
+    summary: Create a new user account
+    description: Registers a new user and sends an OTP to the provided email for verification.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/CreateUserInput"
+    responses:
+      "201":
+        description: User created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/user.yaml#/SafeUser"
+      "400":
+        description: Validation error
+      "409":
+        description: Email already exists
+verify-user:
+  post:
+    tags: ["02 — Users — Authentication"]
+    summary: Verify user account
+    description: Verifies a user's email using the OTP sent during registration.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/VerifyUserInput"
+    responses:
+      "201":
+        description: User verified successfully
+      "400":
+        description: Invalid or expired OTP
+login-user:
+  post:
+    tags: ["02 — Users — Authentication"]
+    summary: Login user account
+    description: Authenticates a user and returns access and refresh tokens.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/LoginUserInput"
+    responses:
+      "201":
+        description: Login successful
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/auth.yaml#/LoginResponse"
+      "401":
+        description: Invalid credentials or account not verified
+resend-otp:
+  post:
+    tags: ["02 — Users — Authentication"]
+    summary: Resend OTP
+    description: Resends the verification OTP to the user's email.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/ResendOtpInput"
+    responses:
+      "201":
+        description: OTP resent successfully
+      "404":
+        description: User not found
+forgot-password:
+  post:
+    tags: ["02 — Users — Authentication"]
+    summary: Forgot password
+    description: Initiates a password reset by sending an OTP to the user's email.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/ForgotPasswordInput"
+    responses:
+      "201":
+        description: Reset OTP sent to email
+      "404":
+        description: User not found
+verify-reset-otp:
+  post:
+    tags: ["02 — Users — Authentication"]
+    summary: Verify password reset OTP
+    description: Verifies the OTP for password reset and returns a reset token.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/VerifyUserInput"
+    responses:
+      "201":
+        description: OTP verified successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        token:
+                          type: string
+                          example: eyJhbGciOiJIUzI1NiIs...
+      "400":
+        description: Invalid or expired OTP
+reset-pass:
+  post:
+    tags: ["02 — Users — Authentication"]
+    summary: Reset password
+    description: Resets the user's password using a valid reset token (requires Authorization header with reset token).
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/ResetPasswordInput"
+    responses:
+      "201":
+        description: Password reset successfully
+      "400":
+        description: Validation error
+      "401":
+        description: Invalid or expired reset token
+refresh-token:
+  post:
+    tags: ["02 — Users — Authentication"]
+    summary: Refresh access token
+    description: Exchanges a valid refresh token for a new access/refresh token pair.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/RefreshTokenInput"
+    responses:
+      "201":
+        description: Tokens refreshed successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        accessToken:
+                          type: string
+                        refreshToken:
+                          type: string
+      "401":
+        description: Invalid or expired refresh token

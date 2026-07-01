@@ -1,0 +1,153 @@
+AdminLoginInput:
+  type: object
+  required: [email, password]
+  properties:
+    email:
+      type: string
+      format: email
+      example: admin@example.com
+    password:
+      type: string
+      format: password
+      example: AdminP@ss1!
+AdminLoginResponse:
+  type: object
+  properties:
+    accessToken:
+      type: string
+      example: eyJhbGciOiJIUzI1NiIs...
+    refreshToken:
+      type: string
+      example: eyJhbGciOiJIUzI1NiIs...
+    admin:
+      type: object
+      properties:
+        id:
+          type: string
+          example: uuid
+        name:
+          type: string
+          example: Admin User
+        email:
+          type: string
+          example: admin@example.com
+        role:
+          type: string
+          enum: [admin, super_admin]
+        avatar:
+          type: string
+          nullable: true
+CreateAdminInput:
+  type: object
+  required: [name, email, password, confirmPassword, role]
+  properties:
+    name:
+      type: string
+      example: New Admin
+      minLength: 3
+      maxLength: 100
+    email:
+      type: string
+      format: email
+      example: newadmin@example.com
+    password:
+      type: string
+      format: password
+      example: AdminP@ss1!
+    confirmPassword:
+      type: string
+      format: password
+      example: AdminP@ss1!
+    role:
+      type: string
+      enum: [admin, super_admin]
+      example: admin
+    phone:
+      type: string
+      example: "+1234567890"
+AdminProfile:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    name:
+      type: string
+      example: Admin User
+    email:
+      type: string
+      example: admin@example.com
+    role:
+      type: string
+      enum: [admin, super_admin]
+    avatar:
+      type: string
+      nullable: true
+    phone:
+      type: string
+      nullable: true
+    isEmailVerified:
+      type: boolean
+      example: true
+    isActive:
+      type: boolean
+      example: true
+    isPaid:
+      type: boolean
+      example: false
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+AdminUpdateSelfInput:
+  type: object
+  properties:
+    name:
+      type: string
+      example: Updated Admin
+      minLength: 3
+      maxLength: 100
+    email:
+      type: string
+      format: email
+      example: admin.updated@example.com
+    phone:
+      type: string
+      example: "+1987654321"
+AdminUpdateUserInput:
+  type: object
+  properties:
+    name:
+      type: string
+      example: Updated User
+    email:
+      type: string
+      format: email
+      example: user.updated@example.com
+    phone:
+      type: string
+      example: "+1987654321"
+    isActive:
+      type: boolean
+      example: true
+    role:
+      type: string
+      enum: [user, admin, super_admin]
+AdminChangePasswordInput:
+  type: object
+  required: [oldPassword, password, confirmPassword]
+  properties:
+    oldPassword:
+      type: string
+      format: password
+      example: OldP@ss1!
+    password:
+      type: string
+      format: password
+      example: NewP@ss1!
+    confirmPassword:
+      type: string
+      format: password
+      example: NewP@ss1!

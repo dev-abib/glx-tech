@@ -1,0 +1,82 @@
+SafeUser:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    name:
+      type: string
+      example: John Doe
+    email:
+      type: string
+      example: john@example.com
+    role:
+      type: string
+      enum: [user, seller, admin, super_admin]
+      example: user
+    avatar:
+      type: string
+      nullable: true
+    avatarPublicId:
+      type: string
+      nullable: true
+    phone:
+      type: string
+      nullable: true
+      example: "+1234567890"
+    isEmailVerified:
+      type: boolean
+      example: true
+    isActive:
+      type: boolean
+      example: true
+    isPaid:
+      type: boolean
+      example: false
+    address:
+      type: string
+      nullable: true
+    lastLoginAt:
+      type: string
+      format: date-time
+      nullable: true
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+UpdateUserInput:
+  type: object
+  properties:
+    name:
+      type: string
+      example: John Updated
+      minLength: 3
+      maxLength: 100
+    email:
+      type: string
+      format: email
+      example: john.updated@example.com
+    phone:
+      type: string
+      example: "+1987654321"
+    address:
+      type: string
+      example: 123 Main St
+ChangePasswordInput:
+  type: object
+  required: [oldPassword, password, confirmPassword]
+  properties:
+    oldPassword:
+      type: string
+      format: password
+      example: OldP@ss1!
+    password:
+      type: string
+      format: password
+      example: NewP@ss1!
+    confirmPassword:
+      type: string
+      format: password
+      example: NewP@ss1!

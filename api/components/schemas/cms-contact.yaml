@@ -1,0 +1,86 @@
+ContactInquiry:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    name:
+      type: string
+      example: Jane Doe
+    email:
+      type: string
+      example: jane@example.com
+    phone:
+      type: string
+      nullable: true
+      example: "+1234567890"
+    subject:
+      type: string
+      nullable: true
+      example: Partnership Inquiry
+    message:
+      type: string
+      example: I'd like to partner with you...
+    isRead:
+      type: boolean
+      example: false
+    isReplied:
+      type: boolean
+      example: false
+    replyMessage:
+      type: string
+      nullable: true
+    repliedAt:
+      type: string
+      format: date-time
+      nullable: true
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+CreateContactInput:
+  type: object
+  required: [name, email, message]
+  properties:
+    name:
+      type: string
+      example: Jane Doe
+      maxLength: 100
+    email:
+      type: string
+      format: email
+      example: jane@example.com
+    phone:
+      type: string
+      example: "+1234567890"
+      maxLength: 30
+    subject:
+      type: string
+      example: Partnership Inquiry
+      maxLength: 200
+    message:
+      type: string
+      example: I'd like to discuss a potential partnership.
+      maxLength: 5000
+ReplyContactInput:
+  type: object
+  required: [replyMessage]
+  properties:
+    replyMessage:
+      type: string
+      example: Thank you for reaching out! We'll contact you shortly.
+      maxLength: 5000
+InquiryStats:
+  type: object
+  properties:
+    total:
+      type: integer
+      example: 50
+    unread:
+      type: integer
+      example: 10
+    replied:
+      type: integer
+      example: 5

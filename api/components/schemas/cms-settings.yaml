@@ -1,0 +1,132 @@
+SiteSettings:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    title:
+      type: string
+      nullable: true
+      example: GLX-Tech
+    subTitle:
+      type: string
+      nullable: true
+      example: Your Digital Partner
+    footerTxt:
+      type: string
+      nullable: true
+      example: "© 2026 GLX-Tech. All rights reserved."
+    siteLink:
+      type: string
+      nullable: true
+      example: https://glx-tech.com
+    location:
+      type: string
+      nullable: true
+      example: 123 Tech Street, Silicon Valley, CA
+    phone:
+      type: string
+      nullable: true
+      example: "+1 (555) 123-4567"
+    email:
+      type: string
+      nullable: true
+      example: contact@glx-tech.com
+CreateSiteSettingsInput:
+  type: object
+  properties:
+    title:
+      type: string
+      example: GLX-Tech
+      maxLength: 200
+    subTitle:
+      type: string
+      example: Your Digital Partner
+      maxLength: 300
+    footerTxt:
+      type: string
+      example: "© 2026 GLX-Tech. All rights reserved."
+      maxLength: 1000
+    siteLink:
+      type: string
+      example: https://glx-tech.com
+      maxLength: 500
+    location:
+      type: string
+      example: 123 Tech Street, Silicon Valley, CA
+      maxLength: 500
+    phone:
+      type: string
+      example: "+1 (555) 123-4567"
+      maxLength: 30
+    email:
+      type: string
+      format: email
+      example: contact@glx-tech.com
+UpdateSiteSettingsInput:
+  type: object
+  properties:
+    title:
+      type: string
+      example: GLX-Tech
+      maxLength: 200
+    subTitle:
+      type: string
+      example: Your Digital Partner
+      maxLength: 300
+    footerTxt:
+      type: string
+      example: Updated footer text
+      maxLength: 1000
+    siteLink:
+      type: string
+      example: https://glx-tech.com
+      maxLength: 500
+    location:
+      type: string
+      example: 456 New Avenue, NYC
+      maxLength: 500
+    phone:
+      type: string
+      example: "+1 (555) 987-6543"
+      maxLength: 30
+    email:
+      type: string
+      format: email
+      example: info@glx-tech.com
+SocialLink:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    icon:
+      type: string
+      example: https://res.cloudinary.com/...
+    iconPublicId:
+      type: string
+      example: cms/socials/abc123
+    socialLink:
+      type: string
+      example: https://facebook.com/glxtech
+CreateSocialInput:
+  type: object
+  required: [socialLink]
+  properties:
+    socialLink:
+      type: string
+      example: https://facebook.com/glxtech
+      maxLength: 500
+    icon:
+      type: string
+      example: https://res.cloudinary.com/...
+UpdateSocialInput:
+  type: object
+  properties:
+    socialLink:
+      type: string
+      example: https://twitter.com/glxtech
+      maxLength: 500
+    icon:
+      type: string
+      example: https://res.cloudinary.com/...

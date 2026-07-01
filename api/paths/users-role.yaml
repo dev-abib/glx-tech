@@ -1,0 +1,65 @@
+update-as-seller:
+  post:
+    tags: ["04 — Users — Role"]
+    summary: Update user profile as seller
+    description: Marks the authenticated user as a seller by creating their seller profile (SellerInfo record). Requires an authenticated user role. Creates a seller business profile with store details, services, and contact information.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/seller.yaml#/UpdateUserAsSellerInput"
+    responses:
+      "200":
+        description: User updated as seller successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: User updated as seller successfully
+      "400":
+        description: User already marked as a seller or validation error
+      "401":
+        description: Unauthorized
+switch-role:
+  post:
+    tags: ["04 — Users — Role"]
+    summary: Switch between user and seller roles
+    description: Toggles the authenticated user's role between 'user' and 'seller'. Returns new access/refresh tokens with the updated role claim.
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Role switched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        accessToken:
+                          type: string
+                          example: eyJhbGciOiJIUzI1NiIs...
+                        refreshToken:
+                          type: string
+                          example: eyJhbGciOiJIUzI1NiIs...
+                        role:
+                          type: string
+                          enum: [user, seller]
+                          example: seller
+      "400":
+        description: Only users can switch between user and seller roles
+      "401":
+        description: Unauthorized

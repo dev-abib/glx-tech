@@ -1,0 +1,137 @@
+# Schemas index — aggregate $ref pointers for all schema definitions
+# Used by openapi.yaml for standalone Redocly CLI bundling
+# Each key is the schema name; each $ref points to the definition in the individual schema YAML
+
+# ── Common ───────────────────────────────────────────────────────────
+SystemReport:
+  $ref: "./common.yaml#/SystemReport"
+ApiResponse:
+  $ref: "./common.yaml#/ApiResponse"
+ApiError:
+  $ref: "./common.yaml#/ApiError"
+Pagination:
+  $ref: "./common.yaml#/Pagination"
+
+# ── Auth ─────────────────────────────────────────────────────────────
+CreateUserInput:
+  $ref: "./auth.yaml#/CreateUserInput"
+VerifyUserInput:
+  $ref: "./auth.yaml#/VerifyUserInput"
+LoginUserInput:
+  $ref: "./auth.yaml#/LoginUserInput"
+LoginResponse:
+  $ref: "./auth.yaml#/LoginResponse"
+RefreshTokenInput:
+  $ref: "./auth.yaml#/RefreshTokenInput"
+ForgotPasswordInput:
+  $ref: "./auth.yaml#/ForgotPasswordInput"
+ResendOtpInput:
+  $ref: "./auth.yaml#/ResendOtpInput"
+ResetPasswordInput:
+  $ref: "./auth.yaml#/ResetPasswordInput"
+
+# ── User ─────────────────────────────────────────────────────────────
+SafeUser:
+  $ref: "./user.yaml#/SafeUser"
+UpdateUserInput:
+  $ref: "./user.yaml#/UpdateUserInput"
+ChangePasswordInput:
+  $ref: "./user.yaml#/ChangePasswordInput"
+
+# ── Admin ────────────────────────────────────────────────────────────
+AdminLoginInput:
+  $ref: "./admin.yaml#/AdminLoginInput"
+AdminLoginResponse:
+  $ref: "./admin.yaml#/AdminLoginResponse"
+CreateAdminInput:
+  $ref: "./admin.yaml#/CreateAdminInput"
+AdminProfile:
+  $ref: "./admin.yaml#/AdminProfile"
+AdminUpdateSelfInput:
+  $ref: "./admin.yaml#/AdminUpdateSelfInput"
+AdminUpdateUserInput:
+  $ref: "./admin.yaml#/AdminUpdateUserInput"
+AdminChangePasswordInput:
+  $ref: "./admin.yaml#/AdminChangePasswordInput"
+
+# ── CMS — Hero ───────────────────────────────────────────────────────
+Hero:
+  $ref: "./cms-hero.yaml#/Hero"
+CreateHeroInput:
+  $ref: "./cms-hero.yaml#/CreateHeroInput"
+UpdateHeroInput:
+  $ref: "./cms-hero.yaml#/UpdateHeroInput"
+Service:
+  $ref: "./cms-hero.yaml#/Service"
+CreateServiceInput:
+  $ref: "./cms-hero.yaml#/CreateServiceInput"
+UpdateServiceInput:
+  $ref: "./cms-hero.yaml#/UpdateServiceInput"
+
+# ── CMS — Contact ────────────────────────────────────────────────────
+ContactInquiry:
+  $ref: "./cms-contact.yaml#/ContactInquiry"
+CreateContactInput:
+  $ref: "./cms-contact.yaml#/CreateContactInput"
+ReplyContactInput:
+  $ref: "./cms-contact.yaml#/ReplyContactInput"
+InquiryStats:
+  $ref: "./cms-contact.yaml#/InquiryStats"
+
+# ── CMS — About ──────────────────────────────────────────────────────
+AboutUs:
+  $ref: "./cms-about.yaml#/AboutUs"
+CreateAboutInput:
+  $ref: "./cms-about.yaml#/CreateAboutInput"
+UpdateAboutInput:
+  $ref: "./cms-about.yaml#/UpdateAboutInput"
+
+# ── CMS — Site Settings ──────────────────────────────────────────────
+SiteSettings:
+  $ref: "./cms-settings.yaml#/SiteSettings"
+CreateSiteSettingsInput:
+  $ref: "./cms-settings.yaml#/CreateSiteSettingsInput"
+UpdateSiteSettingsInput:
+  $ref: "./cms-settings.yaml#/UpdateSiteSettingsInput"
+SocialLink:
+  $ref: "./cms-settings.yaml#/SocialLink"
+CreateSocialInput:
+  $ref: "./cms-settings.yaml#/CreateSocialInput"
+UpdateSocialInput:
+  $ref: "./cms-settings.yaml#/UpdateSocialInput"
+
+# ── CMS — Reviews ────────────────────────────────────────────────────
+ReviewSection:
+  $ref: "./cms-reviews.yaml#/ReviewSection"
+CreateReviewSectionInput:
+  $ref: "./cms-reviews.yaml#/CreateReviewSectionInput"
+UpdateReviewSectionInput:
+  $ref: "./cms-reviews.yaml#/UpdateReviewSectionInput"
+Review:
+  $ref: "./cms-reviews.yaml#/Review"
+CreateReviewInput:
+  $ref: "./cms-reviews.yaml#/CreateReviewInput"
+UpdateReviewInput:
+  $ref: "./cms-reviews.yaml#/UpdateReviewInput"
+
+# ── Listing ──────────────────────────────────────────────────────────
+Listing:
+  $ref: "./listing.yaml#/Listing"
+CreateListingInput:
+  $ref: "./listing.yaml#/CreateListingInput"
+UpdateListingInput:
+  $ref: "./listing.yaml#/UpdateListingInput"
+UserReview:
+  $ref: "./listing.yaml#/UserReview"
+CreateUserReviewInput:
+  $ref: "./listing.yaml#/CreateUserReviewInput"
+UpdateUserReviewInput:
+  $ref: "./listing.yaml#/UpdateUserReviewInput"
+
+# ── Newsletter ───────────────────────────────────────────────────────
+NewsLetterInput:
+  $ref: "./newsletter.yaml#/NewsLetterInput"
+
+# ── Seller ───────────────────────────────────────────────────────────
+UpdateUserAsSellerInput:
+  $ref: "./seller.yaml#/UpdateUserAsSellerInput"

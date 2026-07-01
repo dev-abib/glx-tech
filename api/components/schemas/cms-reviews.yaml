@@ -1,0 +1,123 @@
+ReviewSection:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    title:
+      type: string
+      example: What Our Clients Say
+    subTitle:
+      type: string
+      example: Trusted by hundreds of businesses worldwide
+    reviews:
+      type: array
+      items:
+        $ref: "./cms-reviews.yaml#/Review"
+CreateReviewSectionInput:
+  type: object
+  required: [title, subTitle]
+  properties:
+    title:
+      type: string
+      example: What Our Clients Say
+      maxLength: 200
+    subTitle:
+      type: string
+      example: Trusted by hundreds of businesses worldwide
+      maxLength: 300
+UpdateReviewSectionInput:
+  type: object
+  properties:
+    title:
+      type: string
+      example: Updated Section Title
+      maxLength: 200
+    subTitle:
+      type: string
+      example: Updated subtitle text
+      maxLength: 300
+Review:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    name:
+      type: string
+      example: Jane Smith
+    position:
+      type: string
+      example: CEO, TechCorp
+    reviewDate:
+      type: string
+      example: June 2026
+    picture:
+      type: string
+      example: https://res.cloudinary.com/...
+    picturePublicId:
+      type: string
+      example: cms/reviews/abc123
+    review:
+      type: string
+      example: GLX-Tech provided outstanding service...
+    ratingCount:
+      type: string
+      example: "5"
+    sectionId:
+      type: string
+      nullable: true
+      example: uuid
+CreateReviewInput:
+  type: object
+  required: [name, position, reviewDate, review, ratingCount]
+  properties:
+    name:
+      type: string
+      example: Jane Smith
+      maxLength: 100
+    position:
+      type: string
+      example: CEO, TechCorp
+      maxLength: 200
+    reviewDate:
+      type: string
+      example: June 2026
+      maxLength: 50
+    review:
+      type: string
+      example: GLX-Tech provided outstanding service and delivered beyond our expectations.
+      maxLength: 5000
+    ratingCount:
+      type: string
+      example: "5"
+      maxLength: 10
+    picture:
+      type: string
+      example: https://res.cloudinary.com/...
+UpdateReviewInput:
+  type: object
+  properties:
+    name:
+      type: string
+      example: Jane Smith Updated
+      maxLength: 100
+    position:
+      type: string
+      example: CTO, TechCorp
+      maxLength: 200
+    reviewDate:
+      type: string
+      example: July 2026
+      maxLength: 50
+    review:
+      type: string
+      example: Updated review text...
+      maxLength: 5000
+    ratingCount:
+      type: string
+      example: "4"
+      maxLength: 10
+    picture:
+      type: string
+      example: https://res.cloudinary.com/...

@@ -1,0 +1,126 @@
+get-about:
+  get:
+    tags: ["11 — CMS — About Us"]
+    summary: Get About Us section
+    description: Returns the About Us section content.
+    responses:
+      "200":
+        description: About Us section fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      nullable: true
+                      allOf:
+                        - $ref: "../components/schemas/cms-about.yaml#/AboutUs"
+create-about:
+  post:
+    tags: ["11 — CMS — About Us"]
+    summary: Create About Us section (Admin only)
+    description: Creates the About Us section. Only one section can exist. Supports up to 2 image uploads (multipart/form-data).
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [title, description]
+            properties:
+              title:
+                type: string
+                description: About Us title
+              description:
+                type: string
+                description: About Us description
+              image1:
+                type: string
+                format: binary
+                description: First about image
+              image2:
+                type: string
+                format: binary
+                description: Second about image
+    responses:
+      "201":
+        description: About Us section created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-about.yaml#/AboutUs"
+      "409":
+        description: About Us section already exists
+update-about:
+  put:
+    tags: ["11 — CMS — About Us"]
+    summary: Update About Us section (Admin only)
+    description: Updates the About Us section by ID. Supports optional image uploads.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: About Us ID
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              title:
+                type: string
+                description: Updated title
+              description:
+                type: string
+                description: Updated description
+              image1:
+                type: string
+                format: binary
+                description: New first image
+              image2:
+                type: string
+                format: binary
+                description: New second image
+    responses:
+      "200":
+        description: About Us section updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-about.yaml#/AboutUs"
+      "404":
+        description: About Us section not found
+delete-images:
+  delete:
+    tags: ["11 — CMS — About Us"]
+    summary: Delete About Us images (Admin only)
+    description: Deletes all images from the About Us section.
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: About images deleted successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-about.yaml#/AboutUs"

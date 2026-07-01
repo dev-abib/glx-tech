@@ -1,0 +1,192 @@
+get-review-section:
+  get:
+    tags: ["13 — CMS — Reviews"]
+    summary: Get review section
+    description: Returns the testimonial review section with its associated reviews.
+    responses:
+      "200":
+        description: Review section fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-reviews.yaml#/ReviewSection"
+create-review-section:
+  post:
+    tags: ["13 — CMS — Reviews"]
+    summary: Create review section (Admin only)
+    description: Creates the testimonial review section header.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/cms-reviews.yaml#/CreateReviewSectionInput"
+    responses:
+      "201":
+        description: Review section created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-reviews.yaml#/ReviewSection"
+      "409":
+        description: Review section already exists
+update-review-section:
+  put:
+    tags: ["13 — CMS — Reviews"]
+    summary: Update review section (Admin only)
+    description: Updates the testimonial review section header.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Review section ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/cms-reviews.yaml#/UpdateReviewSectionInput"
+    responses:
+      "200":
+        description: Review section updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-reviews.yaml#/ReviewSection"
+      "404":
+        description: Review section not found
+create-review:
+  post:
+    tags: ["13 — CMS — Reviews"]
+    summary: Create review (Admin only)
+    description: Creates a new testimonial review under the review section. Supports optional picture upload (multipart/form-data).
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [name, position, reviewDate, review, ratingCount]
+            properties:
+              name:
+                type: string
+                description: Reviewer name
+              position:
+                type: string
+                description: Reviewer position/title
+              reviewDate:
+                type: string
+                description: Review date string
+              review:
+                type: string
+                description: Review content
+              ratingCount:
+                type: string
+                description: Rating stars (e.g. "5")
+              picture:
+                type: string
+                format: binary
+                description: Reviewer picture (jpg, png, webp; max 5MB)
+    responses:
+      "201":
+        description: Review created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-reviews.yaml#/Review"
+update-review:
+  put:
+    tags: ["13 — CMS — Reviews"]
+    summary: Update review (Admin only)
+    description: Updates a testimonial review by ID.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Review ID
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Reviewer name
+              position:
+                type: string
+                description: Reviewer position/title
+              reviewDate:
+                type: string
+                description: Review date string
+              review:
+                type: string
+                description: Review content
+              ratingCount:
+                type: string
+                description: Rating stars
+              picture:
+                type: string
+                format: binary
+                description: New reviewer picture
+    responses:
+      "200":
+        description: Review updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-reviews.yaml#/Review"
+      "404":
+        description: Review not found
+delete-review:
+  delete:
+    tags: ["13 — CMS — Reviews"]
+    summary: Delete review (Admin only)
+    description: Deletes a testimonial review by ID.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Review ID
+    responses:
+      "200":
+        description: Review deleted successfully
+      "404":
+        description: Review not found

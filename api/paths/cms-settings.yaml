@@ -1,0 +1,186 @@
+gt-site-settings:
+  get:
+    tags: ["12 — CMS — Site Settings"]
+    summary: Get site settings
+    description: Returns the site-wide settings.
+    responses:
+      "200":
+        description: Site settings fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-settings.yaml#/SiteSettings"
+create-site-settings:
+  post:
+    tags: ["12 — CMS — Site Settings"]
+    summary: Create site settings (Admin only)
+    description: Creates the site-wide settings. Only one record can exist.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/cms-settings.yaml#/CreateSiteSettingsInput"
+    responses:
+      "201":
+        description: Site settings created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-settings.yaml#/SiteSettings"
+      "409":
+        description: Site settings already exist
+update-site-settings:
+  put:
+    tags: ["12 — CMS — Site Settings"]
+    summary: Update site settings (Admin only)
+    description: Updates site settings by ID.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Site settings ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/cms-settings.yaml#/UpdateSiteSettingsInput"
+    responses:
+      "200":
+        description: Site settings updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-settings.yaml#/SiteSettings"
+      "404":
+        description: Site settings not found
+create-social-link:
+  post:
+    tags: ["12 — CMS — Site Settings"]
+    summary: Create social link (Admin only)
+    description: Creates a new social media link.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [socialLink]
+            properties:
+              socialLink:
+                type: string
+                description: Social media URL
+              icon:
+                type: string
+                format: binary
+                description: Social icon image
+    responses:
+      "201":
+        description: Social link created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-settings.yaml#/SocialLink"
+update-social-link:
+  put:
+    tags: ["12 — CMS — Site Settings"]
+    summary: Update social link (Admin only)
+    description: Updates a social media link by ID.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Social link ID
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              socialLink:
+                type: string
+                description: Updated social media URL
+              icon:
+                type: string
+                format: binary
+                description: New social icon image
+    responses:
+      "200":
+        description: Social link updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-settings.yaml#/SocialLink"
+      "404":
+        description: Social link not found
+delete-social-link:
+  delete:
+    tags: ["12 — CMS — Site Settings"]
+    summary: Delete social link (Admin only)
+    description: Deletes a social media link by ID.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Social link ID
+    responses:
+      "200":
+        description: Social link deleted successfully
+      "404":
+        description: Social link not found
+get-social-links:
+  get:
+    tags: ["12 — CMS — Site Settings"]
+    summary: Get all social links
+    description: Returns all social media links.
+    responses:
+      "200":
+        description: Social links fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: "../components/schemas/cms-settings.yaml#/SocialLink"

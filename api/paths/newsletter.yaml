@@ -1,0 +1,28 @@
+subscribe-unsubscribe-newsletter:
+  post:
+    tags: ["15 — Newsletter"]
+    summary: Subscribe or unsubscribe from newsletter (Public)
+    description: Subscribes or unsubscribes an email address to/from the newsletter. If the email is not yet subscribed, it will be added. If already subscribed, it will be removed (toggle behavior).
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/newsletter.yaml#/NewsLetterInput"
+    responses:
+      "200":
+        description: Subscription status changed successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: successfully subscribed newsletter.
+      "400":
+        description: Validation error

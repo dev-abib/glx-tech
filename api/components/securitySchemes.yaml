@@ -1,0 +1,10 @@
+bearerAuth:
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: "Enter your JWT access token. Can be obtained via login/register endpoints."
+cookieAuth:
+  type: apiKey
+  in: cookie
+  name: accessToken
+  description: "Alternative: JWT access token sent as an 'accessToken' cookie."

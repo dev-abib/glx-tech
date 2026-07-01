@@ -1,0 +1,91 @@
+openapi: "3.0.0"
+info:
+  description: |
+    ## GLX-Tech Backend API
+
+    A comprehensive backend API built with **Express 5**, **TypeScript**, **Prisma (PostgreSQL)**, and **Zod** validation.
+
+    ### Authentication
+
+    Most endpoints require authentication via **JWT Bearer tokens**.
+
+    | Role | Description |
+    |------|-------------|
+    | `user` | Regular authenticated user |
+    | `seller` | Seller account with additional privileges |
+    | `admin` | Admin-level access |
+    | `super_admin` | Full system access |
+
+    **How to authenticate:**
+    1. Register or login to receive `accessToken` and `refreshToken`
+    2. Include the access token in the `Authorization` header: `Bearer <token>`
+    3. Alternatively, the token can be sent as an `accessToken` cookie
+
+    ### Response Format
+
+    All API responses follow a consistent structure:
+
+    ```json
+    {
+      "statusCode": 200,
+      "success": true,
+      "message": "Success message",
+      "data": { ... }
+    }
+    ```
+
+    Error responses:
+    ```json
+    {
+      "statusCode": 400,
+      "success": false,
+      "message": "Error description"
+    }
+    ```
+
+    ### Base URL
+
+    `/api/v1`
+
+    ### Health Check `GET /health` — Returns a detailed system report with server status, database connectivity, uptime, and memory usage.
+
+tags:
+  - name: "01 — Health"
+    description: "Health check endpoint"
+  - name: "02 — Users — Authentication"
+    description: "Public user endpoints — registration, login, email verification, password reset, token refresh"
+  - name: "03 — Users — Profile"
+    description: "Endpoints for authenticated user profile management (get/update profile, change password, logout)"
+  - name: "04 — Users — Role"
+    description: "Role switching between user and seller"
+  - name: "05 — Users — Admin"
+    description: "Admin-only user management endpoints"
+  - name: "06 — Admin — Authentication"
+    description: "Public admin authentication endpoints"
+  - name: "07 — Admin — Profile"
+    description: "Endpoints for authenticated admin/super_admin profile and user management (get/update profile, change password, get/delete users by ID)"
+  - name: "08 — Admin — Super Admin"
+    description: "Super admin exclusive endpoints (create/update/delete admins, list all admins and users)"
+  - name: "09 — CMS — Hero & Services"
+    description: "Homepage hero section and service management"
+  - name: "10 — CMS — Contact"
+    description: "Contact inquiry management"
+  - name: "11 — CMS — About Us"
+    description: "About Us section management"
+  - name: "12 — CMS — Site Settings"
+    description: "Site-wide settings (title, contact info) and social media link management"
+  - name: "13 — CMS — Reviews"
+    description: "Testimonial review section management (section header + individual reviews with ratings and pictures)"
+  - name: "14 — Listings & Reviews"
+    description: "Seller listings (CRUD) and user reviews for listings"
+  - name: "15 — Newsletter"
+    description: "Public newsletter subscription — subscribe and unsubscribe via email"
+
+paths:
+  $ref: "./paths/index.yaml"
+
+components:
+  securitySchemes:
+    $ref: "./components/securitySchemes.yaml"
+  schemas:
+    $ref: "./components/schemas/index.yaml"

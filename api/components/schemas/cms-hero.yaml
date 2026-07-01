@@ -1,0 +1,106 @@
+Hero:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    title:
+      type: string
+      nullable: true
+      example: Welcome to GLX-Tech
+    sub_title:
+      type: string
+      nullable: true
+      example: Your Digital Solution Partner
+    highlighted_txt:
+      type: string
+      nullable: true
+      example: Innovation
+    services:
+      type: array
+      items:
+        $ref: "./cms-hero.yaml#/Service"
+CreateHeroInput:
+  type: object
+  properties:
+    title:
+      type: string
+      example: Welcome to GLX-Tech
+      maxLength: 200
+    sub_title:
+      type: string
+      example: Your Digital Solution Partner
+      maxLength: 300
+    highlighted_txt:
+      type: string
+      example: Innovation
+      maxLength: 200
+UpdateHeroInput:
+  type: object
+  properties:
+    title:
+      type: string
+      example: Updated Title
+      maxLength: 200
+    sub_title:
+      type: string
+      example: Updated Subtitle
+      maxLength: 300
+    highlighted_txt:
+      type: string
+      example: Excellence
+      maxLength: 200
+Service:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    name:
+      type: string
+      nullable: true
+      example: Web Development
+    description:
+      type: string
+      nullable: true
+      example: We build modern web applications
+    icon:
+      type: string
+      nullable: true
+      example: https://res.cloudinary.com/...
+    iconPublicId:
+      type: string
+      example: cms/services/abc123
+    heroId:
+      type: string
+      nullable: true
+      example: uuid
+CreateServiceInput:
+  type: object
+  required: [name]
+  properties:
+    name:
+      type: string
+      example: Web Development
+      maxLength: 100
+    description:
+      type: string
+      example: We build modern web applications
+      maxLength: 500
+    icon:
+      type: string
+      example: https://example.com/icon.svg
+UpdateServiceInput:
+  type: object
+  properties:
+    name:
+      type: string
+      example: Mobile Development
+      maxLength: 100
+    description:
+      type: string
+      example: iOS & Android apps
+      maxLength: 500
+    icon:
+      type: string
+      example: https://example.com/new-icon.svg

@@ -1,0 +1,55 @@
+login:
+  post:
+    tags: ["06 — Admin — Authentication"]
+    summary: Admin login
+    description: Authenticates an admin or super_admin user and returns access/refresh tokens.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/admin.yaml#/AdminLoginInput"
+    responses:
+      "200":
+        description: Admin logged in successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/admin.yaml#/AdminLoginResponse"
+      "401":
+        description: Invalid credentials or account not verified
+      "403":
+        description: Access denied
+refresh-token:
+  post:
+    tags: ["06 — Admin — Authentication"]
+    summary: Admin refresh token
+    description: Exchanges a valid admin refresh token for a new access/refresh token pair.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/auth.yaml#/RefreshTokenInput"
+    responses:
+      "200":
+        description: Token refreshed successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        accessToken:
+                          type: string
+                        refreshToken:
+                          type: string
+      "401":
+        description: Invalid or expired refresh token

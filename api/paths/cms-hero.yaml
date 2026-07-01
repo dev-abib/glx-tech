@@ -1,0 +1,212 @@
+get-hero:
+  get:
+    tags: ["09 — CMS — Hero & Services"]
+    summary: Get home hero section
+    description: Returns the homepage hero section with its associated services.
+    responses:
+      "200":
+        description: Home hero section fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      nullable: true
+                      allOf:
+                        - $ref: "../components/schemas/cms-hero.yaml#/Hero"
+create-hero:
+  post:
+    tags: ["09 — CMS — Hero & Services"]
+    summary: Create hero section (Admin only)
+    description: Creates the homepage hero section. Only one hero section can exist.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/cms-hero.yaml#/CreateHeroInput"
+    responses:
+      "201":
+        description: Home hero section created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-hero.yaml#/Hero"
+      "409":
+        description: Hero section already exists
+update-hero:
+  put:
+    tags: ["09 — CMS — Hero & Services"]
+    summary: Update hero section (Admin only)
+    description: Updates an existing hero section by ID.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Hero ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/cms-hero.yaml#/UpdateHeroInput"
+    responses:
+      "200":
+        description: Home hero section updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-hero.yaml#/Hero"
+      "404":
+        description: Hero not found
+get-services:
+  get:
+    tags: ["09 — CMS — Hero & Services"]
+    summary: Get services by hero
+    description: Returns all services associated with a hero section.
+    parameters:
+      - name: heroId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Hero ID
+    responses:
+      "200":
+        description: Services fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: "../components/schemas/cms-hero.yaml#/Service"
+      "404":
+        description: Hero not found
+create-service:
+  post:
+    tags: ["09 — CMS — Hero & Services"]
+    summary: Create service (Admin only)
+    description: Creates a new service under a hero section. Supports optional icon upload (multipart/form-data).
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: heroId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Hero ID
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+                description: Service name
+              description:
+                type: string
+                description: Service description
+              icon:
+                type: string
+                format: binary
+                description: Service icon image (jpg, png, webp; max 5MB)
+    responses:
+      "201":
+        description: Service created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-hero.yaml#/Service"
+      "404":
+        description: Hero not found
+update-service:
+  put:
+    tags: ["09 — CMS — Hero & Services"]
+    summary: Update service (Admin only)
+    description: Updates a service by ID. Supports optional icon upload (multipart/form-data).
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: serviceId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Service ID
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Service name
+              description:
+                type: string
+                description: Service description
+              icon:
+                type: string
+                format: binary
+                description: New service icon image
+    responses:
+      "200":
+        description: Service updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-hero.yaml#/Service"
+      "404":
+        description: Service not found
+delete-service:
+  delete:
+    tags: ["09 — CMS — Hero & Services"]
+    summary: Delete service (Admin only)
+    description: Deletes a service by ID.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: serviceId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Service ID
+    responses:
+      "200":
+        description: Service deleted successfully
+      "404":
+        description: Service not found

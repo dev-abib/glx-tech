@@ -1,0 +1,9 @@
+NewsLetterInput:
+  type: object
+  required: [email]
+  properties:
+    email:
+      type: string
+      format: email
+      example: john@example.com
+      description: Email address to subscribe or unsubscribe

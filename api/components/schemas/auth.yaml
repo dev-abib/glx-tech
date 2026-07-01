@@ -1,0 +1,110 @@
+CreateUserInput:
+  type: object
+  required: [name, email, password, confirmPassword, phone]
+  properties:
+    name:
+      type: string
+      example: John Doe
+      minLength: 3
+      maxLength: 100
+    email:
+      type: string
+      format: email
+      example: john@example.com
+    password:
+      type: string
+      format: password
+      example: P@ssw0rd!
+      minLength: 8
+    confirmPassword:
+      type: string
+      format: password
+      example: P@ssw0rd!
+    phone:
+      type: string
+      example: "+1234567890"
+VerifyUserInput:
+  type: object
+  required: [email, otp]
+  properties:
+    email:
+      type: string
+      format: email
+      example: john@example.com
+    otp:
+      type: string
+      example: "1234"
+      minLength: 4
+      maxLength: 4
+LoginUserInput:
+  type: object
+  required: [email, password]
+  properties:
+    email:
+      type: string
+      format: email
+      example: john@example.com
+    password:
+      type: string
+      format: password
+      example: P@ssw0rd!
+LoginResponse:
+  type: object
+  properties:
+    token:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIs...
+        refreshToken:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIs...
+    user:
+      type: object
+      properties:
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          example: john@example.com
+        avatar:
+          type: string
+          nullable: true
+          example: https://res.cloudinary.com/...
+RefreshTokenInput:
+  type: object
+  required: [refreshToken]
+  properties:
+    refreshToken:
+      type: string
+      example: eyJhbGciOiJIUzI1NiIs...
+ForgotPasswordInput:
+  type: object
+  required: [email]
+  properties:
+    email:
+      type: string
+      format: email
+      example: john@example.com
+ResendOtpInput:
+  type: object
+  required: [email]
+  properties:
+    email:
+      type: string
+      format: email
+      example: john@example.com
+ResetPasswordInput:
+  type: object
+  required: [password, confirmPassword]
+  properties:
+    password:
+      type: string
+      format: password
+      example: NewP@ss1!
+    confirmPassword:
+      type: string
+      format: password
+      example: NewP@ss1!

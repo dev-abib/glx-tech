@@ -1,0 +1,112 @@
+SystemReport:
+  type: object
+  properties:
+    status:
+      type: string
+      enum: [healthy]
+      example: healthy
+    version:
+      type: string
+      example: "1.0.0"
+    environment:
+      type: string
+      example: development
+      enum: [development, production]
+    uptime:
+      type: object
+      properties:
+        seconds:
+          type: integer
+          example: 3600
+        human:
+          type: string
+          example: "1h 0m 0s"
+    timestamp:
+      type: string
+      format: date-time
+      example: "2026-06-24T07:00:00.000Z"
+    node:
+      type: object
+      properties:
+        version:
+          type: string
+          example: v25.9.3
+        memory:
+          type: object
+          properties:
+            rss:
+              type: string
+              example: "45.23 MB"
+            heapTotal:
+              type: string
+              example: "30.12 MB"
+            heapUsed:
+              type: string
+              example: "20.45 MB"
+            external:
+              type: string
+              example: "5.67 MB"
+    api:
+      type: object
+      properties:
+        name:
+          type: string
+          example: GLX-Tech
+        version:
+          type: string
+          example: "1.0.0"
+        baseUrl:
+          type: string
+          example: /api/v1
+    database:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [connected, disconnected]
+          example: connected
+        provider:
+          type: string
+          example: PostgreSQL (Prisma)
+ApiResponse:
+  type: object
+  properties:
+    statusCode:
+      type: integer
+      example: 200
+    success:
+      type: boolean
+      example: true
+    message:
+      type: string
+      example: Operation successful
+    data:
+      type: object
+      nullable: true
+ApiError:
+  type: object
+  properties:
+    statusCode:
+      type: integer
+      example: 400
+    success:
+      type: boolean
+      example: false
+    message:
+      type: string
+      example: Validation error
+Pagination:
+  type: object
+  properties:
+    page:
+      type: integer
+      example: 1
+    limit:
+      type: integer
+      example: 10
+    total:
+      type: integer
+      example: 100
+    totalPages:
+      type: integer
+      example: 10

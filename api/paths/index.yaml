@@ -1,0 +1,170 @@
+# Paths index — aggregate $ref pointers for all endpoints
+# Used by openapi.yaml for standalone Redocly CLI bundling
+# Each key is the HTTP path; each $ref points to the fragment in the individual path YAML
+
+/health:
+  $ref: "./health.yaml#/health"
+
+# ── Users — Authentication ──────────────────────────────────────────
+/users/create-user:
+  $ref: "./users-auth.yaml#/create-user"
+/users/verify-user:
+  $ref: "./users-auth.yaml#/verify-user"
+/users/login-user:
+  $ref: "./users-auth.yaml#/login-user"
+/users/resend-otp:
+  $ref: "./users-auth.yaml#/resend-otp"
+/users/forgot-password:
+  $ref: "./users-auth.yaml#/forgot-password"
+/users/verify-reset-otp:
+  $ref: "./users-auth.yaml#/verify-reset-otp"
+/users/reset-pass:
+  $ref: "./users-auth.yaml#/reset-pass"
+/users/refresh-token:
+  $ref: "./users-auth.yaml#/refresh-token"
+
+# ── Users — Profile ─────────────────────────────────────────────────
+/users/change-password:
+  $ref: "./users-profile.yaml#/change-password"
+/users/get-me:
+  $ref: "./users-profile.yaml#/get-me"
+/users/update-me:
+  $ref: "./users-profile.yaml#/update-me"
+/users/delete-me:
+  $ref: "./users-profile.yaml#/delete-me"
+/users/logout:
+  $ref: "./users-profile.yaml#/logout"
+
+# ── Users — Role ────────────────────────────────────────────────────
+/users/update-as-seller:
+  $ref: "./users-role.yaml#/update-as-seller"
+/users/switch-role:
+  $ref: "./users-role.yaml#/switch-role"
+
+# ── Users — Admin ───────────────────────────────────────────────────
+/users/gt-all-users:
+  $ref: "./users-admin.yaml#/gt-all-users"
+
+# ── Admin — Authentication ──────────────────────────────────────────
+/admin/login:
+  $ref: "./admin-auth.yaml#/login"
+/admin/refresh-token:
+  $ref: "./admin-auth.yaml#/refresh-token"
+
+# ── Admin — Profile ─────────────────────────────────────────────────
+/admin/get-me:
+  $ref: "./admin-profile.yaml#/get-me"
+/admin/update-me:
+  $ref: "./admin-profile.yaml#/update-me"
+/admin/change-password:
+  $ref: "./admin-profile.yaml#/change-password"
+/admin/get-user/{id}:
+  $ref: "./admin-profile.yaml#/get-user"
+/admin/delete-user/{id}:
+  $ref: "./admin-profile.yaml#/delete-user"
+
+# ── Admin — Super Admin ─────────────────────────────────────────────
+/admin/create-admin:
+  $ref: "./admin-super.yaml#/create-admin"
+/admin/gt-all-users:
+  $ref: "./admin-super.yaml#/gt-all-users"
+/admin/gt-all-admins:
+  $ref: "./admin-super.yaml#/gt-all-admins"
+/admin/delete-admin/{id}:
+  $ref: "./admin-super.yaml#/delete-admin"
+/admin/update-admin/{id}:
+  $ref: "./admin-super.yaml#/update-admin"
+
+# ── CMS — Hero & Services ───────────────────────────────────────────
+/cms/hero:
+  $ref: "./cms-hero.yaml#/get-hero"
+/cms/create-hero:
+  $ref: "./cms-hero.yaml#/create-hero"
+/cms/update-hero/{id}:
+  $ref: "./cms-hero.yaml#/update-hero"
+/cms/hero/{heroId}/services:
+  $ref: "./cms-hero.yaml#/get-services"
+/cms/hero/{heroId}/create-service:
+  $ref: "./cms-hero.yaml#/create-service"
+/cms/update-service/{serviceId}:
+  $ref: "./cms-hero.yaml#/update-service"
+/cms/delete-service/{serviceId}:
+  $ref: "./cms-hero.yaml#/delete-service"
+
+# ── CMS — Contact ───────────────────────────────────────────────────
+/cms/submit-inquiry:
+  $ref: "./cms-contact.yaml#/submit-inquiry"
+/cms/gt-all-inquiries:
+  $ref: "./cms-contact.yaml#/gt-all-inquiries"
+/cms/get-inquiry-stats:
+  $ref: "./cms-contact.yaml#/get-inquiry-stats"
+/cms/get-inquiry/{id}:
+  $ref: "./cms-contact.yaml#/get-inquiry"
+/cms/mark-inquiry-read/{id}:
+  $ref: "./cms-contact.yaml#/mark-inquiry-read"
+/cms/reply-inquiry/{id}:
+  $ref: "./cms-contact.yaml#/reply-inquiry"
+/cms/delete-inquiry/{id}:
+  $ref: "./cms-contact.yaml#/delete-inquiry"
+
+# ── CMS — About Us ──────────────────────────────────────────────────
+/cms/get-about:
+  $ref: "./cms-about.yaml#/get-about"
+/cms/create-about:
+  $ref: "./cms-about.yaml#/create-about"
+/cms/update-about/{id}:
+  $ref: "./cms-about.yaml#/update-about"
+/cms/delete-images:
+  $ref: "./cms-about.yaml#/delete-images"
+
+# ── CMS — Site Settings ─────────────────────────────────────────────
+/cms/gt-site-settings:
+  $ref: "./cms-settings.yaml#/gt-site-settings"
+/cms/create-site-settings:
+  $ref: "./cms-settings.yaml#/create-site-settings"
+/cms/update-site-settings/{id}:
+  $ref: "./cms-settings.yaml#/update-site-settings"
+/cms/create-social-link:
+  $ref: "./cms-settings.yaml#/create-social-link"
+/cms/update-social-link/{id}:
+  $ref: "./cms-settings.yaml#/update-social-link"
+/cms/delete-social-link/{id}:
+  $ref: "./cms-settings.yaml#/delete-social-link"
+/cms/get-social-links:
+  $ref: "./cms-settings.yaml#/get-social-links"
+
+# ── CMS — Reviews ───────────────────────────────────────────────────
+/cms/get-review-section:
+  $ref: "./cms-reviews.yaml#/get-review-section"
+/cms/create-review-section:
+  $ref: "./cms-reviews.yaml#/create-review-section"
+/cms/update-review-section/{id}:
+  $ref: "./cms-reviews.yaml#/update-review-section"
+/cms/create-review:
+  $ref: "./cms-reviews.yaml#/create-review"
+/cms/update-review/{id}:
+  $ref: "./cms-reviews.yaml#/update-review"
+/cms/delete-review/{id}:
+  $ref: "./cms-reviews.yaml#/delete-review"
+
+# ── Listings & Reviews ──────────────────────────────────────────────
+/listings/create-listing:
+  $ref: "./listings.yaml#/create-listing"
+/listings/get-all-listings:
+  $ref: "./listings.yaml#/get-all-listings"
+/listings/get-listing/{slug}:
+  $ref: "./listings.yaml#/get-listing"
+/listings/update-listing/{id}:
+  $ref: "./listings.yaml#/update-listing"
+/listings/delete-listing/{id}:
+  $ref: "./listings.yaml#/delete-listing"
+/listings/create-review/{listingId}:
+  $ref: "./listings.yaml#/create-review"
+/listings/update-review/{listingId}/{reviewId}:
+  $ref: "./listings.yaml#/update-review"
+/listings/delete-review/{listingId}/{reviewId}:
+  $ref: "./listings.yaml#/delete-review"
+
+# ── Newsletter ──────────────────────────────────────────────────────
+/newsletter/subscribe-unsubscribe-newsletter:
+  $ref: "./newsletter.yaml#/subscribe-unsubscribe-newsletter"

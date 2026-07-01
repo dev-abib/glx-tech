@@ -1,0 +1,26 @@
+health:
+  get:
+    tags: ["01 — Health"]
+    summary: System health report
+    description: Returns a detailed system health report including server status, database connectivity, uptime, Node.js version, and memory usage.
+    responses:
+      "200":
+        description: System is healthy
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/common.yaml#/SystemReport"
+      "503":
+        description: System is unhealthy (e.g., database disconnected)
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/common.yaml#/SystemReport"

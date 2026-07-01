@@ -1,0 +1,108 @@
+change-password:
+  post:
+    tags: ["03 — Users — Profile"]
+    summary: Change password
+    description: Changes the authenticated user's password.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "../components/schemas/user.yaml#/ChangePasswordInput"
+    responses:
+      "201":
+        description: Password changed successfully
+      "401":
+        description: Invalid old password
+get-me:
+  get:
+    tags: ["03 — Users — Profile"]
+    summary: Get current user profile
+    description: Returns the profile of the currently authenticated user.
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Profile fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/user.yaml#/SafeUser"
+      "401":
+        description: Unauthorized
+update-me:
+  put:
+    tags: ["03 — Users — Profile"]
+    summary: Update user profile
+    description: Updates the authenticated user's profile. Supports optional avatar upload (multipart/form-data).
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: User's full name
+              email:
+                type: string
+                format: email
+                description: New email address
+              phone:
+                type: string
+                description: Phone number
+              address:
+                type: string
+                description: Address
+              avatar:
+                type: string
+                format: binary
+                description: Avatar image (jpg, png, webp; max 5MB)
+    responses:
+      "200":
+        description: Profile updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/user.yaml#/SafeUser"
+      "400":
+        description: Validation error
+      "401":
+        description: Unauthorized
+delete-me:
+  delete:
+    tags: ["03 — Users — Profile"]
+    summary: Delete user account
+    description: Permanently deletes the authenticated user's account.
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: User deleted successfully
+      "401":
+        description: Unauthorized
+logout:
+  post:
+    tags: ["03 — Users — Profile"]
+    summary: Logout user
+    description: Logs out the authenticated user by clearing their stored tokens.
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Logged out successfully
+      "401":
+        description: Unauthorized

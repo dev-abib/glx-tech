@@ -1,0 +1,251 @@
+Listing:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    userId:
+      type: string
+      example: uuid
+    title:
+      type: string
+      example: Professional Web Development
+    slug:
+      type: string
+      example: professional-web-development
+    serviceId:
+      type: string
+      example: uuid
+    description:
+      type: string
+      example: We build modern web applications...
+    address:
+      type: string
+      example: 123 Tech Street
+    media:
+      type: array
+      items:
+        type: object
+        properties:
+          url:
+            type: string
+            example: https://res.cloudinary.com/...
+          publicId:
+            type: string
+            example: listings/abc123
+    days:
+      type: array
+      items:
+        type: string
+      example: [Monday, Tuesday]
+    weekend:
+      type: array
+      items:
+        type: string
+      example: [Saturday, Sunday]
+    timeSlot:
+      type: array
+      items:
+        type: string
+      example: ["09:00", "10:00"]
+    basePrice:
+      type: string
+      example: "500"
+    hourlyPrice:
+      type: string
+      example: "50"
+    dailyPrice:
+      type: string
+      example: "200"
+    estimatedDuration:
+      type: string
+      example: 2 weeks
+    latitude:
+      type: number
+      example: 40.7128
+    longitude:
+      type: number
+      example: -74.006
+    isAvailable:
+      type: boolean
+      example: true
+    avgRating:
+      type: number
+      example: 4.5
+      description: Average user rating (0 if no reviews)
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+CreateListingInput:
+  type: object
+  required:
+    - title
+    - slug
+    - serviceId
+    - description
+    - address
+    - days
+    - weekend
+    - timeSlot
+    - basePrice
+    - hourlyPrice
+    - dailyPrice
+    - estimatedDuration
+    - isAvailable
+  properties:
+    title:
+      type: string
+      example: Professional Web Development
+    slug:
+      type: string
+      example: professional-web-development
+    serviceId:
+      type: string
+      example: uuid
+    description:
+      type: string
+      example: We build modern web applications...
+    address:
+      type: string
+      example: 123 Tech Street
+    days:
+      type: array
+      items:
+        type: string
+      example: [Monday, Tuesday]
+    weekend:
+      type: array
+      items:
+        type: string
+      example: [Saturday, Sunday]
+    timeSlot:
+      type: array
+      items:
+        type: string
+      example: ["09:00", "10:00"]
+    basePrice:
+      type: string
+      example: "500"
+    hourlyPrice:
+      type: string
+      example: "50"
+    dailyPrice:
+      type: string
+      example: "200"
+    estimatedDuration:
+      type: string
+      example: 2 weeks
+    isAvailable:
+      type: boolean
+      example: true
+UpdateListingInput:
+  type: object
+  properties:
+    title:
+      type: string
+      example: Updated Title
+    slug:
+      type: string
+      example: updated-slug
+    serviceId:
+      type: string
+      example: uuid
+    description:
+      type: string
+      example: Updated description...
+    address:
+      type: string
+      example: 456 New Street
+    days:
+      type: array
+      items:
+        type: string
+    weekend:
+      type: array
+      items:
+        type: string
+    timeSlot:
+      type: array
+      items:
+        type: string
+    basePrice:
+      type: string
+      example: "600"
+    hourlyPrice:
+      type: string
+      example: "60"
+    dailyPrice:
+      type: string
+      example: "250"
+    estimatedDuration:
+      type: string
+      example: 3 weeks
+    isAvailable:
+      type: boolean
+      example: true
+UserReview:
+  type: object
+  properties:
+    id:
+      type: string
+      example: uuid
+    userId:
+      type: string
+      example: uuid
+    listingId:
+      type: string
+      example: uuid
+    rating:
+      type: number
+      example: 4.5
+      minimum: 1
+      maximum: 5
+    review:
+      type: string
+      example: Great service! Highly recommended.
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+    user:
+      type: object
+      properties:
+        id:
+          type: string
+          example: uuid
+        name:
+          type: string
+          example: John Doe
+        avatar:
+          type: string
+          nullable: true
+CreateUserReviewInput:
+  type: object
+  required: [rating, review]
+  properties:
+    rating:
+      type: number
+      example: 4.5
+      minimum: 1
+      maximum: 5
+    review:
+      type: string
+      example: Great service! Highly recommended.
+      maxLength: 5000
+UpdateUserReviewInput:
+  type: object
+  properties:
+    rating:
+      type: number
+      example: 5
+      minimum: 1
+      maximum: 5
+    review:
+      type: string
+      example: Updated review text...
+      maxLength: 5000
