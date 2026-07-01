@@ -1,8 +1,8 @@
-subscribe-unsubscribe-newsletter:
+subscribe:
   post:
     tags: ["15 — Newsletter"]
-    summary: Subscribe or unsubscribe from newsletter (Public)
-    description: Subscribes or unsubscribes an email address to/from the newsletter. If the email is not yet subscribed, it will be added. If already subscribed, it will be removed (toggle behavior).
+    summary: Subscribe to the newsletter (Public)
+    description: Subscribes an email address to the newsletter.
     requestBody:
       required: true
       content:
@@ -11,7 +11,7 @@ subscribe-unsubscribe-newsletter:
             $ref: "../components/schemas/newsletter.yaml#/NewsLetterInput"
     responses:
       "200":
-        description: Subscription status changed successfully
+        description: Successfully subscribed
         content:
           application/json:
             schema:
@@ -23,6 +23,69 @@ subscribe-unsubscribe-newsletter:
                       properties:
                         message:
                           type: string
-                          example: successfully subscribed newsletter.
+                          example: Successfully subscribed to the newsletter!
       "400":
         description: Validation error
+      "429":
+        description: Too many requests (rate limited)
+
+unsubscribe:
+  get:
+    tags: ["15 — Newsletter"]
+    summary: Unsubscribe from newsletter — HTML page (Public)
+    description: >
+      Unsubscribes using a token from the email link. Returns an HTML confirmation page.
+      This is the endpoint linked in campaign email unsubscribe buttons.
+    parameters:
+      - in: query
+        name: token
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unsubscribe token received in the email
+    responses:
+      "200":
+        description: HTML confirmation page (unsubscribed successfully)
+        content:
+          text/html:
+            schema:
+              type: string
+              example: "<!DOCTYPE html><html>..."
+      "400":
+        description: Invalid or expired token — returns HTML error page
+        content:
+          text/html:
+            schema:
+              type: string
+  post:
+    tags: ["15 — Newsletter"]
+    summary: Unsubscribe from newsletter — programmatic (Public)
+    description: >
+      Programmatically unsubscribes using a token. Returns JSON response.
+      Accepts the token as a query parameter.
+    parameters:
+      - in: query
+        name: token
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: Unsubscribe token received in the email
+    responses:
+      "200":
+        description: Unsubscribed successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: You have been unsubscribed successfully.
+      "400":
+        description: Token is required or invalid

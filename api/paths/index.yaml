@@ -196,5 +196,15 @@
   $ref: "./admin-listings.yaml#/get-dashboard-trends"
 
 # ── Newsletter ──────────────────────────────────────────────────────
-/newsletter/subscribe-unsubscribe-newsletter:
-  $ref: "./newsletter.yaml#/subscribe-unsubscribe-newsletter"
+/newsletter/subscribe:
+  $ref: "./newsletter.yaml#/subscribe"
+/newsletter/unsubscribe:
+  $ref: "./newsletter.yaml#/unsubscribe"
+
+# ── Admin — Campaigns ────────────────────────────────────────────────
+/admin/campaigns:
+  $ref: "./admin-campaigns.yaml#/campaigns"
+/admin/campaigns/{id}/send:
+  $ref: "./admin-campaigns.yaml#/send-campaign"
+/admin/campaigns/subscriber-count:
+  $ref: "./admin-campaigns.yaml#/get-subscriber-count"

@@ -84,6 +84,8 @@ tags:
     description: "Admin read-only views for listings and user reviews"
   - name: "17 — Admin — Dashboard"
     description: "Admin dashboard trend data"
+  - name: "18 — Admin — Campaigns"
+    description: "Email campaign management — create, list, send campaigns, and view subscriber count"
 
 paths:
   $ref: "./paths/index.yaml"

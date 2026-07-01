@@ -54,6 +54,7 @@ S("cms-reviews.yaml", "Review"); S("cms-reviews.yaml", "CreateReviewInput"); S("
 S("listing.yaml", "Listing"); S("listing.yaml", "CreateListingInput"); S("listing.yaml", "UpdateListingInput");
 S("listing.yaml", "UserReview"); S("listing.yaml", "CreateUserReviewInput"); S("listing.yaml", "UpdateUserReviewInput");
 S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "UpdateUserAsSellerInput");
+S("admin-campaigns.yaml", "Campaign"); S("admin-campaigns.yaml", "CreateCampaignInput");
 
 const paths: Record<string, unknown> = {};
 // P(file, pathKey, fragmentName) — load fragmentName from YAML file and assign to pathKey in paths
@@ -154,7 +155,13 @@ P("admin-listings.yaml", "/admin/reviews", "get-all-reviews");
 P("admin-listings.yaml", "/admin/dashboard-trends", "get-dashboard-trends");
 
 // ── Newsletter ──────────────────────────────────────────────────────
-P("newsletter.yaml", "/newsletter/subscribe-unsubscribe-newsletter", "subscribe-unsubscribe-newsletter");
+P("newsletter.yaml", "/newsletter/subscribe", "subscribe");
+P("newsletter.yaml", "/newsletter/unsubscribe", "unsubscribe");
+
+// ── Admin — Campaigns ────────────────────────────────────────────────
+P("admin-campaigns.yaml", "/admin/campaigns", "campaigns");
+P("admin-campaigns.yaml", "/admin/campaigns/{id}/send", "send-campaign");
+P("admin-campaigns.yaml", "/admin/campaigns/subscriber-count", "get-subscriber-count");
 
 const infoDescription: string = ((openapiBase?.info as Record<string, unknown> | undefined)?.description as string) ?? '';
 

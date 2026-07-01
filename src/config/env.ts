@@ -34,6 +34,7 @@ export interface EnvConfig {
   readonly SITE_NAME: string;
   readonly SITE_URL: string;
   readonly APP_URL: string;
+  readonly FRONTEND_URL: string;
   readonly LOCATIONIQ_KEY: string;
 }
 
@@ -172,6 +173,7 @@ export const env = {
   SITE_NAME: process.env.SITE_NAME || "Verep",
   SITE_URL: process.env.SITE_URL || "#",
   APP_URL: process.env.APP_URL || "#",
+  FRONTEND_URL: process.env.FRONTEND_URL || process.env.APP_URL || "#",
   LOCATIONIQ_KEY: process.env.LOCATIONIQ_KEY || "#",
 } as const satisfies EnvConfig;
 

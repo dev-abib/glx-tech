@@ -1,0 +1,67 @@
+Campaign:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: Campaign ID
+    subject:
+      type: string
+      description: Email subject line
+    heading:
+      type: string
+      description: Email heading
+    bodyHtml:
+      type: string
+      description: HTML body of the campaign email
+    ctaText:
+      type: string
+      nullable: true
+      description: Call-to-action button text
+    ctaLink:
+      type: string
+      nullable: true
+      description: Call-to-action button URL
+    status:
+      type: string
+      enum: [draft, sending, sent]
+      description: Campaign status
+    sentAt:
+      type: string
+      format: date-time
+      nullable: true
+      description: When the campaign was sent
+    recipientCount:
+      type: integer
+      description: Number of recipients (only for sent campaigns)
+    createdAt:
+      type: string
+      format: date-time
+      description: When the campaign was created
+
+CreateCampaignInput:
+  type: object
+  required: [subject, heading, bodyHtml]
+  properties:
+    subject:
+      type: string
+      maxLength: 200
+      description: Email subject line
+    heading:
+      type: string
+      maxLength: 200
+      description: Email heading
+    bodyHtml:
+      type: string
+      description: HTML body of the campaign email
+    ctaText:
+      type: string
+      maxLength: 100
+      nullable: true
+      description: Call-to-action button text
+    ctaLink:
+      type: string
+      format: uri
+      maxLength: 500
+      nullable: true
+      description: Call-to-action button URL
