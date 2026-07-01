@@ -1,0 +1,225 @@
+get-all-listings:
+  get:
+    tags: ["16 — Admin — Listings & Reviews"]
+    summary: Get all listings (Admin view)
+    description: Returns a paginated list of all listings. Admin only.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Search keyword for title or description
+      - name: serviceId
+        in: query
+        schema:
+          type: string
+        description: Filter by service ID
+      - name: sortBy
+        in: query
+        schema:
+          type: string
+          default: createdAt
+        description: Sort field
+      - name: sortOrder
+        in: query
+        schema:
+          type: string
+          enum: [asc, desc]
+          default: desc
+        description: Sort order
+    responses:
+      "200":
+        description: Listings fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        listings:
+                          type: array
+                          items:
+                            $ref: "../components/schemas/listing.yaml#/Listing"
+                        pagination:
+                          $ref: "../components/schemas/common.yaml#/Pagination"
+      "401":
+        description: Unauthorized
+      "403":
+        description: Forbidden — Admin access required
+get-listing-by-slug:
+  get:
+    tags: ["16 — Admin — Listings & Reviews"]
+    summary: Get listing by slug (Admin view)
+    description: Returns a single listing by slug. Admin only.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing slug
+    responses:
+      "200":
+        description: Listing fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/listing.yaml#/Listing"
+      "401":
+        description: Unauthorized
+      "403":
+        description: Forbidden — Admin access required
+      "404":
+        description: Listing not found
+get-listing-reviews:
+  get:
+    tags: ["16 — Admin — Listings & Reviews"]
+    summary: Get reviews for a listing (Admin view)
+    description: Returns all reviews for a specific listing. Admin only.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing ID
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+    responses:
+      "200":
+        description: Reviews fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        reviews:
+                          type: array
+                          items:
+                            $ref: "../components/schemas/listing.yaml#/UserReview"
+                        pagination:
+                          $ref: "../components/schemas/common.yaml#/Pagination"
+      "401":
+        description: Unauthorized
+      "403":
+        description: Forbidden — Admin access required
+      "404":
+        description: Listing not found
+get-all-reviews:
+  get:
+    tags: ["16 — Admin — Listings & Reviews"]
+    summary: Get all reviews across all listings (Admin view)
+    description: Returns a paginated list of all user reviews across all listings. Admin only.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: Search keyword
+    responses:
+      "200":
+        description: Reviews fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        reviews:
+                          type: array
+                          items:
+                            $ref: "../components/schemas/listing.yaml#/UserReview"
+                        pagination:
+                          $ref: "../components/schemas/common.yaml#/Pagination"
+      "401":
+        description: Unauthorized
+      "403":
+        description: Forbidden — Admin access required
+get-dashboard-trends:
+  get:
+    tags: ["17 — Admin — Dashboard"]
+    summary: Get dashboard trends (Admin only)
+    description: Returns dashboard trend data for the admin panel.
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Dashboard trends fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        totalUsers:
+                          type: integer
+                        totalListings:
+                          type: integer
+                        totalReviews:
+                          type: integer
+                        totalInquiries:
+                          type: integer
+                        newUsersToday:
+                          type: integer
+                        newListingsToday:
+                          type: integer
+      "401":
+        description: Unauthorized
+      "403":
+        description: Forbidden — Admin access required

@@ -106,16 +106,30 @@ update-about:
                       $ref: "../components/schemas/cms-about.yaml#/AboutUs"
       "404":
         description: About Us section not found
-delete-images:
+delete-about-image:
   delete:
     tags: ["11 — CMS — About Us"]
-    summary: Delete About Us images (Admin only)
-    description: Deletes all images from the About Us section.
+    summary: Delete About Us image (Admin only)
+    description: Deletes a specific image (image1 or image2) from the About Us section by ID.
     security:
       - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: About Us ID
+      - name: image
+        in: query
+        required: true
+        schema:
+          type: string
+          enum: [image1, image2]
+        description: Which image to delete
     responses:
       "200":
-        description: About images deleted successfully
+        description: Image deleted successfully
         content:
           application/json:
             schema:
@@ -124,3 +138,7 @@ delete-images:
                 - properties:
                     data:
                       $ref: "../components/schemas/cms-about.yaml#/AboutUs"
+      "400":
+        description: Invalid image field
+      "404":
+        description: About Us section not found

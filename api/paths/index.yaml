@@ -114,37 +114,47 @@
   $ref: "./cms-about.yaml#/create-about"
 /cms/update-about/{id}:
   $ref: "./cms-about.yaml#/update-about"
-/cms/delete-images:
-  $ref: "./cms-about.yaml#/delete-images"
+/cms/delete-about-image/{id}:
+  $ref: "./cms-about.yaml#/delete-about-image"
 
 # ── CMS — Site Settings ─────────────────────────────────────────────
-/cms/gt-site-settings:
+/cms/site-settings:
   $ref: "./cms-settings.yaml#/gt-site-settings"
 /cms/create-site-settings:
   $ref: "./cms-settings.yaml#/create-site-settings"
 /cms/update-site-settings/{id}:
   $ref: "./cms-settings.yaml#/update-site-settings"
-/cms/create-social-link:
+/cms/site-settings/create-social:
   $ref: "./cms-settings.yaml#/create-social-link"
-/cms/update-social-link/{id}:
+/cms/site-settings/update-social/{socialId}:
   $ref: "./cms-settings.yaml#/update-social-link"
-/cms/delete-social-link/{id}:
+/cms/site-settings/delete-social/{socialId}:
   $ref: "./cms-settings.yaml#/delete-social-link"
-/cms/get-social-links:
+/cms/site-settings/socials:
   $ref: "./cms-settings.yaml#/get-social-links"
 
 # ── CMS — Reviews ───────────────────────────────────────────────────
-/cms/get-review-section:
+/cms/review/section:
   $ref: "./cms-reviews.yaml#/get-review-section"
-/cms/create-review-section:
+/cms/review/create-section:
   $ref: "./cms-reviews.yaml#/create-review-section"
-/cms/update-review-section/{id}:
+/cms/review/update-section/{id}:
   $ref: "./cms-reviews.yaml#/update-review-section"
 /cms/create-review:
   $ref: "./cms-reviews.yaml#/create-review"
 /cms/update-review/{id}:
   $ref: "./cms-reviews.yaml#/update-review"
-/cms/delete-review/{id}:
+/cms/review/delete-section/{id}:
+  $ref: "./cms-reviews.yaml#/delete-review-section"
+/cms/review/{sectionId}/reviews:
+  $ref: "./cms-reviews.yaml#/get-reviews"
+/cms/review/{reviewId}:
+  $ref: "./cms-reviews.yaml#/get-review"
+/cms/review/{sectionId}/create-review:
+  $ref: "./cms-reviews.yaml#/create-review"
+/cms/review/update-review/{reviewId}:
+  $ref: "./cms-reviews.yaml#/update-review"
+/cms/review/delete-review/{reviewId}:
   $ref: "./cms-reviews.yaml#/delete-review"
 
 # ── Listings & Reviews ──────────────────────────────────────────────
@@ -152,18 +162,38 @@
   $ref: "./listings.yaml#/create-listing"
 /listings/get-all-listings:
   $ref: "./listings.yaml#/get-all-listings"
-/listings/get-listing/{slug}:
+/listings/listing/{slug}:
   $ref: "./listings.yaml#/get-listing"
 /listings/update-listing/{id}:
   $ref: "./listings.yaml#/update-listing"
 /listings/delete-listing/{id}:
   $ref: "./listings.yaml#/delete-listing"
-/listings/create-review/{listingId}:
+/listings/listing/{slug}/related:
+  $ref: "./listings.yaml#/get-related-listings"
+/listings/my-listings:
+  $ref: "./listings.yaml#/get-my-listings"
+/listings/listing/{listingId}/reviews:
+  $ref: "./listings.yaml#/get-listing-reviews"
+/listings/review/{reviewId}:
+  $ref: "./listings.yaml#/get-review"
+/listings/listing/{listingId}/create-review:
   $ref: "./listings.yaml#/create-review"
-/listings/update-review/{listingId}/{reviewId}:
+/listings/update-review/{reviewId}:
   $ref: "./listings.yaml#/update-review"
-/listings/delete-review/{listingId}/{reviewId}:
+/listings/delete-review/{reviewId}:
   $ref: "./listings.yaml#/delete-review"
+
+# ── Admin — Listings, Reviews & Dashboard ───────────────────────────
+/admin/listings:
+  $ref: "./admin-listings.yaml#/get-all-listings"
+/admin/listings/listing/{slug}:
+  $ref: "./admin-listings.yaml#/get-listing-by-slug"
+/admin/listings/{listingId}/reviews:
+  $ref: "./admin-listings.yaml#/get-listing-reviews"
+/admin/reviews:
+  $ref: "./admin-listings.yaml#/get-all-reviews"
+/admin/dashboard-trends:
+  $ref: "./admin-listings.yaml#/get-dashboard-trends"
 
 # ── Newsletter ──────────────────────────────────────────────────────
 /newsletter/subscribe-unsubscribe-newsletter:

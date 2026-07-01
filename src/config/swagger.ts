@@ -114,31 +114,45 @@ P("cms-contact.yaml", "/cms/delete-inquiry/{id}", "delete-inquiry");
 P("cms-about.yaml", "/cms/get-about", "get-about");
 P("cms-about.yaml", "/cms/create-about", "create-about");
 P("cms-about.yaml", "/cms/update-about/{id}", "update-about");
-P("cms-about.yaml", "/cms/delete-images", "delete-images");
+P("cms-about.yaml", "/cms/delete-about-image/{id}", "delete-about-image");
 // ── CMS — Site Settings ─────────────────────────────────────────────
-P("cms-settings.yaml", "/cms/gt-site-settings", "gt-site-settings");
+P("cms-settings.yaml", "/cms/site-settings", "gt-site-settings");
 P("cms-settings.yaml", "/cms/create-site-settings", "create-site-settings");
 P("cms-settings.yaml", "/cms/update-site-settings/{id}", "update-site-settings");
-P("cms-settings.yaml", "/cms/create-social-link", "create-social-link");
-P("cms-settings.yaml", "/cms/update-social-link/{id}", "update-social-link");
-P("cms-settings.yaml", "/cms/delete-social-link/{id}", "delete-social-link");
-P("cms-settings.yaml", "/cms/get-social-links", "get-social-links");
+P("cms-settings.yaml", "/cms/site-settings/socials", "get-social-links");
+P("cms-settings.yaml", "/cms/site-settings/create-social", "create-social-link");
+P("cms-settings.yaml", "/cms/site-settings/update-social/{socialId}", "update-social-link");
+P("cms-settings.yaml", "/cms/site-settings/delete-social/{socialId}", "delete-social-link");
 // ── CMS — Reviews ───────────────────────────────────────────────────
-P("cms-reviews.yaml", "/cms/get-review-section", "get-review-section");
-P("cms-reviews.yaml", "/cms/create-review-section", "create-review-section");
-P("cms-reviews.yaml", "/cms/update-review-section/{id}", "update-review-section");
-P("cms-reviews.yaml", "/cms/create-review", "create-review");
-P("cms-reviews.yaml", "/cms/update-review/{id}", "update-review");
-P("cms-reviews.yaml", "/cms/delete-review/{id}", "delete-review");
+P("cms-reviews.yaml", "/cms/review/section", "get-review-section");
+P("cms-reviews.yaml", "/cms/review/create-section", "create-review-section");
+P("cms-reviews.yaml", "/cms/review/update-section/{id}", "update-review-section");
+P("cms-reviews.yaml", "/cms/review/delete-section/{id}", "delete-review-section");
+P("cms-reviews.yaml", "/cms/review/{sectionId}/reviews", "get-reviews");
+P("cms-reviews.yaml", "/cms/review/{reviewId}", "get-review");
+P("cms-reviews.yaml", "/cms/review/{sectionId}/create-review", "create-review");
+P("cms-reviews.yaml", "/cms/review/update-review/{reviewId}", "update-review");
+P("cms-reviews.yaml", "/cms/review/delete-review/{reviewId}", "delete-review");
 // ── Listings & Reviews ──────────────────────────────────────────────
 P("listings.yaml", "/listings/create-listing", "create-listing");
 P("listings.yaml", "/listings/get-all-listings", "get-all-listings");
-P("listings.yaml", "/listings/get-listing/{slug}", "get-listing");
+P("listings.yaml", "/listings/listing/{slug}", "get-listing");
+P("listings.yaml", "/listings/listing/{slug}/related", "get-related-listings");
+P("listings.yaml", "/listings/my-listings", "get-my-listings");
 P("listings.yaml", "/listings/update-listing/{id}", "update-listing");
 P("listings.yaml", "/listings/delete-listing/{id}", "delete-listing");
-P("listings.yaml", "/listings/create-review/{listingId}", "create-review");
-P("listings.yaml", "/listings/update-review/{listingId}/{reviewId}", "update-review");
-P("listings.yaml", "/listings/delete-review/{listingId}/{reviewId}", "delete-review");
+P("listings.yaml", "/listings/listing/{listingId}/reviews", "get-listing-reviews");
+P("listings.yaml", "/listings/review/{reviewId}", "get-review");
+P("listings.yaml", "/listings/listing/{listingId}/create-review", "create-review");
+P("listings.yaml", "/listings/update-review/{reviewId}", "update-review");
+P("listings.yaml", "/listings/delete-review/{reviewId}", "delete-review");
+// ── Admin — Listings, Reviews & Dashboard ───────────────────────────
+P("admin-listings.yaml", "/admin/listings", "get-all-listings");
+P("admin-listings.yaml", "/admin/listings/listing/{slug}", "get-listing-by-slug");
+P("admin-listings.yaml", "/admin/listings/{listingId}/reviews", "get-listing-reviews");
+P("admin-listings.yaml", "/admin/reviews", "get-all-reviews");
+P("admin-listings.yaml", "/admin/dashboard-trends", "get-dashboard-trends");
+
 // ── Newsletter ──────────────────────────────────────────────────────
 P("newsletter.yaml", "/newsletter/subscribe-unsubscribe-newsletter", "subscribe-unsubscribe-newsletter");
 

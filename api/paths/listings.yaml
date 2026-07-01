@@ -119,6 +119,16 @@ get-all-listings:
         schema:
           type: string
         description: Filter by service ID
+      - name: serviceName
+        in: query
+        schema:
+          type: string
+        description: Filter by service name
+      - name: address
+        in: query
+        schema:
+          type: string
+        description: Filter by address
       - name: minPrice
         in: query
         schema:
@@ -145,6 +155,30 @@ get-all-listings:
           type: number
           default: 10
         description: Search radius in km
+      - name: minRating
+        in: query
+        schema:
+          type: number
+        description: Minimum rating filter
+      - name: isAvailable
+        in: query
+        schema:
+          type: string
+          enum: ["true", "false"]
+        description: Filter by availability
+      - name: sortBy
+        in: query
+        schema:
+          type: string
+          default: createdAt
+        description: Sort field
+      - name: sortOrder
+        in: query
+        schema:
+          type: string
+          enum: [asc, desc]
+          default: desc
+        description: Sort order
     responses:
       "200":
         description: Listings fetched successfully
@@ -188,6 +222,101 @@ get-listing:
                       $ref: "../components/schemas/listing.yaml#/Listing"
       "404":
         description: Listing not found
+get-related-listings:
+  get:
+    tags: ["14 — Listings & Reviews"]
+    summary: Get related listings
+    description: Returns related listings by the same service type.
+    parameters:
+      - name: slug
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing slug
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 6
+          maximum: 50
+    responses:
+      "200":
+        description: Related listings fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        listings:
+                          type: array
+                          items:
+                            $ref: "../components/schemas/listing.yaml#/Listing"
+                        pagination:
+                          $ref: "../components/schemas/common.yaml#/Pagination"
+      "404":
+        description: Listing not found
+get-my-listings:
+  get:
+    tags: ["14 — Listings & Reviews"]
+    summary: Get my listings (Seller only)
+    description: Returns the authenticated seller's own listings.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+      - name: sortBy
+        in: query
+        schema:
+          type: string
+          default: createdAt
+        description: Sort field
+      - name: sortOrder
+        in: query
+        schema:
+          type: string
+          enum: [asc, desc]
+          default: desc
+        description: Sort order
+    responses:
+      "200":
+        description: My listings fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        listings:
+                          type: array
+                          items:
+                            $ref: "../components/schemas/listing.yaml#/Listing"
+                        pagination:
+                          $ref: "../components/schemas/common.yaml#/Pagination"
+      "401":
+        description: Unauthorized
 update-listing:
   put:
     tags: ["14 — Listings & Reviews"]
@@ -282,6 +411,74 @@ delete-listing:
         description: Forbidden — Not the listing owner
       "404":
         description: Listing not found
+get-listing-reviews:
+  get:
+    tags: ["14 — Listings & Reviews"]
+    summary: Get reviews for a listing (Public)
+    description: Returns all reviews for a specific listing.
+    parameters:
+      - name: listingId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing ID
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+    responses:
+      "200":
+        description: Reviews fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        reviews:
+                          type: array
+                          items:
+                            $ref: "../components/schemas/listing.yaml#/UserReview"
+                        pagination:
+                          $ref: "../components/schemas/common.yaml#/Pagination"
+      "404":
+        description: Listing not found
+get-review:
+  get:
+    tags: ["14 — Listings & Reviews"]
+    summary: Get review by ID (Public)
+    description: Returns a single review by its ID.
+    parameters:
+      - name: reviewId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Review ID
+    responses:
+      "200":
+        description: Review fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/listing.yaml#/UserReview"
+      "404":
+        description: Review not found
 create-review:
   post:
     tags: ["14 — Listings & Reviews"]
@@ -325,12 +522,6 @@ update-review:
     security:
       - bearerAuth: []
     parameters:
-      - name: listingId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Listing ID
       - name: reviewId
         in: path
         required: true
@@ -366,12 +557,6 @@ delete-review:
     security:
       - bearerAuth: []
     parameters:
-      - name: listingId
-        in: path
-        required: true
-        schema:
-          type: string
-        description: Listing ID
       - name: reviewId
         in: path
         required: true

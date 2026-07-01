@@ -73,13 +73,91 @@ update-review-section:
                       $ref: "../components/schemas/cms-reviews.yaml#/ReviewSection"
       "404":
         description: Review section not found
+delete-review-section:
+  delete:
+    tags: ["13 — CMS — Reviews"]
+    summary: Delete review section (Admin only)
+    description: Deletes a review section by ID.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Review section ID
+    responses:
+      "200":
+        description: Review section deleted successfully
+      "404":
+        description: Review section not found
+get-reviews:
+  get:
+    tags: ["13 — CMS — Reviews"]
+    summary: Get reviews by section
+    description: Returns all reviews associated with a review section.
+    parameters:
+      - name: sectionId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Review section ID
+    responses:
+      "200":
+        description: Reviews fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: "../components/schemas/cms-reviews.yaml#/Review"
+      "404":
+        description: Review section not found
+get-review:
+  get:
+    tags: ["13 — CMS — Reviews"]
+    summary: Get review by ID
+    description: Returns a single review by its ID.
+    parameters:
+      - name: reviewId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Review ID
+    responses:
+      "200":
+        description: Review fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "../components/schemas/cms-reviews.yaml#/Review"
+      "404":
+        description: Review not found
 create-review:
   post:
     tags: ["13 — CMS — Reviews"]
     summary: Create review (Admin only)
-    description: Creates a new testimonial review under the review section. Supports optional picture upload (multipart/form-data).
+    description: Creates a new testimonial review under a review section. Supports optional picture upload (multipart/form-data).
     security:
       - bearerAuth: []
+    parameters:
+      - name: sectionId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Review section ID
     requestBody:
       required: true
       content:
@@ -126,7 +204,7 @@ update-review:
     security:
       - bearerAuth: []
     parameters:
-      - name: id
+      - name: reviewId
         in: path
         required: true
         schema:
@@ -179,7 +257,7 @@ delete-review:
     security:
       - bearerAuth: []
     parameters:
-      - name: id
+      - name: reviewId
         in: path
         required: true
         schema:

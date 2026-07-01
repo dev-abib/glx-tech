@@ -80,6 +80,10 @@ tags:
     description: "Seller listings (CRUD) and user reviews for listings"
   - name: "15 — Newsletter"
     description: "Public newsletter subscription — subscribe and unsubscribe via email"
+  - name: "16 — Admin — Listings & Reviews"
+    description: "Admin read-only views for listings and user reviews"
+  - name: "17 — Admin — Dashboard"
+    description: "Admin dashboard trend data"
 
 paths:
   $ref: "./paths/index.yaml"
