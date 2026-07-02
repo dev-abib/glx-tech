@@ -23,8 +23,12 @@ submit-inquiry:
                       properties:
                         id:
                           type: string
+                          format: uuid
+                          description: Created inquiry ID
                         message:
                           type: string
+                          example: Inquiry submitted successfully
+                          description: Success confirmation message
       "400":
         description: Validation error
 gt-all-inquiries:

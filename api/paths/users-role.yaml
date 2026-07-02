@@ -52,13 +52,16 @@ switch-role:
                         accessToken:
                           type: string
                           example: eyJhbGciOiJIUzI1NiIs...
+                          description: New JWT access token with updated role claim
                         refreshToken:
                           type: string
                           example: eyJhbGciOiJIUzI1NiIs...
+                          description: New JWT refresh token with updated role claim
                         role:
                           type: string
                           enum: [user, seller]
                           example: seller
+                          description: The newly assigned role
       "400":
         description: Only users can switch between user and seller roles
       "401":

@@ -5,59 +5,78 @@ SystemReport:
       type: string
       enum: [healthy]
       example: healthy
+      description: Overall system health status
     version:
       type: string
       example: "1.0.0"
+      description: Application version number
     environment:
       type: string
       example: development
       enum: [development, production]
+      description: Current runtime environment
     uptime:
       type: object
       properties:
         seconds:
           type: integer
           example: 3600
+          description: Server uptime in seconds
         human:
           type: string
           example: "1h 0m 0s"
+          description: Server uptime in human-readable format
+      description: Server uptime information
     timestamp:
       type: string
       format: date-time
       example: "2026-06-24T07:00:00.000Z"
+      description: Timestamp of the health check
     node:
       type: object
       properties:
         version:
           type: string
           example: v25.9.3
+          description: Node.js runtime version
         memory:
           type: object
           properties:
             rss:
               type: string
               example: "45.23 MB"
+              description: Resident set size memory usage
             heapTotal:
               type: string
               example: "30.12 MB"
+              description: Total V8 heap memory allocated
             heapUsed:
               type: string
               example: "20.45 MB"
+              description: Used V8 heap memory
             external:
               type: string
               example: "5.67 MB"
+              description: External memory usage (C++ objects, etc.)
+          description: Process memory usage details
+      description: Node.js runtime information
     api:
       type: object
       properties:
         name:
           type: string
           example: GLX-Tech
+          description: API application name
         version:
           type: string
           example: "1.0.0"
+          description: API version number
         baseUrl:
           type: string
+          format: uri
           example: /api/v1
+          description: API base URL path
+      description: API application information
     database:
       type: object
       properties:
@@ -65,48 +84,65 @@ SystemReport:
           type: string
           enum: [connected, disconnected]
           example: connected
+          description: Database connection status
         provider:
           type: string
           example: PostgreSQL (Prisma)
+          description: Database provider name
+      description: Database connection status
 ApiResponse:
   type: object
   properties:
     statusCode:
       type: integer
       example: 200
+      description: HTTP status code
     success:
       type: boolean
       example: true
+      description: Whether the operation was successful
     message:
       type: string
       example: Operation successful
+      description: Response message
     data:
       type: object
       nullable: true
+      description: Response payload data
+  description: Standard successful API response wrapper
 ApiError:
   type: object
   properties:
     statusCode:
       type: integer
       example: 400
+      description: HTTP error status code
     success:
       type: boolean
       example: false
+      description: Always false for error responses
     message:
       type: string
       example: Validation error
+      description: Error description
+  description: Standard API error response
 Pagination:
   type: object
   properties:
     page:
       type: integer
       example: 1
+      description: Current page number
     limit:
       type: integer
       example: 10
+      description: Items per page
     total:
       type: integer
       example: 100
+      description: Total number of items
     totalPages:
       type: integer
       example: 10
+      description: Total number of pages
+  description: Pagination metadata

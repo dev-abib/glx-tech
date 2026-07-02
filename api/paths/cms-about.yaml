@@ -33,18 +33,22 @@ create-about:
             properties:
               title:
                 type: string
+                minLength: 3
+                maxLength: 300
                 description: About Us title
               description:
                 type: string
-                description: About Us description
+                minLength: 10
+                maxLength: 10000
+                description: About Us description text
               image1:
                 type: string
                 format: binary
-                description: First about image
+                description: First about image (jpg, png, webp)
               image2:
                 type: string
                 format: binary
-                description: Second about image
+                description: Second about image (jpg, png, webp)
     responses:
       "201":
         description: About Us section created successfully
@@ -81,18 +85,22 @@ update-about:
             properties:
               title:
                 type: string
-                description: Updated title
+                minLength: 3
+                maxLength: 300
+                description: Updated about section title
               description:
                 type: string
-                description: Updated description
+                minLength: 10
+                maxLength: 10000
+                description: Updated about section description
               image1:
                 type: string
                 format: binary
-                description: New first image
+                description: New first about image (jpg, png, webp)
               image2:
                 type: string
                 format: binary
-                description: New second image
+                description: New second about image (jpg, png, webp)
     responses:
       "200":
         description: About Us section updated successfully

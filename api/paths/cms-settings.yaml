@@ -90,11 +90,13 @@ create-social-link:
             properties:
               socialLink:
                 type: string
-                description: Social media URL
+                format: uri
+                maxLength: 500
+                description: Social media profile URL
               icon:
                 type: string
                 format: binary
-                description: Social icon image
+                description: Social icon image (jpg, png, webp, svg)
     responses:
       "201":
         description: Social link created successfully
@@ -129,11 +131,13 @@ update-social-link:
             properties:
               socialLink:
                 type: string
-                description: Updated social media URL
+                format: uri
+                maxLength: 500
+                description: Updated social media profile URL
               icon:
                 type: string
                 format: binary
-                description: New social icon image
+                description: New social icon image (jpg, png, webp, svg)
     responses:
       "200":
         description: Social link updated successfully

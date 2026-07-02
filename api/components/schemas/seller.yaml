@@ -20,7 +20,9 @@ UpdateUserAsSellerInput:
       type: array
       items:
         type: string
-      example: [uuid-1, uuid-2]
+        format: uuid
+        example: 550e8400-e29b-41d4-a716-446655440002
+      example: ["550e8400-e29b-41d4-a716-446655440002", "550e8400-e29b-41d4-a716-446655440003"]
       description: Array of service IDs the seller offers
     insuranceStatus:
       type: string
@@ -29,6 +31,7 @@ UpdateUserAsSellerInput:
       description: Insurance status
     socialLInk:
       type: string
+      format: uri
       example: https://facebook.com/glxtech
       description: Social media profile link
     businessNumber:

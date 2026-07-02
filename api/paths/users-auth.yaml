@@ -122,6 +122,7 @@ verify-reset-otp:
                         token:
                           type: string
                           example: eyJhbGciOiJIUzI1NiIs...
+                          description: Password reset token (short-lived JWT)
       "400":
         description: Invalid or expired OTP
 reset-pass:
@@ -169,7 +170,9 @@ refresh-token:
                       properties:
                         accessToken:
                           type: string
+                          description: New JWT access token (short-lived)
                         refreshToken:
                           type: string
+                          description: New JWT refresh token (long-lived)
       "401":
         description: Invalid or expired refresh token

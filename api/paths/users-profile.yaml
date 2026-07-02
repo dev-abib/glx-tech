@@ -52,6 +52,8 @@ update-me:
             properties:
               name:
                 type: string
+                minLength: 3
+                maxLength: 100
                 description: User's full name
               email:
                 type: string
@@ -62,7 +64,9 @@ update-me:
                 description: Phone number
               address:
                 type: string
-                description: Address
+                minLength: 5
+                maxLength: 500
+                description: Physical address
               avatar:
                 type: string
                 format: binary

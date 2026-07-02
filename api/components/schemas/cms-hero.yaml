@@ -3,78 +3,107 @@ Hero:
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440400
+      description: Unique hero-section identifier
     title:
       type: string
+      minLength: 3
+      maxLength: 200
       nullable: true
       example: Welcome to GLX-Tech
+      description: Hero section main title
     sub_title:
       type: string
+      maxLength: 300
       nullable: true
       example: Your Digital Solution Partner
+      description: Hero section subtitle
     highlighted_txt:
       type: string
+      maxLength: 200
       nullable: true
       example: Innovation
+      description: Hero section highlighted text
     services:
       type: array
       items:
         $ref: "./cms-hero.yaml#/Service"
+      description: Services displayed in the hero section
 CreateHeroInput:
   type: object
   properties:
     title:
       type: string
       example: Welcome to GLX-Tech
+      minLength: 3
       maxLength: 200
+      description: Hero section main title
     sub_title:
       type: string
       example: Your Digital Solution Partner
       maxLength: 300
+      description: Hero section subtitle
     highlighted_txt:
       type: string
       example: Innovation
       maxLength: 200
+      description: Hero section highlighted/emphasized text
 UpdateHeroInput:
   type: object
   properties:
     title:
       type: string
       example: Updated Title
+      minLength: 3
       maxLength: 200
+      description: Updated hero section title
     sub_title:
       type: string
       example: Updated Subtitle
       maxLength: 300
+      description: Updated hero section subtitle
     highlighted_txt:
       type: string
       example: Excellence
       maxLength: 200
+      description: Updated highlighted text
 Service:
   type: object
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440410
+      description: Unique service identifier
     name:
       type: string
+      maxLength: 100
       nullable: true
       example: Web Development
+      description: Service name
     description:
       type: string
+      maxLength: 500
       nullable: true
-      example: We build modern web applications
+      example: We build modern web applications using cutting-edge technologies
+      description: Service description
     icon:
       type: string
+      format: uri
       nullable: true
-      example: https://res.cloudinary.com/...
+      example: https://res.cloudinary.com/demo/image/upload/v1/cms/services/web-dev.svg
+      description: Service icon URL
     iconPublicId:
       type: string
       example: cms/services/abc123
+      description: Cloudinary public ID for the icon
     heroId:
       type: string
+      format: uuid
       nullable: true
-      example: uuid
+      example: 550e8400-e29b-41d4-a716-446655440400
+      description: Parent hero-section ID
 CreateServiceInput:
   type: object
   required: [name]
@@ -82,25 +111,35 @@ CreateServiceInput:
     name:
       type: string
       example: Web Development
+      minLength: 2
       maxLength: 100
+      description: Service name
     description:
       type: string
-      example: We build modern web applications
+      example: We build modern web applications using cutting-edge technologies
       maxLength: 500
+      description: Service description
     icon:
       type: string
-      example: https://example.com/icon.svg
+      format: uri
+      example: https://res.cloudinary.com/demo/image/upload/v1/cms/services/web-dev.svg
+      description: Service icon URL
 UpdateServiceInput:
   type: object
   properties:
     name:
       type: string
       example: Mobile Development
+      minLength: 2
       maxLength: 100
+      description: Updated service name
     description:
       type: string
-      example: iOS & Android apps
+      example: iOS & Android apps built with modern frameworks
       maxLength: 500
+      description: Updated service description
     icon:
       type: string
-      example: https://example.com/new-icon.svg
+      format: uri
+      example: https://res.cloudinary.com/demo/image/upload/v1/cms/services/mobile-dev.svg
+      description: Updated service icon URL

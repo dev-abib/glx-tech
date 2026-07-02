@@ -86,6 +86,8 @@ tags:
     description: "Admin dashboard trend data"
   - name: "18 — Admin — Campaigns"
     description: "Email campaign management — create, list, send campaigns, and view subscriber count"
+  - name: "19 — Appointments"
+    description: "Appointment booking and management — create bookings, view appointments, check booked time slots"
 
 paths:
   $ref: "./paths/index.yaml"

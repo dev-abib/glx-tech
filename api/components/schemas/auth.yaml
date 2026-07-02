@@ -57,22 +57,31 @@ LoginResponse:
         accessToken:
           type: string
           example: eyJhbGciOiJIUzI1NiIs...
+          description: JWT access token (short-lived)
         refreshToken:
           type: string
           example: eyJhbGciOiJIUzI1NiIs...
+          description: JWT refresh token (long-lived)
     user:
       type: object
       properties:
         name:
           type: string
+          minLength: 3
+          maxLength: 100
           example: John Doe
+          description: User display name
         email:
           type: string
+          format: email
           example: john@example.com
+          description: User email address
         avatar:
           type: string
+          format: uri
           nullable: true
-          example: https://res.cloudinary.com/...
+          example: https://res.cloudinary.com/demo/image/upload/v1/avatars/abc123.jpg
+          description: Avatar image URL (null if not set)
 RefreshTokenInput:
   type: object
   required: [refreshToken]
@@ -80,6 +89,7 @@ RefreshTokenInput:
     refreshToken:
       type: string
       example: eyJhbGciOiJIUzI1NiIs...
+      description: JWT refresh token (long-lived)
 ForgotPasswordInput:
   type: object
   required: [email]

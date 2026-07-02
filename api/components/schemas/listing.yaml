@@ -3,25 +3,42 @@ Listing:
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440000
+      description: Unique identifier for the listing
     userId:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440001
+      description: Owner (seller) user ID
     title:
       type: string
+      minLength: 3
+      maxLength: 200
       example: Professional Web Development
+      description: Listing title
     slug:
       type: string
+      pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
       example: professional-web-development
+      description: URL-friendly slug (kebab-case)
     serviceId:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440002
+      description: Associated service category ID
     description:
       type: string
-      example: We build modern web applications...
+      minLength: 10
+      maxLength: 5000
+      example: We build modern web applications using the latest technologies...
+      description: Detailed description of the listing
     address:
       type: string
-      example: 123 Tech Street
+      minLength: 5
+      maxLength: 500
+      example: 123 Tech Street, San Francisco, CA 94105
+      description: Physical address of the listing (geocoded for map display)
     media:
       type: array
       items:
@@ -29,46 +46,68 @@ Listing:
         properties:
           url:
             type: string
-            example: https://res.cloudinary.com/...
+            format: uri
+            example: https://res.cloudinary.com/demo/image/upload/v1/listings/abc123.jpg
+            description: Cloudinary image URL
           publicId:
             type: string
             example: listings/abc123
+            description: Cloudinary public ID (used for deletion/updates)
+      description: Array of uploaded listing images
     days:
       type: array
       items:
         type: string
-      example: [Monday, Tuesday]
+        example: Monday
+      example: [Monday, Tuesday, Wednesday]
+      description: Weekday availability (day names)
     weekend:
       type: array
       items:
         type: string
+        example: Saturday
       example: [Saturday, Sunday]
+      description: Weekend availability (day names)
     timeSlot:
       type: array
       items:
         type: string
-      example: ["09:00", "10:00"]
+        format: time
+        pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+        example: "09:00"
+      example: ["09:00", "10:00", "11:00"]
+      description: Available time slots in 24-hour HH:MM format
     basePrice:
       type: string
+      pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "500"
+      description: Base price as a numeric string (supports up to 2 decimal places)
     hourlyPrice:
       type: string
+      pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "50"
+      description: Hourly rate as a numeric string
     dailyPrice:
       type: string
+      pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "200"
+      description: Daily rate as a numeric string
     estimatedDuration:
       type: string
       example: 2 weeks
+      description: Estimated duration of the service (e.g. "2 weeks", "3 hours")
     latitude:
       type: number
       example: 40.7128
+      description: Geocoded latitude coordinate
     longitude:
       type: number
       example: -74.006
+      description: Geocoded longitude coordinate
     isAvailable:
       type: boolean
       example: true
+      description: Whether the listing is currently accepting bookings
     avgRating:
       type: number
       example: 4.5
@@ -76,9 +115,11 @@ Listing:
     createdAt:
       type: string
       format: date-time
+      description: Timestamp when the listing was created
     updatedAt:
       type: string
       format: date-time
+      description: Timestamp when the listing was last updated
 CreateListingInput:
   type: object
   required:
@@ -98,132 +139,210 @@ CreateListingInput:
   properties:
     title:
       type: string
+      minLength: 3
+      maxLength: 200
       example: Professional Web Development
+      description: Listing title
     slug:
       type: string
+      pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
       example: professional-web-development
+      description: URL-friendly slug (kebab-case, auto-generated or custom)
     serviceId:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440002
+      description: ID of the service category this listing belongs to
     description:
       type: string
-      example: We build modern web applications...
+      minLength: 10
+      maxLength: 5000
+      example: We build modern web applications using the latest technologies...
+      description: Detailed description of the service offered
     address:
       type: string
-      example: 123 Tech Street
+      minLength: 5
+      maxLength: 500
+      example: 123 Tech Street, San Francisco, CA 94105
+      description: Physical address (will be geocoded to lat/lng)
     days:
       type: array
       items:
         type: string
-      example: [Monday, Tuesday]
+        example: Monday
+      example: [Monday, Tuesday, Wednesday]
+      description: Weekday availability
     weekend:
       type: array
       items:
         type: string
+        example: Saturday
       example: [Saturday, Sunday]
+      description: Weekend availability
     timeSlot:
       type: array
       items:
         type: string
-      example: ["09:00", "10:00"]
+        format: time
+        pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+        example: "09:00"
+      example: ["09:00", "10:00", "11:00"]
+      description: Available time slots in 24-hour HH:MM format
     basePrice:
       type: string
+      pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "500"
+      description: Base price as a numeric string
     hourlyPrice:
       type: string
+      pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "50"
+      description: Hourly rate as a numeric string
     dailyPrice:
       type: string
+      pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "200"
+      description: Daily rate as a numeric string
     estimatedDuration:
       type: string
       example: 2 weeks
+      description: Estimated duration (e.g. "2 weeks", "3 hours")
     isAvailable:
       type: boolean
       example: true
+      description: Whether the listing should be available for bookings immediately
 UpdateListingInput:
   type: object
   properties:
     title:
       type: string
+      minLength: 3
+      maxLength: 200
       example: Updated Title
+      description: Listing title
     slug:
       type: string
+      pattern: "^[a-z0-9]+(?:-[a-z0-9]+)*$"
       example: updated-slug
+      description: URL-friendly slug (kebab-case)
     serviceId:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440002
+      description: ID of the service category
     description:
       type: string
-      example: Updated description...
+      minLength: 10
+      maxLength: 5000
+      example: Updated description with more details about the service...
+      description: Detailed description of the service
     address:
       type: string
-      example: 456 New Street
+      minLength: 5
+      maxLength: 500
+      example: 456 New Street, San Francisco, CA 94105
+      description: Physical address (will be re-geocoded)
     days:
       type: array
       items:
         type: string
+        example: Monday
+      description: Updated weekday availability
     weekend:
       type: array
       items:
         type: string
+        example: Saturday
+      description: Updated weekend availability
     timeSlot:
       type: array
       items:
         type: string
+        format: time
+        pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+        example: "09:00"
+      description: Updated time slots in 24-hour HH:MM format
     basePrice:
       type: string
+      pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "600"
+      description: Base price as a numeric string
     hourlyPrice:
       type: string
+      pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "60"
+      description: Hourly rate as a numeric string
     dailyPrice:
       type: string
+      pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "250"
+      description: Daily rate as a numeric string
     estimatedDuration:
       type: string
       example: 3 weeks
+      description: Estimated duration
     isAvailable:
       type: boolean
       example: true
+      description: Whether the listing is available for bookings
 UserReview:
   type: object
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440010
+      description: Unique review identifier
     userId:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440001
+      description: Reviewer user ID
     listingId:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440020
+      description: Reviewed listing ID
     rating:
       type: number
       example: 4.5
       minimum: 1
       maximum: 5
+      description: Rating score (1-5, supports decimals)
     review:
       type: string
-      example: Great service! Highly recommended.
+      minLength: 1
+      maxLength: 5000
+      example: Great service! Highly recommended. The team was professional and delivered on time.
+      description: Review text content
     createdAt:
       type: string
       format: date-time
+      description: Timestamp when the review was created
     updatedAt:
       type: string
       format: date-time
+      description: Timestamp when the review was last updated
     user:
       type: object
       properties:
         id:
           type: string
-          example: uuid
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+          description: Reviewer user ID
         name:
           type: string
+          minLength: 3
+          maxLength: 100
           example: John Doe
+          description: Reviewer display name
         avatar:
           type: string
+          format: uri
           nullable: true
+          example: https://res.cloudinary.com/demo/image/upload/v1/avatars/abc123.jpg
+          description: Reviewer avatar URL (null if not set)
 CreateUserReviewInput:
   type: object
   required: [rating, review]
@@ -233,10 +352,13 @@ CreateUserReviewInput:
       example: 4.5
       minimum: 1
       maximum: 5
+      description: Rating score (1-5, supports decimals)
     review:
       type: string
       example: Great service! Highly recommended.
+      minLength: 1
       maxLength: 5000
+      description: Review text content
 UpdateUserReviewInput:
   type: object
   properties:
@@ -245,7 +367,10 @@ UpdateUserReviewInput:
       example: 5
       minimum: 1
       maximum: 5
+      description: Updated rating score (1-5, supports decimals)
     review:
       type: string
       example: Updated review text...
+      minLength: 1
       maxLength: 5000
+      description: Updated review text

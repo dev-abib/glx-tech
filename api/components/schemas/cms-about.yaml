@@ -3,33 +3,51 @@ AboutUs:
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440200
+      description: Unique about-section identifier
     title:
       type: string
+      minLength: 3
+      maxLength: 300
       example: About Our Company
+      description: Section title
     description:
       type: string
-      example: We are a leading technology company...
+      minLength: 10
+      maxLength: 10000
+      example: We are a leading technology company dedicated to providing innovative solutions...
+      description: About section description text
     image1:
       type: string
+      format: uri
       nullable: true
-      example: https://res.cloudinary.com/...
+      example: https://res.cloudinary.com/demo/image/upload/v1/about/image1.jpg
+      description: First about-section image URL
     image1PublicId:
       type: string
       nullable: true
+      example: about/image1
+      description: Cloudinary public ID for the first image
     image2:
       type: string
+      format: uri
       nullable: true
-      example: https://res.cloudinary.com/...
+      example: https://res.cloudinary.com/demo/image/upload/v1/about/image2.jpg
+      description: Second about-section image URL
     image2PublicId:
       type: string
       nullable: true
+      example: about/image2
+      description: Cloudinary public ID for the second image
     createdAt:
       type: string
       format: date-time
+      description: Timestamp when the about section was created
     updatedAt:
       type: string
       format: date-time
+      description: Timestamp when the about section was last updated
 CreateAboutInput:
   type: object
   required: [title, description]
@@ -37,19 +55,27 @@ CreateAboutInput:
     title:
       type: string
       example: About Our Company
+      minLength: 3
       maxLength: 300
+      description: Section title
     description:
       type: string
-      example: We are a leading technology company...
+      example: We are a leading technology company dedicated to providing innovative solutions...
+      minLength: 10
       maxLength: 10000
+      description: About section description text
 UpdateAboutInput:
   type: object
   properties:
     title:
       type: string
       example: Updated About Title
+      minLength: 3
       maxLength: 300
+      description: Updated section title
     description:
       type: string
-      example: Updated company description...
+      example: Updated company description with more details...
+      minLength: 10
       maxLength: 10000
+      description: Updated about section description

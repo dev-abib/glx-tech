@@ -132,6 +132,16 @@ UpdateUserReviewInput:
 NewsLetterInput:
   $ref: "./newsletter.yaml#/NewsLetterInput"
 
+# ── Appointment ──────────────────────────────────────────────────────
+Appointment:
+  $ref: "./appointment.yaml#/Appointment"
+CreateAppointmentInput:
+  $ref: "./appointment.yaml#/CreateAppointmentInput"
+UpdateAppointmentStatusInput:
+  $ref: "./appointment.yaml#/UpdateAppointmentStatusInput"
+BookedTimes:
+  $ref: "./appointment.yaml#/BookedTimes"
+
 # ── Seller ───────────────────────────────────────────────────────────
 UpdateUserAsSellerInput:
   $ref: "./seller.yaml#/UpdateUserAsSellerInput"

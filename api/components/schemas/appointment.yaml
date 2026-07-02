@@ -1,0 +1,147 @@
+Appointment:
+  type: object
+  properties:
+    id:
+      type: string
+      format: cuid
+      example: clz6xq8k80000hxq8f1j2m3n4
+      description: Unique appointment identifier (auto-generated CUID)
+    listingId:
+      type: string
+      format: cuid
+      example: clz6xq8k80001hxq8f1j2m3n5
+      description: ID of the listing being booked
+    buyerId:
+      type: string
+      format: cuid
+      example: clz6xq8k80002hxq8f1j2m3n6
+      description: ID of the buyer who made the booking
+    sellerId:
+      type: string
+      format: cuid
+      example: clz6xq8k80003hxq8f1j2m3n7
+      description: ID of the seller (listing owner)
+    bookingDate:
+      type: string
+      format: date
+      example: "2026-07-15"
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      description: The booking date in YYYY-MM-DD format
+    bookingTime:
+      type: string
+      format: time
+      example: "09:00"
+      pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+      description: The selected time slot (HH:MM, 24-hour format)
+    status:
+      type: string
+      enum: [pending, confirmed, cancelled, completed]
+      example: pending
+      description: Current appointment status
+    listing:
+      type: object
+      description: Brief listing details included in the response
+      properties:
+        id:
+          type: string
+          format: cuid
+          example: clz6xq8k80001hxq8f1j2m3n5
+        title:
+          type: string
+          example: Professional Web Development
+        slug:
+          type: string
+          example: professional-web-development
+        address:
+          type: string
+          example: 123 Tech Street
+        timeSlot:
+          type: array
+          description: Available time slots for the listing
+          items:
+            type: string
+            pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+            example: "09:00"
+          example: ["09:00", "10:00"]
+        media:
+          type: array
+          description: Listing media (images)
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: uri
+                example: https://res.cloudinary.com/example/image/upload/v1/listings/abc123.jpg
+              publicId:
+                type: string
+                example: listings/abc123
+
+CreateAppointmentInput:
+  type: object
+  required:
+    - listingId
+    - bookingDate
+    - bookingTime
+  properties:
+    listingId:
+      type: string
+      format: cuid
+      example: clz6xq8k80001hxq8f1j2m3n5
+      description: ID of the listing to book
+    bookingDate:
+      type: string
+      format: date
+      example: "2026-07-15"
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      description: The desired booking date in YYYY-MM-DD format
+    bookingTime:
+      type: string
+      format: time
+      example: "09:00"
+      pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+      description: The desired time slot in HH:MM (24-hour) format. Must be one of the listing's available timeSlots.
+  example:
+    listingId: clz6xq8k80001hxq8f1j2m3n5
+    bookingDate: "2026-07-15"
+    bookingTime: "10:00"
+
+UpdateAppointmentStatusInput:
+  type: object
+  required:
+    - status
+  properties:
+    status:
+      type: string
+      enum: [pending, confirmed, cancelled, completed]
+      example: confirmed
+      description: |
+        New status for the appointment.
+        - `pending` → `confirmed` (seller only)
+        - `confirmed` → `completed` (seller only)
+        - `pending` → `cancelled` (buyer or seller)
+        - `confirmed` → `cancelled` (buyer or seller)
+  example:
+    status: confirmed
+
+BookedSlot:
+  type: object
+  properties:
+    bookingDate:
+      type: string
+      format: date
+      example: "2026-07-15"
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      description: The date of the booked slot (YYYY-MM-DD)
+    bookingTime:
+      type: string
+      format: time
+      example: "09:00"
+      pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+      description: The time of the booked slot (HH:MM, 24-hour format)
+
+BookedTimes:
+  type: array
+  items:
+    $ref: "#/BookedSlot"
+  description: List of already-booked slots for a listing (with date and time)

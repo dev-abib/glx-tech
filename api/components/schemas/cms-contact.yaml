@@ -3,43 +3,62 @@ ContactInquiry:
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440300
+      description: Unique inquiry identifier
     name:
       type: string
+      minLength: 2
+      maxLength: 100
       example: Jane Doe
+      description: Inquirer's name
     email:
       type: string
+      format: email
       example: jane@example.com
+      description: Inquirer's email address
     phone:
       type: string
       nullable: true
       example: "+1234567890"
+      description: Inquirer's phone number
     subject:
       type: string
       nullable: true
       example: Partnership Inquiry
+      description: Inquiry subject line
     message:
       type: string
-      example: I'd like to partner with you...
+      minLength: 1
+      maxLength: 5000
+      example: I'd like to discuss a potential partnership opportunity with your company.
+      description: Inquiry message content
     isRead:
       type: boolean
       example: false
+      description: Whether the inquiry has been read
     isReplied:
       type: boolean
       example: false
+      description: Whether the inquiry has been replied to
     replyMessage:
       type: string
       nullable: true
+      example: Thank you for reaching out! We'll contact you shortly.
+      description: Admin reply message
     repliedAt:
       type: string
       format: date-time
       nullable: true
+      description: Timestamp when the reply was sent
     createdAt:
       type: string
       format: date-time
+      description: Timestamp when the inquiry was created
     updatedAt:
       type: string
       format: date-time
+      description: Timestamp when the inquiry was last updated
 CreateContactInput:
   type: object
   required: [name, email, message]

@@ -3,17 +3,25 @@ ReviewSection:
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440500
+      description: Unique review-section identifier
     title:
       type: string
+      minLength: 3
+      maxLength: 200
       example: What Our Clients Say
+      description: Review section title
     subTitle:
       type: string
+      maxLength: 300
       example: Trusted by hundreds of businesses worldwide
+      description: Review section subtitle
     reviews:
       type: array
       items:
         $ref: "./cms-reviews.yaml#/Review"
+      description: Array of reviews in this section
 CreateReviewSectionInput:
   type: object
   required: [title, subTitle]
@@ -42,32 +50,50 @@ Review:
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440510
+      description: Unique review identifier
     name:
       type: string
+      maxLength: 100
       example: Jane Smith
+      description: Reviewer name
     position:
       type: string
+      maxLength: 200
       example: CEO, TechCorp
+      description: Reviewer position/title
     reviewDate:
       type: string
+      maxLength: 50
       example: June 2026
+      description: Review date (display text, e.g. "June 2026")
     picture:
       type: string
-      example: https://res.cloudinary.com/...
+      format: uri
+      example: https://res.cloudinary.com/demo/image/upload/v1/cms/reviews/abc123.jpg
+      description: Reviewer picture URL
     picturePublicId:
       type: string
       example: cms/reviews/abc123
+      description: Cloudinary public ID for the picture
     review:
       type: string
-      example: GLX-Tech provided outstanding service...
+      minLength: 1
+      maxLength: 5000
+      example: GLX-Tech provided outstanding service and delivered beyond our expectations.
+      description: Review text content
     ratingCount:
       type: string
+      pattern: "^\\d+(\\.\\d)?$"
       example: "5"
+      description: Rating count as a numeric string (e.g. "5", "4.5")
     sectionId:
       type: string
+      format: uuid
       nullable: true
-      example: uuid
+      example: 550e8400-e29b-41d4-a716-446655440500
+      description: Parent review-section ID
 CreateReviewInput:
   type: object
   required: [name, position, reviewDate, review, ratingCount]
@@ -75,26 +101,36 @@ CreateReviewInput:
     name:
       type: string
       example: Jane Smith
+      minLength: 2
       maxLength: 100
+      description: Reviewer name
     position:
       type: string
       example: CEO, TechCorp
       maxLength: 200
+      description: Reviewer position/title
     reviewDate:
       type: string
       example: June 2026
       maxLength: 50
+      description: Review date display text
     review:
       type: string
       example: GLX-Tech provided outstanding service and delivered beyond our expectations.
+      minLength: 1
       maxLength: 5000
+      description: Review text content
     ratingCount:
       type: string
+      pattern: "^\\d+(\\.\\d)?$"
       example: "5"
       maxLength: 10
+      description: Rating count as a numeric string (e.g. "5", "4.5")
     picture:
       type: string
-      example: https://res.cloudinary.com/...
+      format: uri
+      example: https://res.cloudinary.com/demo/image/upload/v1/cms/reviews/photo.jpg
+      description: Reviewer picture URL
 UpdateReviewInput:
   type: object
   properties:
@@ -102,22 +138,31 @@ UpdateReviewInput:
       type: string
       example: Jane Smith Updated
       maxLength: 100
+      description: Updated reviewer name
     position:
       type: string
       example: CTO, TechCorp
       maxLength: 200
+      description: Updated reviewer position
     reviewDate:
       type: string
       example: July 2026
       maxLength: 50
+      description: Updated review date text
     review:
       type: string
-      example: Updated review text...
+      example: Updated review text with more details...
+      minLength: 1
       maxLength: 5000
+      description: Updated review text
     ratingCount:
       type: string
+      pattern: "^\\d+(\\.\\d)?$"
       example: "4"
       maxLength: 10
+      description: Updated rating count as a numeric string
     picture:
       type: string
-      example: https://res.cloudinary.com/...
+      format: uri
+      example: https://res.cloudinary.com/demo/image/upload/v1/cms/reviews/updated.jpg
+      description: Updated reviewer picture URL

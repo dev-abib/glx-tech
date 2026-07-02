@@ -28,55 +28,65 @@ create-listing:
             properties:
               title:
                 type: string
+                minLength: 3
+                maxLength: 200
                 description: Listing title
               slug:
                 type: string
-                description: URL-friendly slug
+                description: URL-friendly slug (kebab-case)
               serviceId:
                 type: string
-                description: Service ID
+                format: uuid
+                description: Service category ID
               description:
                 type: string
+                minLength: 10
+                maxLength: 5000
                 description: Listing description
               address:
                 type: string
-                description: Address
+                minLength: 5
+                maxLength: 500
+                description: Physical address (will be geocoded)
               days:
                 type: array
                 items:
                   type: string
-                description: Available weekdays
+                  example: Monday
+                description: Available weekdays (day names)
               weekend:
                 type: array
                 items:
                   type: string
-                description: Available weekend days
+                  example: Saturday
+                description: Available weekend days (day names)
               timeSlot:
                 type: array
                 items:
                   type: string
-                description: Available time slots
+                  example: "09:00"
+                description: Available time slots in HH:MM 24-hour format
               basePrice:
                 type: string
-                description: Base price
+                description: Base price as a numeric string
               hourlyPrice:
                 type: string
-                description: Hourly price
+                description: Hourly rate as a numeric string
               dailyPrice:
                 type: string
-                description: Daily price
+                description: Daily rate as a numeric string
               estimatedDuration:
                 type: string
-                description: Estimated duration
+                description: Estimated duration (e.g. "2 weeks", "3 hours")
               isAvailable:
                 type: string
-                description: "Availability status (true/false)"
+                description: "Availability status (send \"true\" or \"false\")"
               media:
                 type: array
                 items:
                   type: string
                   format: binary
-                description: Media files to upload
+                description: Media files to upload (jpg, png, webp; max 5MB each)
     responses:
       "201":
         description: Listing created successfully
@@ -340,41 +350,62 @@ update-listing:
             properties:
               title:
                 type: string
+                minLength: 3
+                maxLength: 200
+                description: Updated listing title
               slug:
                 type: string
+                description: Updated URL-friendly slug (kebab-case)
               serviceId:
                 type: string
+                format: uuid
+                description: Updated service category ID
               description:
                 type: string
+                minLength: 10
+                maxLength: 5000
+                description: Updated listing description
               address:
                 type: string
+                minLength: 5
+                maxLength: 500
+                description: Updated physical address (will be re-geocoded)
               days:
                 type: array
                 items:
                   type: string
+                description: Updated weekday availability
               weekend:
                 type: array
                 items:
                   type: string
+                description: Updated weekend availability
               timeSlot:
                 type: array
                 items:
                   type: string
+                description: Updated time slots in HH:MM 24-hour format
               basePrice:
                 type: string
+                description: Updated base price as a numeric string
               hourlyPrice:
                 type: string
+                description: Updated hourly rate as a numeric string
               dailyPrice:
                 type: string
+                description: Updated daily rate as a numeric string
               estimatedDuration:
                 type: string
+                description: Updated estimated duration
               isAvailable:
                 type: string
+                description: "Updated availability (send \"true\" or \"false\")"
               media:
                 type: array
                 items:
                   type: string
                   format: binary
+                description: New media files to upload (replaces existing)
     responses:
       "200":
         description: Listing updated successfully

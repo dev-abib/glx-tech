@@ -140,10 +140,6 @@
   $ref: "./cms-reviews.yaml#/create-review-section"
 /cms/review/update-section/{id}:
   $ref: "./cms-reviews.yaml#/update-review-section"
-/cms/create-review:
-  $ref: "./cms-reviews.yaml#/create-review"
-/cms/update-review/{id}:
-  $ref: "./cms-reviews.yaml#/update-review"
 /cms/review/delete-section/{id}:
   $ref: "./cms-reviews.yaml#/delete-review-section"
 /cms/review/{sectionId}/reviews:
@@ -208,3 +204,15 @@
   $ref: "./admin-campaigns.yaml#/send-campaign"
 /admin/campaigns/subscriber-count:
   $ref: "./admin-campaigns.yaml#/get-subscriber-count"
+
+# ── Appointments ─────────────────────────────────────────────────────
+/appointments/create-appointment:
+  $ref: "./appointments.yaml#/create-appointment"
+/appointments/my-bookings:
+  $ref: "./appointments.yaml#/get-my-bookings"
+/appointments/seller/my-appointments:
+  $ref: "./appointments.yaml#/seller-get-my-appointments"
+/appointments/booked-times/{listingId}:
+  $ref: "./appointments.yaml#/get-booked-times"
+/appointments/update-status/{appointmentId}:
+  $ref: "./appointments.yaml#/update-appointment-status"

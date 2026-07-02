@@ -126,14 +126,17 @@ create-service:
             properties:
               name:
                 type: string
+                minLength: 2
+                maxLength: 100
                 description: Service name
               description:
                 type: string
+                maxLength: 500
                 description: Service description
               icon:
                 type: string
                 format: binary
-                description: Service icon image (jpg, png, webp; max 5MB)
+                description: Service icon image (jpg, png, webp, svg; max 5MB)
     responses:
       "201":
         description: Service created successfully
@@ -170,14 +173,17 @@ update-service:
             properties:
               name:
                 type: string
-                description: Service name
+                minLength: 2
+                maxLength: 100
+                description: Updated service name
               description:
                 type: string
-                description: Service description
+                maxLength: 500
+                description: Updated service description
               icon:
                 type: string
                 format: binary
-                description: New service icon image
+                description: New service icon image (jpg, png, webp, svg)
     responses:
       "200":
         description: Service updated successfully

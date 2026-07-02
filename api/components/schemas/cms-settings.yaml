@@ -3,35 +3,52 @@ SiteSettings:
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440600
+      description: Unique site-settings identifier
     title:
       type: string
+      maxLength: 200
       nullable: true
       example: GLX-Tech
+      description: Site title / brand name
     subTitle:
       type: string
+      maxLength: 300
       nullable: true
       example: Your Digital Partner
+      description: Site subtitle / tagline
     footerTxt:
       type: string
+      maxLength: 1000
       nullable: true
       example: "© 2026 GLX-Tech. All rights reserved."
+      description: Footer copyright text
     siteLink:
       type: string
+      format: uri
+      maxLength: 500
       nullable: true
       example: https://glx-tech.com
+      description: Website URL
     location:
       type: string
+      maxLength: 500
       nullable: true
       example: 123 Tech Street, Silicon Valley, CA
+      description: Business location / address
     phone:
       type: string
+      maxLength: 30
       nullable: true
       example: "+1 (555) 123-4567"
+      description: Contact phone number
     email:
       type: string
+      format: email
       nullable: true
       example: contact@glx-tech.com
+      description: Contact email address
 CreateSiteSettingsInput:
   type: object
   properties:
@@ -99,16 +116,23 @@ SocialLink:
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440610
+      description: Unique social-link identifier
     icon:
       type: string
-      example: https://res.cloudinary.com/...
+      format: uri
+      example: https://res.cloudinary.com/demo/image/upload/v1/cms/socials/facebook.svg
+      description: Social media icon URL
     iconPublicId:
       type: string
       example: cms/socials/abc123
+      description: Cloudinary public ID for the icon
     socialLink:
       type: string
+      format: uri
       example: https://facebook.com/glxtech
+      description: Social media profile URL
 CreateSocialInput:
   type: object
   required: [socialLink]

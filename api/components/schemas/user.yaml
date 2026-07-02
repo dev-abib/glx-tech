@@ -3,49 +3,71 @@ SafeUser:
   properties:
     id:
       type: string
-      example: uuid
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440001
+      description: Unique user identifier
     name:
       type: string
+      minLength: 3
+      maxLength: 100
       example: John Doe
+      description: User display name
     email:
       type: string
+      format: email
       example: john@example.com
+      description: User email address
     role:
       type: string
       enum: [user, seller, admin, super_admin]
       example: user
+      description: User role determining permissions
     avatar:
       type: string
+      format: uri
       nullable: true
+      example: https://res.cloudinary.com/demo/image/upload/v1/avatars/abc123.jpg
+      description: Avatar image URL (null if not set)
     avatarPublicId:
       type: string
       nullable: true
+      example: avatars/abc123
+      description: Cloudinary public ID for the avatar (used for updates/deletion)
     phone:
       type: string
       nullable: true
       example: "+1234567890"
+      description: Contact phone number
     isEmailVerified:
       type: boolean
       example: true
+      description: Whether the email has been verified
     isActive:
       type: boolean
       example: true
+      description: Whether the user account is active
     isPaid:
       type: boolean
       example: false
+      description: Whether the user has paid subscription/listing fees
     address:
       type: string
       nullable: true
+      example: 123 Main St, San Francisco, CA
+      description: User's physical address
     lastLoginAt:
       type: string
       format: date-time
       nullable: true
+      description: Timestamp of the last login
     createdAt:
       type: string
       format: date-time
+      description: Timestamp when the user was created
     updatedAt:
       type: string
       format: date-time
+      description: Timestamp when the user was last updated
 UpdateUserInput:
   type: object
   properties:
@@ -54,16 +76,22 @@ UpdateUserInput:
       example: John Updated
       minLength: 3
       maxLength: 100
+      description: Updated display name
     email:
       type: string
       format: email
       example: john.updated@example.com
+      description: Updated email address
     phone:
       type: string
       example: "+1987654321"
+      description: Updated phone number
     address:
       type: string
-      example: 123 Main St
+      minLength: 5
+      maxLength: 500
+      example: 123 Main St, San Francisco, CA
+      description: Updated physical address
 ChangePasswordInput:
   type: object
   required: [oldPassword, password, confirmPassword]

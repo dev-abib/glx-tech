@@ -25,19 +25,28 @@ create-admin:
                       properties:
                         id:
                           type: string
+                          format: uuid
+                          description: Admin user ID
                         name:
                           type: string
+                          description: Admin display name
                         email:
                           type: string
+                          format: email
+                          description: Admin email address
                         role:
                           type: string
+                          description: Admin role (admin or super_admin)
                         isEmailVerified:
                           type: boolean
+                          description: Whether the email has been verified
                         isActive:
                           type: boolean
+                          description: Whether the admin account is active
                         createdAt:
                           type: string
                           format: date-time
+                          description: Timestamp when the admin was created
       "400":
         description: Validation error
       "403":

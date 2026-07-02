@@ -36,6 +36,8 @@ update-me:
             properties:
               name:
                 type: string
+                minLength: 3
+                maxLength: 100
                 description: Admin's full name
               email:
                 type: string
