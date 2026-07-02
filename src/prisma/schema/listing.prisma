@@ -11,13 +11,13 @@ model UserReview {
 }
 
 model Listing {
-  id                String       @id @default(uuid())
+  id                String        @id @default(uuid())
   userId            String
-  user              User         @relation(fields: [userId], references: [id])
+  user              User          @relation(fields: [userId], references: [id])
   title             String
-  slug              String       @unique()
+  slug              String        @unique()
   serviceId         String
-  service           Service      @relation(fields: [serviceId], references: [id])
+  service           Service       @relation(fields: [serviceId], references: [id])
   description       String
   address           String
   media             Json
@@ -28,10 +28,11 @@ model Listing {
   hourlyPrice       String
   dailyPrice        String
   estimatedDuration String
-  createdAt         DateTime     @default(now()) @map("created_at")
-  updatedAt         DateTime     @updatedAt @map("updated_at")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
   userReview        UserReview[]
   latitude          Float
   longitude         Float
-  isAvailable       Boolean      @default(true)
+  isAvailable       Boolean       @default(true)
+  bookings          Appointment[]
 }

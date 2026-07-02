@@ -13,14 +13,14 @@ model EmailSubscribe {
 }
 
 model Campaign {
-  id        String          @id @default(uuid())
+  id        String         @id @default(uuid())
   subject   String
   heading   String
   bodyHtml  String
   ctaText   String?
   ctaLink   String?
-  status    CampaignStatus  @default(draft)
-  createdAt DateTime        @default(now())
+  status    CampaignStatus @default(draft)
+  createdAt DateTime       @default(now())
   sentAt    DateTime?
 
   @@map("campaigns")

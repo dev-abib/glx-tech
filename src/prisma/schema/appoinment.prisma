@@ -1,0 +1,15 @@
+enum STATUS {
+  pending
+  confirmed
+  cancelled
+  completed
+}
+
+model Appointment {
+  id        String  @id @default(cuid())
+  listingId String
+  listing   Listing @relation(fields: [listingId], references: [id])
+  status    STATUS
+  buyerId   String
+  sellerId  String
+}
