@@ -55,6 +55,7 @@ S("listing.yaml", "Listing"); S("listing.yaml", "CreateListingInput"); S("listin
 S("listing.yaml", "UserReview"); S("listing.yaml", "CreateUserReviewInput"); S("listing.yaml", "UpdateUserReviewInput");
 S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "UpdateUserAsSellerInput");
 S("admin-campaigns.yaml", "Campaign"); S("admin-campaigns.yaml", "CreateCampaignInput");
+S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes");
 
 const paths: Record<string, unknown> = {};
 // P(file, pathKey, fragmentName) — load fragmentName from YAML file and assign to pathKey in paths

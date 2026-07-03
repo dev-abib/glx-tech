@@ -10,7 +10,7 @@ create-appointment:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/appointment.yaml#/CreateAppointmentInput"
+            $ref: "#/components/schemas/CreateAppointmentInput"
     responses:
       "201":
         description: Appointment created successfully
@@ -18,10 +18,10 @@ create-appointment:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/appointment.yaml#/Appointment"
+                      $ref: "#/components/schemas/Appointment"
       "400":
         description: Invalid booking time or listing unavailable
       "401":
@@ -57,7 +57,7 @@ get-my-bookings:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -65,9 +65,9 @@ get-my-bookings:
                         appointments:
                           type: array
                           items:
-                            $ref: "../components/schemas/appointment.yaml#/Appointment"
+                            $ref: "#/components/schemas/Appointment"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "401":
         description: Unauthorized
 
@@ -97,7 +97,7 @@ seller-get-my-appointments:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -105,9 +105,9 @@ seller-get-my-appointments:
                         appointments:
                           type: array
                           items:
-                            $ref: "../components/schemas/appointment.yaml#/Appointment"
+                            $ref: "#/components/schemas/Appointment"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "401":
         description: Unauthorized
 
@@ -137,10 +137,10 @@ get-booked-times:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/appointment.yaml#/BookedTimes"
+                      $ref: "#/components/schemas/BookedTimes"
       "404":
         description: Listing not found
 
@@ -166,7 +166,7 @@ update-appointment-status:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/appointment.yaml#/UpdateAppointmentStatusInput"
+            $ref: "#/components/schemas/UpdateAppointmentStatusInput"
     responses:
       "200":
         description: Appointment status updated successfully
@@ -174,10 +174,10 @@ update-appointment-status:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/appointment.yaml#/Appointment"
+                      $ref: "#/components/schemas/Appointment"
       "400":
         description: Invalid status transition
       "401":

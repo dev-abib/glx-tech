@@ -81,6 +81,9 @@ create-listing:
               isAvailable:
                 type: string
                 description: "Availability status (send \"true\" or \"false\")"
+              genericData:
+                type: string
+                description: "Optional additional arbitrary data as a JSON string (e.g. '{\"customField\": \"value\"}')"
               media:
                 type: array
                 items:
@@ -94,10 +97,10 @@ create-listing:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/listing.yaml#/Listing"
+                      $ref: "#/components/schemas/Listing"
       "400":
         description: Validation error
       "401":
@@ -196,7 +199,7 @@ get-all-listings:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -204,9 +207,9 @@ get-all-listings:
                         listings:
                           type: array
                           items:
-                            $ref: "../components/schemas/listing.yaml#/Listing"
+                            $ref: "#/components/schemas/Listing"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
 get-listing:
   get:
     tags: ["14 — Listings & Reviews"]
@@ -226,10 +229,10 @@ get-listing:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/listing.yaml#/Listing"
+                      $ref: "#/components/schemas/Listing"
       "404":
         description: Listing not found
 get-related-listings:
@@ -262,7 +265,7 @@ get-related-listings:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -270,9 +273,9 @@ get-related-listings:
                         listings:
                           type: array
                           items:
-                            $ref: "../components/schemas/listing.yaml#/Listing"
+                            $ref: "#/components/schemas/Listing"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "404":
         description: Listing not found
 get-my-listings:
@@ -314,7 +317,7 @@ get-my-listings:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -322,9 +325,9 @@ get-my-listings:
                         listings:
                           type: array
                           items:
-                            $ref: "../components/schemas/listing.yaml#/Listing"
+                            $ref: "#/components/schemas/Listing"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "401":
         description: Unauthorized
 update-listing:
@@ -400,6 +403,9 @@ update-listing:
               isAvailable:
                 type: string
                 description: "Updated availability (send \"true\" or \"false\")"
+              genericData:
+                type: string
+                description: "Optional updated arbitrary data as a JSON string (e.g. '{\"customField\": \"value\"}')"
               media:
                 type: array
                 items:
@@ -413,10 +419,10 @@ update-listing:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/listing.yaml#/Listing"
+                      $ref: "#/components/schemas/Listing"
       "403":
         description: Forbidden — Not the listing owner
       "404":
@@ -472,7 +478,7 @@ get-listing-reviews:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -480,9 +486,9 @@ get-listing-reviews:
                         reviews:
                           type: array
                           items:
-                            $ref: "../components/schemas/listing.yaml#/UserReview"
+                            $ref: "#/components/schemas/UserReview"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "404":
         description: Listing not found
 get-review:
@@ -504,10 +510,10 @@ get-review:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/listing.yaml#/UserReview"
+                      $ref: "#/components/schemas/UserReview"
       "404":
         description: Review not found
 create-review:
@@ -529,7 +535,7 @@ create-review:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/listing.yaml#/CreateUserReviewInput"
+            $ref: "#/components/schemas/CreateUserReviewInput"
     responses:
       "201":
         description: Review created successfully
@@ -537,10 +543,10 @@ create-review:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/listing.yaml#/UserReview"
+                      $ref: "#/components/schemas/UserReview"
       "400":
         description: Validation error
       "401":
@@ -564,7 +570,7 @@ update-review:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/listing.yaml#/UpdateUserReviewInput"
+            $ref: "#/components/schemas/UpdateUserReviewInput"
     responses:
       "200":
         description: Review updated successfully
@@ -572,10 +578,10 @@ update-review:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/listing.yaml#/UserReview"
+                      $ref: "#/components/schemas/UserReview"
       "403":
         description: Forbidden — Not the review author
       "404":

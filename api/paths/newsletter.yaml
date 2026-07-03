@@ -8,7 +8,7 @@ subscribe:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/newsletter.yaml#/NewsLetterInput"
+            $ref: "#/components/schemas/NewsLetterInput"
     responses:
       "200":
         description: Successfully subscribed
@@ -16,7 +16,7 @@ subscribe:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -79,7 +79,7 @@ unsubscribe:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object

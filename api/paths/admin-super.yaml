@@ -10,7 +10,7 @@ create-admin:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/admin.yaml#/CreateAdminInput"
+            $ref: "#/components/schemas/CreateAdminInput"
     responses:
       "201":
         description: Admin created successfully
@@ -18,7 +18,7 @@ create-admin:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -77,7 +77,7 @@ gt-all-users:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -85,9 +85,9 @@ gt-all-users:
                         users:
                           type: array
                           items:
-                            $ref: "../components/schemas/admin.yaml#/AdminProfile"
+                            $ref: "#/components/schemas/AdminProfile"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "403":
         description: Forbidden
 gt-all-admins:
@@ -116,7 +116,7 @@ gt-all-admins:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -124,9 +124,9 @@ gt-all-admins:
                         admins:
                           type: array
                           items:
-                            $ref: "../components/schemas/admin.yaml#/AdminProfile"
+                            $ref: "#/components/schemas/AdminProfile"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "403":
         description: Forbidden
 delete-admin:
@@ -169,7 +169,7 @@ update-admin:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/admin.yaml#/AdminUpdateUserInput"
+            $ref: "#/components/schemas/AdminUpdateUserInput"
     responses:
       "200":
         description: Admin updated successfully
@@ -177,10 +177,10 @@ update-admin:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/admin.yaml#/AdminProfile"
+                      $ref: "#/components/schemas/AdminProfile"
       "400":
         description: Cannot demote the last super admin
       "403":

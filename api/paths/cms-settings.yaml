@@ -10,10 +10,10 @@ gt-site-settings:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-settings.yaml#/SiteSettings"
+                      $ref: "#/components/schemas/SiteSettings"
 create-site-settings:
   post:
     tags: ["12 — CMS — Site Settings"]
@@ -26,7 +26,7 @@ create-site-settings:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/cms-settings.yaml#/CreateSiteSettingsInput"
+            $ref: "#/components/schemas/CreateSiteSettingsInput"
     responses:
       "201":
         description: Site settings created successfully
@@ -34,10 +34,10 @@ create-site-settings:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-settings.yaml#/SiteSettings"
+                      $ref: "#/components/schemas/SiteSettings"
       "409":
         description: Site settings already exist
 update-site-settings:
@@ -59,7 +59,7 @@ update-site-settings:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/cms-settings.yaml#/UpdateSiteSettingsInput"
+            $ref: "#/components/schemas/UpdateSiteSettingsInput"
     responses:
       "200":
         description: Site settings updated successfully
@@ -67,10 +67,10 @@ update-site-settings:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-settings.yaml#/SiteSettings"
+                      $ref: "#/components/schemas/SiteSettings"
       "404":
         description: Site settings not found
 create-social-link:
@@ -104,10 +104,10 @@ create-social-link:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-settings.yaml#/SocialLink"
+                      $ref: "#/components/schemas/SocialLink"
 update-social-link:
   put:
     tags: ["12 — CMS — Site Settings"]
@@ -145,10 +145,10 @@ update-social-link:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-settings.yaml#/SocialLink"
+                      $ref: "#/components/schemas/SocialLink"
       "404":
         description: Social link not found
 delete-social-link:
@@ -182,9 +182,9 @@ get-social-links:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: array
                       items:
-                        $ref: "../components/schemas/cms-settings.yaml#/SocialLink"
+                        $ref: "#/components/schemas/SocialLink"

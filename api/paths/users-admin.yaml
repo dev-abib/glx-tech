@@ -26,7 +26,7 @@ gt-all-users:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -34,9 +34,9 @@ gt-all-users:
                         users:
                           type: array
                           items:
-                            $ref: "../components/schemas/user.yaml#/SafeUser"
+                            $ref: "#/components/schemas/SafeUser"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "401":
         description: Unauthorized
       "403":

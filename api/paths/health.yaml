@@ -10,17 +10,17 @@ health:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/common.yaml#/SystemReport"
+                      $ref: "#/components/schemas/SystemReport"
       "503":
         description: System is unhealthy (e.g., database disconnected)
         content:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/common.yaml#/SystemReport"
+                      $ref: "#/components/schemas/SystemReport"

@@ -28,7 +28,7 @@ Hero:
     services:
       type: array
       items:
-        $ref: "./cms-hero.yaml#/Service"
+        $ref: "#/components/schemas/Service"
       description: Services displayed in the hero section
 CreateHeroInput:
   type: object

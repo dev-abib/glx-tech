@@ -1,6 +1,6 @@
 CreateUserInput:
   type: object
-  required: [name, email, password, confirmPassword, phone]
+  required: [name, email, password, confirmPassword]
   properties:
     name:
       type: string

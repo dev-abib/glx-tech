@@ -8,7 +8,7 @@ login:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/admin.yaml#/AdminLoginInput"
+            $ref: "#/components/schemas/AdminLoginInput"
     responses:
       "200":
         description: Admin logged in successfully
@@ -16,10 +16,10 @@ login:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/admin.yaml#/AdminLoginResponse"
+                      $ref: "#/components/schemas/AdminLoginResponse"
       "401":
         description: Invalid credentials or account not verified
       "403":
@@ -34,7 +34,7 @@ refresh-token:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/auth.yaml#/RefreshTokenInput"
+            $ref: "#/components/schemas/RefreshTokenInput"
     responses:
       "200":
         description: Token refreshed successfully
@@ -42,7 +42,7 @@ refresh-token:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object

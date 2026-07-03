@@ -20,7 +20,7 @@ ReviewSection:
     reviews:
       type: array
       items:
-        $ref: "./cms-reviews.yaml#/Review"
+        $ref: "#/components/schemas/Review"
       description: Array of reviews in this section
 CreateReviewSectionInput:
   type: object

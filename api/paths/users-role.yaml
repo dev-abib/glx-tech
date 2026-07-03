@@ -10,7 +10,7 @@ update-as-seller:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/seller.yaml#/UpdateUserAsSellerInput"
+            $ref: "#/components/schemas/UpdateUserAsSellerInput"
     responses:
       "200":
         description: User updated as seller successfully
@@ -18,7 +18,7 @@ update-as-seller:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -37,6 +37,13 @@ switch-role:
     description: Toggles the authenticated user's role between 'user' and 'seller'. Returns new access/refresh tokens with the updated role claim.
     security:
       - bearerAuth: []
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            description: Empty payload (no fields required)
     responses:
       "200":
         description: Role switched successfully
@@ -44,7 +51,7 @@ switch-role:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object

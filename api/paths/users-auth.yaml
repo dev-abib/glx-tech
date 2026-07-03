@@ -8,7 +8,7 @@ create-user:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/auth.yaml#/CreateUserInput"
+            $ref: "#/components/schemas/CreateUserInput"
     responses:
       "201":
         description: User created successfully
@@ -16,10 +16,10 @@ create-user:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/user.yaml#/SafeUser"
+                      $ref: "#/components/schemas/SafeUser"
       "400":
         description: Validation error
       "409":
@@ -34,7 +34,7 @@ verify-user:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/auth.yaml#/VerifyUserInput"
+            $ref: "#/components/schemas/VerifyUserInput"
     responses:
       "201":
         description: User verified successfully
@@ -50,7 +50,7 @@ login-user:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/auth.yaml#/LoginUserInput"
+            $ref: "#/components/schemas/LoginUserInput"
     responses:
       "201":
         description: Login successful
@@ -58,10 +58,10 @@ login-user:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/auth.yaml#/LoginResponse"
+                      $ref: "#/components/schemas/LoginResponse"
       "401":
         description: Invalid credentials or account not verified
 resend-otp:
@@ -74,7 +74,7 @@ resend-otp:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/auth.yaml#/ResendOtpInput"
+            $ref: "#/components/schemas/ResendOtpInput"
     responses:
       "201":
         description: OTP resent successfully
@@ -90,7 +90,7 @@ forgot-password:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/auth.yaml#/ForgotPasswordInput"
+            $ref: "#/components/schemas/ForgotPasswordInput"
     responses:
       "201":
         description: Reset OTP sent to email
@@ -106,7 +106,7 @@ verify-reset-otp:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/auth.yaml#/VerifyUserInput"
+            $ref: "#/components/schemas/VerifyUserInput"
     responses:
       "201":
         description: OTP verified successfully
@@ -114,7 +114,7 @@ verify-reset-otp:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -137,7 +137,7 @@ reset-pass:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/auth.yaml#/ResetPasswordInput"
+            $ref: "#/components/schemas/ResetPasswordInput"
     responses:
       "201":
         description: Password reset successfully
@@ -155,7 +155,7 @@ refresh-token:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/auth.yaml#/RefreshTokenInput"
+            $ref: "#/components/schemas/RefreshTokenInput"
     responses:
       "201":
         description: Tokens refreshed successfully
@@ -163,7 +163,7 @@ refresh-token:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object

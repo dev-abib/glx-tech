@@ -10,12 +10,12 @@ get-hero:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       nullable: true
                       allOf:
-                        - $ref: "../components/schemas/cms-hero.yaml#/Hero"
+                        - $ref: "#/components/schemas/Hero"
 create-hero:
   post:
     tags: ["09 — CMS — Hero & Services"]
@@ -28,7 +28,7 @@ create-hero:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/cms-hero.yaml#/CreateHeroInput"
+            $ref: "#/components/schemas/CreateHeroInput"
     responses:
       "201":
         description: Home hero section created successfully
@@ -36,10 +36,10 @@ create-hero:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-hero.yaml#/Hero"
+                      $ref: "#/components/schemas/Hero"
       "409":
         description: Hero section already exists
 update-hero:
@@ -61,7 +61,7 @@ update-hero:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/cms-hero.yaml#/UpdateHeroInput"
+            $ref: "#/components/schemas/UpdateHeroInput"
     responses:
       "200":
         description: Home hero section updated successfully
@@ -69,10 +69,10 @@ update-hero:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-hero.yaml#/Hero"
+                      $ref: "#/components/schemas/Hero"
       "404":
         description: Hero not found
 get-services:
@@ -94,12 +94,12 @@ get-services:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: array
                       items:
-                        $ref: "../components/schemas/cms-hero.yaml#/Service"
+                        $ref: "#/components/schemas/Service"
       "404":
         description: Hero not found
 create-service:
@@ -144,10 +144,10 @@ create-service:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-hero.yaml#/Service"
+                      $ref: "#/components/schemas/Service"
       "404":
         description: Hero not found
 update-service:
@@ -191,10 +191,10 @@ update-service:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-hero.yaml#/Service"
+                      $ref: "#/components/schemas/Service"
       "404":
         description: Service not found
 delete-service:

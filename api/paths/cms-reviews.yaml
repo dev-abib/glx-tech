@@ -10,10 +10,10 @@ get-review-section:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-reviews.yaml#/ReviewSection"
+                      $ref: "#/components/schemas/ReviewSection"
 create-review-section:
   post:
     tags: ["13 — CMS — Reviews"]
@@ -26,7 +26,7 @@ create-review-section:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/cms-reviews.yaml#/CreateReviewSectionInput"
+            $ref: "#/components/schemas/CreateReviewSectionInput"
     responses:
       "201":
         description: Review section created successfully
@@ -34,10 +34,10 @@ create-review-section:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-reviews.yaml#/ReviewSection"
+                      $ref: "#/components/schemas/ReviewSection"
       "409":
         description: Review section already exists
 update-review-section:
@@ -59,7 +59,7 @@ update-review-section:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/cms-reviews.yaml#/UpdateReviewSectionInput"
+            $ref: "#/components/schemas/UpdateReviewSectionInput"
     responses:
       "200":
         description: Review section updated successfully
@@ -67,10 +67,10 @@ update-review-section:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-reviews.yaml#/ReviewSection"
+                      $ref: "#/components/schemas/ReviewSection"
       "404":
         description: Review section not found
 delete-review-section:
@@ -111,12 +111,12 @@ get-reviews:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: array
                       items:
-                        $ref: "../components/schemas/cms-reviews.yaml#/Review"
+                        $ref: "#/components/schemas/Review"
       "404":
         description: Review section not found
 get-review:
@@ -138,10 +138,10 @@ get-review:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-reviews.yaml#/Review"
+                      $ref: "#/components/schemas/Review"
       "404":
         description: Review not found
 create-review:
@@ -199,10 +199,10 @@ create-review:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-reviews.yaml#/Review"
+                      $ref: "#/components/schemas/Review"
 update-review:
   put:
     tags: ["13 — CMS — Reviews"]
@@ -257,10 +257,10 @@ update-review:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-reviews.yaml#/Review"
+                      $ref: "#/components/schemas/Review"
       "404":
         description: Review not found
 delete-review:

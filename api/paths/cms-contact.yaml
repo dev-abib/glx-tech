@@ -8,7 +8,7 @@ submit-inquiry:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/cms-contact.yaml#/CreateContactInput"
+            $ref: "#/components/schemas/CreateContactInput"
     responses:
       "201":
         description: Inquiry submitted successfully
@@ -16,7 +16,7 @@ submit-inquiry:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -80,7 +80,7 @@ gt-all-inquiries:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -88,9 +88,9 @@ gt-all-inquiries:
                         inquiries:
                           type: array
                           items:
-                            $ref: "../components/schemas/cms-contact.yaml#/ContactInquiry"
+                            $ref: "#/components/schemas/ContactInquiry"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "401":
         description: Unauthorized
 get-inquiry-stats:
@@ -107,10 +107,10 @@ get-inquiry-stats:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-contact.yaml#/InquiryStats"
+                      $ref: "#/components/schemas/InquiryStats"
 get-inquiry:
   get:
     tags: ["10 — CMS — Contact"]
@@ -132,10 +132,10 @@ get-inquiry:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-contact.yaml#/ContactInquiry"
+                      $ref: "#/components/schemas/ContactInquiry"
       "404":
         description: Inquiry not found
 mark-inquiry-read:
@@ -159,10 +159,10 @@ mark-inquiry-read:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-contact.yaml#/ContactInquiry"
+                      $ref: "#/components/schemas/ContactInquiry"
       "404":
         description: Inquiry not found
 reply-inquiry:
@@ -184,7 +184,7 @@ reply-inquiry:
       content:
         application/json:
           schema:
-            $ref: "../components/schemas/cms-contact.yaml#/ReplyContactInput"
+            $ref: "#/components/schemas/ReplyContactInput"
     responses:
       "200":
         description: Reply sent successfully
@@ -192,10 +192,10 @@ reply-inquiry:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-contact.yaml#/ContactInquiry"
+                      $ref: "#/components/schemas/ContactInquiry"
       "404":
         description: Inquiry not found
 delete-inquiry:

@@ -10,12 +10,12 @@ get-about:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       nullable: true
                       allOf:
-                        - $ref: "../components/schemas/cms-about.yaml#/AboutUs"
+                        - $ref: "#/components/schemas/AboutUs"
 create-about:
   post:
     tags: ["11 — CMS — About Us"]
@@ -56,10 +56,10 @@ create-about:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-about.yaml#/AboutUs"
+                      $ref: "#/components/schemas/AboutUs"
       "409":
         description: About Us section already exists
 update-about:
@@ -108,10 +108,10 @@ update-about:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-about.yaml#/AboutUs"
+                      $ref: "#/components/schemas/AboutUs"
       "404":
         description: About Us section not found
 delete-about-image:
@@ -142,10 +142,10 @@ delete-about-image:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/cms-about.yaml#/AboutUs"
+                      $ref: "#/components/schemas/AboutUs"
       "400":
         description: Invalid image field
       "404":

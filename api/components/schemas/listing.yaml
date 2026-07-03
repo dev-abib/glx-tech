@@ -211,6 +211,11 @@ CreateListingInput:
       type: boolean
       example: true
       description: Whether the listing should be available for bookings immediately
+    genericData:
+      type: object
+      nullable: true
+      description: Additional arbitrary data as a JSON object
+      example: {"customField": "value"}
 UpdateListingInput:
   type: object
   properties:
@@ -285,6 +290,11 @@ UpdateListingInput:
       type: boolean
       example: true
       description: Whether the listing is available for bookings
+    genericData:
+      type: object
+      nullable: true
+      description: Additional arbitrary data as a JSON object
+      example: {"customField": "value"}
 UserReview:
   type: object
   properties:

@@ -47,7 +47,7 @@ get-all-listings:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -55,9 +55,9 @@ get-all-listings:
                         listings:
                           type: array
                           items:
-                            $ref: "../components/schemas/listing.yaml#/Listing"
+                            $ref: "#/components/schemas/Listing"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "401":
         description: Unauthorized
       "403":
@@ -83,10 +83,10 @@ get-listing-by-slug:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "../components/schemas/listing.yaml#/Listing"
+                      $ref: "#/components/schemas/Listing"
       "401":
         description: Unauthorized
       "403":
@@ -125,7 +125,7 @@ get-listing-reviews:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -133,9 +133,9 @@ get-listing-reviews:
                         reviews:
                           type: array
                           items:
-                            $ref: "../components/schemas/listing.yaml#/UserReview"
+                            $ref: "#/components/schemas/UserReview"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "401":
         description: Unauthorized
       "403":
@@ -173,7 +173,7 @@ get-all-reviews:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
@@ -181,9 +181,9 @@ get-all-reviews:
                         reviews:
                           type: array
                           items:
-                            $ref: "../components/schemas/listing.yaml#/UserReview"
+                            $ref: "#/components/schemas/UserReview"
                         pagination:
-                          $ref: "../components/schemas/common.yaml#/Pagination"
+                          $ref: "#/components/schemas/Pagination"
       "401":
         description: Unauthorized
       "403":
@@ -202,7 +202,7 @@ get-dashboard-trends:
           application/json:
             schema:
               allOf:
-                - $ref: "../components/schemas/common.yaml#/ApiResponse"
+                - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
                       type: object
