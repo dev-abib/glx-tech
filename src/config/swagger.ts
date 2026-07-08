@@ -56,6 +56,8 @@ S("listing.yaml", "UserReview"); S("listing.yaml", "CreateUserReviewInput"); S("
 S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "UpdateUserAsSellerInput");
 S("admin-campaigns.yaml", "Campaign"); S("admin-campaigns.yaml", "CreateCampaignInput");
 S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes");
+S("stripe-donate.yaml", "CreateDonationInput"); S("stripe-donate.yaml", "DonationPaymentLinkResponse");
+S("stripe-donate.yaml", "Donation"); S("stripe-donate.yaml", "DonationListResponse"); S("stripe-donate.yaml", "DonationStatsResponse");
 
 const paths: Record<string, unknown> = {};
 // P(file, pathKey, fragmentName) — load fragmentName from YAML file and assign to pathKey in paths
@@ -163,6 +165,11 @@ P("newsletter.yaml", "/newsletter/unsubscribe", "unsubscribe");
 P("admin-campaigns.yaml", "/admin/campaigns", "campaigns");
 P("admin-campaigns.yaml", "/admin/campaigns/{id}/send", "send-campaign");
 P("admin-campaigns.yaml", "/admin/campaigns/subscriber-count", "get-subscriber-count");
+
+// ── Donations / Stripe ────────────────────────────────────────────────
+P("stripe-donate.yaml", "/stripe/donate", "create-donation");
+P("stripe-donate.yaml", "/stripe/donations", "get-donations");
+P("stripe-donate.yaml", "/stripe/donations/stats", "get-donation-stats");
 
 const infoDescription: string = ((openapiBase?.info as Record<string, unknown> | undefined)?.description as string) ?? '';
 

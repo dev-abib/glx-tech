@@ -1,0 +1,24 @@
+enum DonationStatus {
+  pending
+  completed
+  failed
+}
+
+/// Donation records created via Stripe payment links / checkout sessions.
+model Donation {
+  id                  String         @id @default(uuid())
+  amount              Float?
+  currency            String         @default("usd")
+  stripeSessionId     String?        @unique
+  stripePaymentId     String?
+  stripePaymentLinkId String?
+  customerEmail       String?
+  customerName        String?
+  message             String?
+  status              DonationStatus @default(pending)
+  metadata            Json?
+  createdAt           DateTime       @default(now()) @map("created_at")
+  updatedAt           DateTime       @updatedAt @map("updated_at")
+
+  @@map("donations")
+}

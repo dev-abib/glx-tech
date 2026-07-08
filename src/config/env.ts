@@ -36,6 +36,8 @@ export interface EnvConfig {
   readonly APP_URL: string;
   readonly FRONTEND_URL: string;
   readonly LOCATIONIQ_KEY: string;
+  readonly STRIPE_WEBHOOK_SECRET: string;
+  readonly STRIPE_SECRET_KEY: string;
 }
 
 // ─── Critical env var validation ─────────────────────────────────────────
@@ -96,6 +98,18 @@ const criticalEnvVars: Array<{
     key: "LOCATIONIQ_KEY",
     label: "LOCATIONIQ_KEY",
     group: "location",
+  },
+
+  // Stripe
+  {
+    key: "STRIPE_SECRET_KEY",
+    label: "STRIPE_SECRET_KEY",
+    group: "Stripe",
+  },
+  {
+    key: "STRIPE_WEBHOOK_SECRET",
+    label: "STRIPE_WEBHOOK_SECRET",
+    group: "Stripe",
   },
 ];
 
@@ -175,6 +189,10 @@ export const env = {
   APP_URL: process.env.APP_URL || "#",
   FRONTEND_URL: process.env.FRONTEND_URL || process.env.APP_URL || "#",
   LOCATIONIQ_KEY: process.env.LOCATIONIQ_KEY || "#",
+
+  // Stripe
+  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",
+  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || "",
 } as const satisfies EnvConfig;
 
 // Validate at startup

@@ -142,6 +142,18 @@ UpdateAppointmentStatusInput:
 BookedTimes:
   $ref: "./appointment.yaml#/BookedTimes"
 
+# ── Stripe / Donations ───────────────────────────────────────────────
+CreateDonationInput:
+  $ref: "./stripe-donate.yaml#/CreateDonationInput"
+DonationPaymentLinkResponse:
+  $ref: "./stripe-donate.yaml#/DonationPaymentLinkResponse"
+Donation:
+  $ref: "./stripe-donate.yaml#/Donation"
+DonationListResponse:
+  $ref: "./stripe-donate.yaml#/DonationListResponse"
+DonationStatsResponse:
+  $ref: "./stripe-donate.yaml#/DonationStatsResponse"
+
 # ── Seller ───────────────────────────────────────────────────────────
 UpdateUserAsSellerInput:
   $ref: "./seller.yaml#/UpdateUserAsSellerInput"

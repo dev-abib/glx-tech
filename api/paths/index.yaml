@@ -216,3 +216,11 @@
   $ref: "./appointments.yaml#/get-booked-times"
 /appointments/update-status/{appointmentId}:
   $ref: "./appointments.yaml#/update-appointment-status"
+
+# ── Stripe / Donations ────────────────────────────────────────────────
+/stripe/donate:
+  $ref: "./stripe-donate.yaml#/create-donation"
+/stripe/donations:
+  $ref: "./stripe-donate.yaml#/get-donations"
+/stripe/donations/stats:
+  $ref: "./stripe-donate.yaml#/get-donation-stats"

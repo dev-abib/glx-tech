@@ -23,10 +23,7 @@ const __dirname = path.dirname(__filename);
 
 const helmet = helmetModule as unknown as (
   options?: Record<string, unknown>
-) => (req: Request, res: Response, next: NextFunction) => void;
-
-app.use(
-  helmet({
+) => (req: Request, res: Response, next: NextFunction) => void;app.use(helmet({
     crossOriginResourcePolicy: false,
     contentSecurityPolicy: {
       directives: {
@@ -42,6 +39,13 @@ app.use(
 );
 
 app.use(cors());
+
+// ── Stripe Webhook ─────────────────────────────────────────────────────────
+// Stripe webhook needs the raw request body for signature verification.
+// This must be registered BEFORE express.json() so the raw body is preserved.
+import { stripeWebhook } from "./modules/stripe/stripe.controllers.js";
+app.post(`${env.API_VERSION}/stripe/webhook`, express.raw({ type: "application/json" }), stripeWebhook);
+
 app.use(express.json());
 
 // ── Static Assets (favicon, etc.) ─────────────────────────────────────────

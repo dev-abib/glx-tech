@@ -1,0 +1,116 @@
+CreateDonationInput:
+  type: object
+  properties:
+    amount:
+      type: number
+      description: Fixed donation amount (optional - if not set, donor can choose any amount)
+      example: 25.00
+    customerEmail:
+      type: string
+      format: email
+      description: Donor email
+      example: donor@example.com
+    customerName:
+      type: string
+      description: Donor name
+      example: John Doe
+    message:
+      type: string
+      description: Optional donation message
+      maxLength: 500
+      example: Keep up the great work!
+    successUrl:
+      type: string
+      format: url
+      description: Custom redirect URL after successful payment (defaults to FRONTEND_URL/donate/success)
+      example: https://example.com/donate/success
+    cancelUrl:
+      type: string
+      format: url
+      description: Custom redirect URL if payment is cancelled (defaults to FRONTEND_URL/donate)
+      example: https://example.com/donate
+
+DonationPaymentLinkResponse:
+  type: object
+  properties:
+    paymentLinkUrl:
+      type: string
+      description: The Stripe payment link URL to redirect the donor to
+      example: https://buy.stripe.com/test_abc123
+    donationId:
+      type: string
+      description: The internal donation record ID
+      example: 550e8400-e29b-41d4-a716-446655440000
+
+Donation:
+  type: object
+  properties:
+    id:
+      type: string
+      description: Donation ID
+    amount:
+      type: number
+      nullable: true
+      description: Donation amount in dollars
+      example: 25.00
+    currency:
+      type: string
+      description: Currency code
+      example: usd
+    customerEmail:
+      type: string
+      nullable: true
+      description: Donor email
+    customerName:
+      type: string
+      nullable: true
+      description: Donor name
+    message:
+      type: string
+      nullable: true
+      description: Donation message
+    createdAt:
+      type: string
+      format: date-time
+      description: Donation date
+
+DonationListResponse:
+  type: object
+  properties:
+    donations:
+      type: array
+      items:
+        $ref: "#/components/schemas/Donation"
+    pagination:
+      $ref: "#/components/schemas/Pagination"
+
+DonationStatsResponse:
+  type: object
+  properties:
+    totalDonations:
+      type: integer
+      description: Total number of completed donations
+      example: 42
+    totalAmount:
+      type: number
+      description: Total amount donated in dollars
+      example: 1250.50
+    recentDonations:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+          amount:
+            type: number
+            nullable: true
+          customerName:
+            type: string
+            nullable: true
+          message:
+            type: string
+            nullable: true
+          createdAt:
+            type: string
+            format: date-time

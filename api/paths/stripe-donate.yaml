@@ -1,0 +1,69 @@
+create-donation:
+  post:
+    tags: ["20 — Donations"]
+    summary: Create a donation payment link
+    description: Generates a Stripe payment link for donations. Public endpoint - no authentication required.
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateDonationInput"
+    responses:
+      "201":
+        description: Payment link created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "#/components/schemas/DonationPaymentLinkResponse"
+
+get-donations:
+  get:
+    tags: ["20 — Donations"]
+    summary: Get all completed donations
+    description: Returns a paginated list of completed donations. Public endpoint - no authentication required.
+    parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          default: 1
+        description: Page number
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 10
+        description: Items per page (max 50)
+    responses:
+      "200":
+        description: Donations fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "#/components/schemas/DonationListResponse"
+
+get-donation-stats:
+  get:
+    tags: ["20 — Donations"]
+    summary: Get donation statistics
+    description: Returns aggregate donation statistics (total count, total amount, recent donations). Public endpoint - no authentication required.
+    responses:
+      "200":
+        description: Donation stats fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "#/components/schemas/DonationStatsResponse"

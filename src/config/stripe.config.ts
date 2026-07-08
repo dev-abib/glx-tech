@@ -1,5 +1,6 @@
 import Stripe from "stripe";
+import { env } from "./env.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+export const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
   apiVersion: "2026-06-24.dahlia",
 });
