@@ -111,6 +111,7 @@ const criticalEnvVars: Array<{
     label: "STRIPE_WEBHOOK_SECRET",
     group: "Stripe",
   },
+
 ];
 
 function validateCriticalEnv(config: EnvConfig): void {
@@ -186,9 +187,9 @@ export const env = {
   // Site
   SITE_NAME: process.env.SITE_NAME || "Verep",
   SITE_URL: process.env.SITE_URL || "#",
-  APP_URL: process.env.APP_URL || "#",
-  FRONTEND_URL: process.env.FRONTEND_URL || process.env.APP_URL || "#",
-  LOCATIONIQ_KEY: process.env.LOCATIONIQ_KEY || "#",
+  APP_URL: process.env.APP_URL || "http://localhost:5173",
+  FRONTEND_URL: process.env.FRONTEND_URL || process.env.APP_URL || "http://localhost:5173",
+  LOCATIONIQ_KEY: process.env.LOCATIONIQ_KEY || "",
 
   // Stripe
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",

@@ -281,10 +281,17 @@ const envVars: EnvVarEntry[] = [
   },
   {
     key: "APP_URL",
-    default: "#",
-    example: "https://yourapp.com",
+    default: "http://localhost:5173",
+    example: "https://api.yourapp.com",
     group: "Site",
     description: "Application root URL used in email CTA buttons",
+  },
+  {
+    key: "FRONTEND_URL",
+    default: "http://localhost:5173",
+    example: "https://yourapp.com",
+    group: "Site",
+    description: "Frontend URL used for Stripe checkout redirects and link generation",
   },
 ];
 

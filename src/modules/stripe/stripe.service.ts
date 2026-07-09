@@ -22,6 +22,13 @@ async function getOrCreateDonationPrice(): Promise<string> {
 
 export class StripeService {
   /**
+   * Build a frontend URL from env config, stripping trailing slashes.
+   */
+  private getFrontendUrl(): string {
+    return (env.FRONTEND_URL || env.APP_URL).replace(/\/+$/, "");
+  }
+
+  /**
    * Create a Stripe Checkout Session for a quick donation.
    * No payload needed — donors enter amount/name/email on Stripe's hosted page.
    */
@@ -29,11 +36,9 @@ export class StripeService {
     // Reuse the same price — the config (custom_unit_amount) never changes
     const priceId = await getOrCreateDonationPrice();
 
-    const successUrl = `${
-      env.FRONTEND_URL || env.APP_URL
-    }/donate/success?session_id={CHECKOUT_SESSION_ID}`;
-
-    const cancelUrl = `${env.FRONTEND_URL || env.APP_URL}/donate`;
+    const baseUrl = this.getFrontendUrl();
+    const successUrl = `${baseUrl}/donate/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = `${baseUrl}/donate`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -83,7 +88,8 @@ export class StripeService {
       custom_unit_amount: { enabled: true },
     });
 
-    const successUrl = data.successUrl || `${env.FRONTEND_URL || env.APP_URL}/donate/success`;
+    const baseUrl = this.getFrontendUrl();
+    const successUrl = data.successUrl || `${baseUrl}/donate/success`;
 
     // Create the payment link
     const paymentLink = await stripe.paymentLinks.create({
