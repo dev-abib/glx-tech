@@ -264,6 +264,34 @@ const envVars: EnvVarEntry[] = [
     description: "Site owner email for admin notifications",
   },
 
+  // ── LocationIQ ───────────────────────────────────────────────────────────
+  {
+    key: "LOCATIONIQ_KEY",
+    default: "",
+    example: "your-locationiq-api-key",
+    group: "LocationIQ — Geocoding",
+    description: "LocationIQ API key for geocoding addresses (required)",
+    critical: true,
+  },
+
+  // ── Stripe ─────────────────────────────────────────────────────────────
+  {
+    key: "STRIPE_SECRET_KEY",
+    default: "",
+    example: "sk_test_...",
+    group: "Stripe — Payments",
+    description: "Stripe secret key (required)",
+    critical: true,
+  },
+  {
+    key: "STRIPE_WEBHOOK_SECRET",
+    default: "",
+    example: "whsec_...",
+    group: "Stripe — Payments",
+    description: "Stripe webhook signing secret (required)",
+    critical: true,
+  },
+
   // ── Site ────────────────────────────────────────────────────────────────
   {
     key: "SITE_NAME",

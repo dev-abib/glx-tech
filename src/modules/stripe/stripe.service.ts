@@ -22,10 +22,12 @@ async function getOrCreateDonationPrice(): Promise<string> {
 
 export class StripeService {
   /**
-   * Build a frontend URL from env config, stripping trailing slashes.
+   * Build a frontend URL from env config, stripping trailing slashes
+   * and trimming whitespace/spurious characters.
    */
   private getFrontendUrl(): string {
-    return (env.FRONTEND_URL || env.APP_URL).replace(/\/+$/, "");
+    const raw = (env.FRONTEND_URL || env.APP_URL).trim();
+    return raw.replace(/\/+$/, "");
   }
 
   /**
