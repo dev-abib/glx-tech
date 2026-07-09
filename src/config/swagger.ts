@@ -57,7 +57,7 @@ S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "UpdateUserAsSellerInp
 S("admin-campaigns.yaml", "Campaign"); S("admin-campaigns.yaml", "CreateCampaignInput");
 S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes");
 S("stripe-donate.yaml", "CreateDonationInput"); S("stripe-donate.yaml", "DonationPaymentLinkResponse");
-S("stripe-donate.yaml", "Donation"); S("stripe-donate.yaml", "DonationListResponse"); S("stripe-donate.yaml", "DonationStatsResponse");
+S("stripe-donate.yaml", "Donation"); S("stripe-donate.yaml", "DonationListResponse"); S("stripe-donate.yaml", "DonationCheckoutResponse"); S("stripe-donate.yaml", "DonationStatsResponse");
 
 const paths: Record<string, unknown> = {};
 // P(file, pathKey, fragmentName) — load fragmentName from YAML file and assign to pathKey in paths

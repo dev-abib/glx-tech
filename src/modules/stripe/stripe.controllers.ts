@@ -9,10 +9,10 @@ import { env } from "../../config/env.js";
 const stripeService = new StripeService();
 
 /**
- * Quick-donate: creates a Checkout Session and redirects to Stripe.
+ * Quick-donate: creates a Checkout Session and returns the checkout URL.
  * Public endpoint — no authentication or payload required.
  */
-export const quickDonateRedirect: RequestHandler = asyncHandler(
+export const quickDonateCheckout: RequestHandler = asyncHandler(
   async (_req: Request, res: Response) => {
     const result = await stripeService.createDonationCheckoutSession();
     if (!result.url) {
@@ -20,7 +20,14 @@ export const quickDonateRedirect: RequestHandler = asyncHandler(
         .status(500)
         .json(new ApiResponse(500, "Failed to create checkout session"));
     }
-    return res.redirect(303, result.url);
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, "Checkout session created successfully", {
+          checkoutUrl: result.url,
+          donationId: result.donationId,
+        })
+      );
   }
 );
 

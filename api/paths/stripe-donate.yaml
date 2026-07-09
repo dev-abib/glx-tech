@@ -1,11 +1,19 @@
 quick-donate:
   get:
     tags: ["20 — Donations"]
-    summary: Quick donate — redirect to Stripe Checkout
-    description: Creates a Stripe Checkout Session with custom amount and redirects the user. No payload required — the donor enters amount/name/email on Stripe's hosted page. Public endpoint - no authentication required.
+    summary: Quick donate — get Stripe Checkout URL
+    description: Creates a Stripe Checkout Session with custom amount and returns the checkout URL. The client should redirect the user to the returned `checkoutUrl`. No payload required — the donor enters amount/name/email on Stripe's hosted page. Public endpoint - no authentication required.
     responses:
-      "303":
-        description: Redirect to Stripe Checkout
+      "200":
+        description: Checkout session created successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "#/components/schemas/DonationCheckoutResponse"
 
 create-donation:
   post:

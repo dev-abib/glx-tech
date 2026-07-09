@@ -84,6 +84,20 @@ DonationListResponse:
     pagination:
       $ref: "#/components/schemas/Pagination"
 
+DonationCheckoutResponse:
+  type: object
+  properties:
+    checkoutUrl:
+      type: string
+      format: uri
+      description: The Stripe Checkout Session URL to redirect the donor to
+      example: https://checkout.stripe.com/c/pay/cs_test_abc123
+    donationId:
+      type: string
+      format: uuid
+      description: The internal donation record ID
+      example: 550e8400-e29b-41d4-a716-446655440000
+
 DonationStatsResponse:
   type: object
   properties:
