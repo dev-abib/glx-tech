@@ -9,6 +9,22 @@ import { env } from "../../config/env.js";
 const stripeService = new StripeService();
 
 /**
+ * Quick-donate: creates a Checkout Session and redirects to Stripe.
+ * Public endpoint — no authentication or payload required.
+ */
+export const quickDonateRedirect: RequestHandler = asyncHandler(
+  async (_req: Request, res: Response) => {
+    const result = await stripeService.createDonationCheckoutSession();
+    if (!result.url) {
+      return res
+        .status(500)
+        .json(new ApiResponse(500, "Failed to create checkout session"));
+    }
+    return res.redirect(303, result.url);
+  }
+);
+
+/**
  * Create a donation payment link.
  * Public endpoint — no authentication required.
  */

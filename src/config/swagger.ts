@@ -167,9 +167,11 @@ P("admin-campaigns.yaml", "/admin/campaigns/{id}/send", "send-campaign");
 P("admin-campaigns.yaml", "/admin/campaigns/subscriber-count", "get-subscriber-count");
 
 // ── Donations / Stripe ────────────────────────────────────────────────
+P("stripe-donate.yaml", "/stripe/donate/checkout", "quick-donate");
 P("stripe-donate.yaml", "/stripe/donate", "create-donation");
 P("stripe-donate.yaml", "/stripe/donations", "get-donations");
 P("stripe-donate.yaml", "/stripe/donations/stats", "get-donation-stats");
+P("stripe-donate.yaml", "/stripe/webhook", "stripe-webhook");
 
 const infoDescription: string = ((openapiBase?.info as Record<string, unknown> | undefined)?.description as string) ?? '';
 

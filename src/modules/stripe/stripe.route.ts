@@ -5,9 +5,13 @@ import {
   createDonationPaymentLink,
   getDonations,
   getDonationStats,
+  quickDonateRedirect,
 } from "./stripe.controllers.js";
 
 const router = express.Router();
+
+// Quick donate — redirect straight to Stripe Checkout (no payload needed)
+router.route("/donate/checkout").get(quickDonateRedirect);
 
 // Create a donation payment link (public)
 router

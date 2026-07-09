@@ -1,3 +1,12 @@
+quick-donate:
+  get:
+    tags: ["20 — Donations"]
+    summary: Quick donate — redirect to Stripe Checkout
+    description: Creates a Stripe Checkout Session with custom amount and redirects the user. No payload required — the donor enters amount/name/email on Stripe's hosted page. Public endpoint - no authentication required.
+    responses:
+      "303":
+        description: Redirect to Stripe Checkout
+
 create-donation:
   post:
     tags: ["20 — Donations"]
@@ -67,3 +76,36 @@ get-donation-stats:
                 - properties:
                     data:
                       $ref: "#/components/schemas/DonationStatsResponse"
+
+stripe-webhook:
+  post:
+    tags: ["20 — Donations"]
+    summary: Stripe webhook handler
+    description: Handles Stripe webhook events (checkout.session.completed). Verifies the Stripe signature using the webhook secret. No authentication required — the request body must be the raw JSON payload with a `stripe-signature` header.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            description: Stripe event payload (raw JSON)
+    parameters:
+      - in: header
+        name: stripe-signature
+        required: true
+        schema:
+          type: string
+        description: Stripe webhook signature for event verification
+    responses:
+      "200":
+        description: Webhook received successfully
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiResponse"
+      "400":
+        description: Missing stripe-signature header or signature verification failed
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApiError"

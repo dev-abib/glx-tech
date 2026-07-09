@@ -40,9 +40,7 @@ const helmet = helmetModule as unknown as (
 
 app.use(cors());
 
-// ── Stripe Webhook ─────────────────────────────────────────────────────────
-// Stripe webhook needs the raw request body for signature verification.
-// This must be registered BEFORE express.json() so the raw body is preserved.
+
 import { stripeWebhook } from "./modules/stripe/stripe.controllers.js";
 app.post(`${env.API_VERSION}/stripe/webhook`, express.raw({ type: "application/json" }), stripeWebhook);
 

@@ -6,7 +6,65 @@ import type { Prisma } from "@prisma/client";
 
 const prisma = getPrismaClient();
 
+// Reusable price ID for the donation checkout session (lazy-initialised)
+let cachedDonationPriceId: string | null = null;
+
+async function getOrCreateDonationPrice(): Promise<string> {
+  if (cachedDonationPriceId) return cachedDonationPriceId;
+  const price = await stripe.prices.create({
+    currency: "usd",
+    custom_unit_amount: { enabled: true },
+    product_data: { name: "Donation" },
+  });
+  cachedDonationPriceId = price.id;
+  return price.id;
+}
+
 export class StripeService {
+  /**
+   * Create a Stripe Checkout Session for a quick donation.
+   * No payload needed — donors enter amount/name/email on Stripe's hosted page.
+   */
+  async createDonationCheckoutSession() {
+    // Reuse the same price — the config (custom_unit_amount) never changes
+    const priceId = await getOrCreateDonationPrice();
+
+    const successUrl = `${
+      env.FRONTEND_URL || env.APP_URL
+    }/donate/success?session_id={CHECKOUT_SESSION_ID}`;
+
+    const cancelUrl = `${env.FRONTEND_URL || env.APP_URL}/donate`;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      billing_address_collection: "auto",
+      customer_creation: "always",
+      metadata: {
+        source: "donate_button",
+      },
+    });
+
+    // Create a pending donation record so the webhook can look it up by session ID
+    const donation = await prisma.donation.create({
+      data: {
+        currency: "usd",
+        stripeSessionId: session.id,
+        status: "pending" as const,
+        metadata: {
+          checkoutUrl: session.url,
+        } as Prisma.InputJsonValue,
+      },
+    });
+
+    return {
+      url: session.url,
+      donationId: donation.id,
+    };
+  }
+
   /**
    * Create a Stripe payment link for a donation.
    * Anyone can donate without authentication.
@@ -76,12 +134,18 @@ export class StripeService {
     const currency = session.currency as string | undefined;
     const customerDetails = session.customer_details as Record<string, unknown> | undefined;
 
-    // Find donation by stripePaymentLinkId
+    // Find donation by stripePaymentLinkId OR stripeSessionId
     let donation = null;
 
     if (paymentLinkId) {
       donation = await prisma.donation.findFirst({
         where: { stripePaymentLinkId: paymentLinkId },
+      });
+    }
+
+    if (!donation && sessionId) {
+      donation = await prisma.donation.findFirst({
+        where: { stripeSessionId: sessionId },
       });
     }
 
