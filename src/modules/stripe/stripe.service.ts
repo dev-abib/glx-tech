@@ -130,10 +130,6 @@ export class StripeService {
     };
   }
 
-  /**
-   * Handle Stripe checkout.session.completed webhook event.
-   * Updates the donation record with payment details.
-   */
   async handleCheckoutCompleted(session: Record<string, unknown>) {
     const paymentLinkId = session.payment_link as string | undefined;
     const sessionId = session.id as string;
