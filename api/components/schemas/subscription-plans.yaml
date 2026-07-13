@@ -1,0 +1,250 @@
+SubscriptionPlan:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    name:
+      type: string
+    slug:
+      type: string
+    description:
+      type: string
+      nullable: true
+    priceMonthly:
+      type: integer
+      description: Price in cents
+    priceAnnual:
+      type: integer
+      description: Price in cents
+    stripePriceIdMonthly:
+      type: string
+      nullable: true
+    stripePriceIdAnnual:
+      type: string
+      nullable: true
+    maxActiveListings:
+      type: integer
+    platformFeePercent:
+      type: number
+      format: decimal
+    isActive:
+      type: boolean
+    isPublic:
+      type: boolean
+    displayOrder:
+      type: integer
+    features:
+      type: array
+      items:
+        $ref: "#/components/schemas/PlanFeature"
+    _count:
+      type: object
+      properties:
+        users:
+          type: integer
+    createdAt:
+      type: string
+      format: date-time
+    updatedAt:
+      type: string
+      format: date-time
+
+PlanFeature:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    planId:
+      type: string
+    key:
+      type: string
+    enabled:
+      type: boolean
+
+FeatureDefinition:
+  type: object
+  properties:
+    id:
+      type: integer
+    key:
+      type: string
+    label:
+      type: string
+    description:
+      type: string
+      nullable: true
+    displayOrder:
+      type: integer
+    createdAt:
+      type: string
+      format: date-time
+
+CreatePlanInput:
+  type: object
+  required:
+    - name
+    - slug
+    - priceMonthly
+    - priceAnnual
+  properties:
+    name:
+      type: string
+    slug:
+      type: string
+    description:
+      type: string
+      nullable: true
+    priceMonthly:
+      type: integer
+    priceAnnual:
+      type: integer
+    maxActiveListings:
+      type: integer
+      default: 0
+    platformFeePercent:
+      type: number
+      default: 0
+    isActive:
+      type: boolean
+      default: true
+    isPublic:
+      type: boolean
+      default: true
+    displayOrder:
+      type: integer
+      default: 0
+
+UpdatePlanInput:
+  type: object
+  properties:
+    name:
+      type: string
+    description:
+      type: string
+      nullable: true
+    priceMonthly:
+      type: integer
+    priceAnnual:
+      type: integer
+    maxActiveListings:
+      type: integer
+    platformFeePercent:
+      type: number
+    isActive:
+      type: boolean
+    isPublic:
+      type: boolean
+    displayOrder:
+      type: integer
+
+BulkSetFeaturesInput:
+  type: object
+  required:
+    - features
+  properties:
+    features:
+      type: array
+      items:
+        type: object
+        required:
+          - key
+          - enabled
+        properties:
+          key:
+            type: string
+          enabled:
+            type: boolean
+
+CreateFeatureDefinitionInput:
+  type: object
+  required:
+    - key
+    - label
+  properties:
+    key:
+      type: string
+    label:
+      type: string
+    description:
+      type: string
+      nullable: true
+    displayOrder:
+      type: integer
+      default: 0
+
+UpdateFeatureDefinitionInput:
+  type: object
+  properties:
+    label:
+      type: string
+    description:
+      type: string
+      nullable: true
+    displayOrder:
+      type: integer
+
+PaginatedPlans:
+  type: object
+  properties:
+    plans:
+      type: array
+      items:
+        $ref: "#/components/schemas/SubscriptionPlan"
+    pagination:
+      $ref: "#/components/schemas/Pagination"
+
+PublicPlansResponse:
+  type: object
+  properties:
+    plans:
+      type: array
+      items:
+        allOf:
+          - $ref: "#/components/schemas/SubscriptionPlan"
+          - type: object
+            properties:
+              enabledFeatureKeys:
+                type: array
+                items:
+                  type: string
+    featureDefinitions:
+      type: array
+      items:
+        $ref: "#/components/schemas/FeatureDefinition"
+
+CreateSubscriptionCheckoutInput:
+  type: object
+  required:
+    - planId
+  properties:
+    planId:
+      type: string
+      format: uuid
+    billingCycle:
+      type: string
+      enum: [monthly, annual]
+      default: monthly
+    successUrl:
+      type: string
+      format: uri
+    cancelUrl:
+      type: string
+      format: uri
+
+SubscriptionCheckoutResponse:
+  type: object
+  properties:
+    url:
+      type: string
+      description: Stripe Checkout Session URL
+    sessionId:
+      type: string
+
+BillingPortalResponse:
+  type: object
+  properties:
+    url:
+      type: string
+      description: Stripe Billing Portal URL

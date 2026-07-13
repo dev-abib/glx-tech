@@ -55,13 +55,24 @@ S("listing.yaml", "Listing"); S("listing.yaml", "CreateListingInput"); S("listin
 S("listing.yaml", "UserReview"); S("listing.yaml", "CreateUserReviewInput"); S("listing.yaml", "UpdateUserReviewInput");
 S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "UpdateUserAsSellerInput");
 S("admin-campaigns.yaml", "Campaign"); S("admin-campaigns.yaml", "CreateCampaignInput");
-S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes");
+S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes"); S("appointment.yaml", "BookedSlot");
 S("stripe-donate.yaml", "CreateDonationInput"); S("stripe-donate.yaml", "DonationPaymentLinkResponse");
 S("stripe-donate.yaml", "Donation"); S("stripe-donate.yaml", "DonationListResponse"); S("stripe-donate.yaml", "DonationCheckoutResponse"); S("stripe-donate.yaml", "DonationStatsResponse");
+S("subscription-plans.yaml", "SubscriptionPlan"); S("subscription-plans.yaml", "PlanFeature"); S("subscription-plans.yaml", "FeatureDefinition");
+S("subscription-plans.yaml", "CreatePlanInput"); S("subscription-plans.yaml", "UpdatePlanInput"); S("subscription-plans.yaml", "BulkSetFeaturesInput");
+S("subscription-plans.yaml", "CreateFeatureDefinitionInput"); S("subscription-plans.yaml", "UpdateFeatureDefinitionInput");
+S("subscription-plans.yaml", "PaginatedPlans"); S("subscription-plans.yaml", "PublicPlansResponse");
+S("subscription-plans.yaml", "CreateSubscriptionCheckoutInput"); S("subscription-plans.yaml", "SubscriptionCheckoutResponse"); S("subscription-plans.yaml", "BillingPortalResponse");
 
 const paths: Record<string, unknown> = {};
 // P(file, pathKey, fragmentName) — load fragmentName from YAML file and assign to pathKey in paths
 const P = (f: string, p: string, frag: string): void => { paths[p] = loadPathFragment(f, frag); };
+// PM(file, pathKey, fragmentName) — merge fragment into an existing path (for paths with multiple HTTP methods)
+const PM = (f: string, p: string, frag: string): void => {
+  const current = paths[p] as Record<string, unknown> | undefined;
+  const fragment = loadPathFragment(f, frag);
+  paths[p] = { ...(current || {}), ...fragment };
+};
 P("health.yaml", "/health", "health");
 // ── Users — Authentication ──────────────────────────────────────────
 P("users-auth.yaml", "/users/create-user", "create-user");
@@ -172,6 +183,23 @@ P("stripe-donate.yaml", "/stripe/donate", "create-donation");
 P("stripe-donate.yaml", "/stripe/donations", "get-donations");
 P("stripe-donate.yaml", "/stripe/donations/stats", "get-donation-stats");
 P("stripe-donate.yaml", "/stripe/webhook", "stripe-webhook");
+
+// ── Plans & Subscriptions ────────────────────────────────────────────
+P("plans.yaml", "/plans", "get-public-plans");
+P("plans.yaml", "/stripe/subscription/checkout", "create-subscription-checkout");
+P("plans.yaml", "/stripe/subscription/portal", "create-billing-portal");
+
+// ── Admin — Plans ───────────────────────────────────────────────────
+P("plans.yaml", "/admin/plans", "admin-create-plan");
+PM("plans.yaml", "/admin/plans", "admin-get-all-plans");
+P("plans.yaml", "/admin/plans/{id}", "admin-get-plan-by-id");
+PM("plans.yaml", "/admin/plans/{id}", "admin-update-plan");
+PM("plans.yaml", "/admin/plans/{id}", "admin-delete-plan");
+P("plans.yaml", "/admin/plans/{id}/features", "admin-bulk-set-features");
+P("plans.yaml", "/admin/feature-definitions", "admin-get-feature-definitions");
+PM("plans.yaml", "/admin/feature-definitions", "admin-create-feature-definition");
+P("plans.yaml", "/admin/feature-definitions/{id}", "admin-update-feature-definition");
+PM("plans.yaml", "/admin/feature-definitions/{id}", "admin-delete-feature-definition");
 
 const infoDescription: string = ((openapiBase?.info as Record<string, unknown> | undefined)?.description as string) ?? '';
 

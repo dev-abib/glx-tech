@@ -10,12 +10,6 @@ enum Provider {
   google
 }
 
-enum Plan {
-  free
-  professional
-  premium
-}
-
 enum Insurance {
   yes
   no
@@ -64,11 +58,16 @@ model User {
   lastLoginAt     DateTime?    @map("last_login_at")
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
-  plan            Plan         @default(free)
-  listings        Listing[]
-  userReview      UserReview[]
-  isSeller        Boolean      @default(false)
-  sellerInfo      SellerInfo?
+  subscriptionPlanId String?          @map("subscription_plan_id")
+  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
+  subscriptionStatus String?           @map("subscription_status")  // active, past_due, canceled, etc.
+  stripeCustomerId   String?           @map("stripe_customer_id")
+  stripeSubscriptionId String?         @map("stripe_subscription_id")
+  currentPeriodEnd   DateTime?         @map("current_period_end")
+  listings           Listing[]
+  userReview         UserReview[]
+  isSeller           Boolean           @default(false)
+  sellerInfo         SellerInfo?
 
   @@map("users")
 }

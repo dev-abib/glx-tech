@@ -1,0 +1,352 @@
+get-public-plans:
+  get:
+    tags:
+      - "21 — Plans & Subscriptions"
+    summary: Get public plans for pricing page
+    description: Returns active + public subscription plans with their enabled features and all feature definitions
+    operationId: getPublicPlans
+    responses:
+      "200":
+        description: Plans fetched successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statusCode:
+                  type: integer
+                  example: 200
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                data:
+                  $ref: "#/components/schemas/PublicPlansResponse"
+
+admin-create-plan:
+  post:
+    tags:
+      - "22 — Admin — Plans"
+    summary: Create a new subscription plan
+    description: Creates a plan and optionally creates Stripe product + prices. Admin only.
+    operationId: adminCreatePlan
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreatePlanInput"
+    responses:
+      "201":
+        description: Plan created successfully
+      "401":
+        description: Unauthorized
+      "409":
+        description: Plan with this slug already exists
+
+admin-get-all-plans:
+  get:
+    tags:
+      - "22 — Admin — Plans"
+    summary: List all subscription plans
+    description: Returns all plans including inactive ones. Admin only.
+    operationId: adminGetAllPlans
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: query
+        name: page
+        schema:
+          type: integer
+          default: 1
+      - in: query
+        name: limit
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+    responses:
+      "200":
+        description: Plans fetched successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statusCode:
+                  type: integer
+                  example: 200
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                data:
+                  $ref: "#/components/schemas/PaginatedPlans"
+
+admin-get-plan-by-id:
+  get:
+    tags:
+      - "22 — Admin — Plans"
+    summary: Get a subscription plan by ID
+    operationId: adminGetPlanById
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: Plan fetched successfully
+      "404":
+        description: Plan not found
+
+admin-update-plan:
+  patch:
+    tags:
+      - "22 — Admin — Plans"
+    summary: Update a subscription plan
+    description: If price changes, creates new Stripe prices. Admin only.
+    operationId: adminUpdatePlan
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdatePlanInput"
+    responses:
+      "200":
+        description: Plan updated successfully
+      "404":
+        description: Plan not found
+
+admin-delete-plan:
+  delete:
+    tags:
+      - "22 — Admin — Plans"
+    summary: Delete/deactivate a subscription plan
+    description: Soft-deletes if users are on this plan, hard-deletes otherwise. Admin only.
+    operationId: adminDeletePlan
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    responses:
+      "200":
+        description: Plan deleted successfully
+
+admin-bulk-set-features:
+  patch:
+    tags:
+      - "22 — Admin — Plans"
+    summary: Bulk set feature toggles for a plan
+    operationId: adminBulkSetFeatures
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BulkSetFeaturesInput"
+    responses:
+      "200":
+        description: Features updated successfully
+
+# ── Feature Definitions ───────────────────────────────────────────────
+
+admin-get-feature-definitions:
+  get:
+    tags:
+      - "22 — Admin — Plans"
+    summary: List all feature definitions
+    description: Returns the master list of feature definitions. Admin only.
+    operationId: adminGetFeatureDefinitions
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Feature definitions fetched successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statusCode:
+                  type: integer
+                  example: 200
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                data:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/FeatureDefinition"
+
+admin-create-feature-definition:
+  post:
+    tags:
+      - "22 — Admin — Plans"
+    summary: Create a new feature definition
+    operationId: adminCreateFeatureDefinition
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateFeatureDefinitionInput"
+    responses:
+      "201":
+        description: Feature definition created
+      "409":
+        description: Feature with this key already exists
+
+admin-update-feature-definition:
+  patch:
+    tags:
+      - "22 — Admin — Plans"
+    summary: Update a feature definition
+    operationId: adminUpdateFeatureDefinition
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    requestBody:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateFeatureDefinitionInput"
+    responses:
+      "200":
+        description: Feature definition updated
+
+admin-delete-feature-definition:
+  delete:
+    tags:
+      - "22 — Admin — Plans"
+    summary: Delete a feature definition
+    description: Also removes associated plan feature toggles. Admin only.
+    operationId: adminDeleteFeatureDefinition
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    responses:
+      "200":
+        description: Feature definition deleted
+
+# ── Subscription Checkout (Stripe) ─────────────────────────────────────
+
+create-subscription-checkout:
+  post:
+    tags:
+      - "21 — Plans & Subscriptions"
+    summary: Create a Stripe Checkout Session for subscription
+    description: Creates a checkout session with the selected plan's Stripe price. Requires authentication.
+    operationId: createSubscriptionCheckout
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateSubscriptionCheckoutInput"
+    responses:
+      "201":
+        description: Checkout session created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statusCode:
+                  type: integer
+                  example: 201
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                data:
+                  $ref: "#/components/schemas/SubscriptionCheckoutResponse"
+      "401":
+        description: Authentication required
+      "404":
+        description: Plan not found
+
+create-billing-portal:
+  get:
+    tags:
+      - "21 — Plans & Subscriptions"
+    summary: Create a Stripe Billing Portal session
+    description: Redirects to Stripe's hosted billing portal for subscription management. Requires authentication.
+    operationId: createBillingPortal
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: query
+        name: return_url
+        schema:
+          type: string
+          format: uri
+        description: URL to redirect back to after portal session
+    responses:
+      "200":
+        description: Billing portal session created
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                statusCode:
+                  type: integer
+                  example: 200
+                success:
+                  type: boolean
+                  example: true
+                message:
+                  type: string
+                data:
+                  $ref: "#/components/schemas/BillingPortalResponse"
+      "401":
+        description: Authentication required

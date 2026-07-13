@@ -90,6 +90,10 @@ tags:
     description: "Appointment booking and management — create bookings, view appointments, check booked time slots"
   - name: "20 — Donations"
     description: "Donation management — create Stripe payment links, view donations, donation statistics"
+  - name: "21 — Plans & Subscriptions"
+    description: "Subscription plans pricing page, Stripe checkout, and billing portal"
+  - name: "22 — Admin — Plans"
+    description: "Admin CRUD for subscription plans, feature definitions, and feature toggles"
 
 paths:
   $ref: "./paths/index.yaml"

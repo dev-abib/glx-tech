@@ -3,7 +3,7 @@ import { ApiResponse } from "../../utils/api-response.js";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { stripe } from "../../config/stripe.config.js";
 import { StripeService } from "./stripe.service.js";
-import type { CreateDonationInput } from "./stripe.validation.js";
+import type { CreateDonationInput, CreateSubscriptionCheckoutInput } from "./stripe.validation.js";
 import { env } from "../../config/env.js";
 
 const stripeService = new StripeService();
@@ -77,7 +77,45 @@ export const getDonationStats: RequestHandler = asyncHandler(
 );
 
 /**
- * Stripe webhook handler for checkout.session.completed.
+ * Create a Stripe Checkout Session for a subscription plan.
+ * Requires authentication.
+ */
+export const createSubscriptionCheckout: RequestHandler<
+  {},
+  ApiResponse<{ url: string; sessionId: string }>,
+  CreateSubscriptionCheckoutInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const result = await stripeService.createSubscriptionCheckoutSession(
+    req.body,
+    req.user!.id
+  );
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "Checkout session created", result));
+});
+
+/**
+ * Create a Stripe Billing Portal session for subscription management.
+ * Requires authentication.
+ */
+export const createBillingPortal: RequestHandler<
+  {},
+  ApiResponse<{ url: string }>
+> = asyncHandler(async (req: Request, res: Response) => {
+  const returnUrl = (req.query.return_url as string) || undefined;
+  const result = await stripeService.createBillingPortalSession(
+    req.user!.id,
+    returnUrl
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Billing portal session created", result));
+});
+
+/**
+ * Stripe webhook handler for checkout.session.completed AND subscription events.
  * This endpoint is called by Stripe — no auth, but verifies the Stripe webhook signature.
  */
 export const stripeWebhook: RequestHandler = asyncHandler(
@@ -114,10 +152,35 @@ export const stripeWebhook: RequestHandler = asyncHandler(
         .json(new ApiResponse(400, `Webhook signature verification failed: ${message}`));
     }
 
-    // Handle the event
-    if (event.type === "checkout.session.completed") {
-      const session = event.data.object as Record<string, unknown>;
-      await stripeService.handleCheckoutCompleted(session);
+    const object = event.data.object as Record<string, unknown>;
+
+    switch (event.type) {
+      case "checkout.session.completed": {
+        // Handle both donations and subscriptions
+        await stripeService.handleCheckoutCompleted(object);
+
+        // If it's a subscription checkout, also update the user's plan
+        if (object.mode === "subscription") {
+          await stripeService.handleSubscriptionCheckoutCompleted(object);
+        }
+        break;
+      }
+      case "customer.subscription.updated": {
+        await stripeService.handleSubscriptionUpdated(object);
+        break;
+      }
+      case "customer.subscription.deleted": {
+        await stripeService.handleSubscriptionDeleted(object);
+        break;
+      }
+      case "invoice.paid": {
+        await stripeService.handleInvoicePaid(object);
+        break;
+      }
+      case "invoice.payment_failed": {
+        await stripeService.handleInvoicePaymentFailed(object);
+        break;
+      }
     }
 
     return res

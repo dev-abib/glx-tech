@@ -157,3 +157,31 @@ DonationStatsResponse:
 # ── Seller ───────────────────────────────────────────────────────────
 UpdateUserAsSellerInput:
   $ref: "./seller.yaml#/UpdateUserAsSellerInput"
+
+# ── Subscription Plans ───────────────────────────────────────────────
+SubscriptionPlan:
+  $ref: "./subscription-plans.yaml#/SubscriptionPlan"
+PlanFeature:
+  $ref: "./subscription-plans.yaml#/PlanFeature"
+FeatureDefinition:
+  $ref: "./subscription-plans.yaml#/FeatureDefinition"
+CreatePlanInput:
+  $ref: "./subscription-plans.yaml#/CreatePlanInput"
+UpdatePlanInput:
+  $ref: "./subscription-plans.yaml#/UpdatePlanInput"
+BulkSetFeaturesInput:
+  $ref: "./subscription-plans.yaml#/BulkSetFeaturesInput"
+CreateFeatureDefinitionInput:
+  $ref: "./subscription-plans.yaml#/CreateFeatureDefinitionInput"
+UpdateFeatureDefinitionInput:
+  $ref: "./subscription-plans.yaml#/UpdateFeatureDefinitionInput"
+PaginatedPlans:
+  $ref: "./subscription-plans.yaml#/PaginatedPlans"
+PublicPlansResponse:
+  $ref: "./subscription-plans.yaml#/PublicPlansResponse"
+CreateSubscriptionCheckoutInput:
+  $ref: "./subscription-plans.yaml#/CreateSubscriptionCheckoutInput"
+SubscriptionCheckoutResponse:
+  $ref: "./subscription-plans.yaml#/SubscriptionCheckoutResponse"
+BillingPortalResponse:
+  $ref: "./subscription-plans.yaml#/BillingPortalResponse"

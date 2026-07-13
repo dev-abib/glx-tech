@@ -11,6 +11,7 @@
     "check:env-example": "tsx scripts/check-env-example.ts",
     "seed": "tsx src/seeders/super-admin.seeder.ts",
     "seed:listings": "tsx src/seeders/listing.seeder.ts",
+"seed:plans": "tsx src/seeders/plans.seeder.ts",
     "postinstall": "prisma generate",
     "test": "vitest run",
     "test:watch": "vitest",

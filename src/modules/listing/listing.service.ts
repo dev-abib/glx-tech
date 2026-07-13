@@ -2,6 +2,7 @@ import { getPrismaClient } from "../../config/database.js";
 import { CloudinaryService } from "../../helpers/cloudinary.service.js";
 import { UserRepository } from "../user/user.repository.js";
 import { ApiError } from "../../utils/api-error.js";
+import { SubscriptionService } from "../plans/subscription.service.js";
 import type {
   CreateListingInput,
   UpdateListingInput,
@@ -15,6 +16,7 @@ import axios from "axios";
 const cloudinary = new CloudinaryService();
 const prisma = getPrismaClient();
 const userRepo = new UserRepository();
+const subscriptionService = new SubscriptionService();
 
 export class ListingService {
   // create listing service
@@ -25,6 +27,16 @@ export class ListingService {
   ) {
     // checking if user exists
     await userRepo.findUser("id", userId, true);
+
+    // Enforce plan limits — check if user can create a new listing
+    const planCheck = await subscriptionService.canCreateListing(userId);
+    if (!planCheck.allowed) {
+      throw new ApiError(
+        403,
+        `Listing limit reached. Your plan allows a maximum of ${planCheck.maxAllowed} active listing(s). ` +
+        `You currently have ${planCheck.currentCount}. Upgrade your plan to create more listings.`
+      );
+    }
 
     const { lat, lng } = await this.geocodeAddress(data.address);
 

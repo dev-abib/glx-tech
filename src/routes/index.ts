@@ -9,6 +9,7 @@ import newsLetterRoutes from "../modules/admin/newsletter/newsletter.route.js";
 import campaignRoutes from "../modules/admin/newsletter/campaign.route.js";
 import appointmentRoutes from "../modules/appointment/appoinment.route.js";
 import stripeRoutes from "../modules/stripe/stripe.route.js";
+import plansRoutes from "../modules/plans/plans.routes.js";
 import { getSystemReport } from "../modules/system/system.controller.js";
 
 // health check — returns detailed system report (also available at root /health)
@@ -37,5 +38,8 @@ router.use("/appointments", appointmentRoutes);
 
 // stripe / donation routes (webhook is registered in app.ts before express.json())
 router.use("/stripe", stripeRoutes);
+
+// plan / subscription routes (mounted at root to handle both /plans and /admin/plans)
+router.use("/", plansRoutes);
 
 export default router;

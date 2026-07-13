@@ -1,7 +1,8 @@
 import { stripe } from "../../config/stripe.config.js";
 import { getPrismaClient } from "../../config/database.js";
 import { env } from "../../config/env.js";
-import type { CreateDonationInput, DonationQueryInput } from "./stripe.validation.js";
+import { ApiError } from "../../utils/api-error.js";
+import type { CreateDonationInput, DonationQueryInput, CreateSubscriptionCheckoutInput } from "./stripe.validation.js";
 import type { Prisma } from "@prisma/client";
 
 const prisma = getPrismaClient();
@@ -130,7 +131,130 @@ export class StripeService {
     };
   }
 
+  // ══════════════════════════════════════════════════════════════════════
+  // SUBSCRIPTION CHECKOUT
+  // ══════════════════════════════════════════════════════════════════════
+
+  /**
+   * Create a Stripe Checkout Session for subscribing to a plan.
+   * Requires authentication — user must be logged in.
+   */
+  async createSubscriptionCheckoutSession(data: CreateSubscriptionCheckoutInput, userId: string) {
+    // Look up the plan
+    const plan = await prisma.subscriptionPlan.findUnique({
+      where: { id: data.planId },
+    });
+
+    if (!plan) {
+      throw new ApiError(404, "Plan not found");
+    }
+
+    if (!plan.isActive) {
+      throw new ApiError(400, "This plan is no longer available");
+    }
+
+    // Determine which price ID to use
+    const isMonthly = data.billingCycle === "monthly";
+    const priceId = isMonthly ? plan.stripePriceIdMonthly : plan.stripePriceIdAnnual;
+
+    if (!priceId) {
+      throw new ApiError(400, `No Stripe price configured for ${data.billingCycle} billing on this plan`);
+    }
+
+    // Get or create Stripe customer for this user
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true, email: true, name: true },
+    });
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    let customerId = user.stripeCustomerId;
+
+    if (!customerId) {
+      const customer = await stripe.customers.create({
+        email: user.email ?? undefined,
+        name: user.name ?? undefined,
+        metadata: { userId },
+      });
+      customerId = customer.id;
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: { stripeCustomerId: customerId },
+      });
+    }
+
+    const baseUrl = this.getFrontendUrl();
+    const successUrl = data.successUrl || `${baseUrl}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`;
+    const cancelUrl = data.cancelUrl || `${baseUrl}/pricing`;
+
+    // Create the checkout session
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: customerId,
+      client_reference_id: userId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: {
+        planId: plan.id,
+        planSlug: plan.slug,
+        userId,
+        billingCycle: data.billingCycle,
+      },
+      subscription_data: {
+        metadata: {
+          planId: plan.id,
+          planSlug: plan.slug,
+          userId,
+        },
+      },
+    });
+
+    return {
+      url: session.url,
+      sessionId: session.id,
+    };
+  }
+
+  /**
+   * Create a Stripe Billing Portal session for managing the subscription.
+   */
+  async createBillingPortalSession(userId: string, returnUrl?: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { stripeCustomerId: true },
+    });
+
+    if (!user?.stripeCustomerId) {
+      throw new ApiError(400, "No Stripe customer record found. Subscribe to a plan first.");
+    }
+
+    const baseUrl = this.getFrontendUrl();
+
+    const session = await stripe.billingPortal.sessions.create({
+      customer: user.stripeCustomerId,
+      return_url: returnUrl || `${baseUrl}/profile`,
+    });
+
+    return { url: session.url };
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // WEBHOOK HANDLERS
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Handle checkout.session.completed — supports donations only.
+   * Subscription checkouts are handled by handleSubscriptionCheckoutCompleted.
+   */
   async handleCheckoutCompleted(session: Record<string, unknown>) {
+    // Skip if this is a subscription checkout
+    if (session.mode === "subscription") return { received: true };
+
     const paymentLinkId = session.payment_link as string | undefined;
     const sessionId = session.id as string;
     const paymentIntentId = session.payment_intent as string | undefined;
@@ -193,6 +317,228 @@ export class StripeService {
     }
 
     return { received: true };
+  }
+
+  /**
+   * Handle checkout.session.completed for subscription mode.
+   * Updates the user's subscription plan and Stripe IDs.
+   */
+  async handleSubscriptionCheckoutCompleted(session: Record<string, unknown>) {
+    const clientReferenceId = session.client_reference_id as string | undefined;
+    const metadata = session.metadata as Record<string, string> | undefined;
+    const subscriptionId = session.subscription as string | undefined;
+    const customerId = session.customer as string | undefined;
+    const mode = session.mode as string | undefined;
+
+    // Only handle subscription mode
+    if (mode !== "subscription") return;
+
+    const userId = metadata?.userId || clientReferenceId;
+    const planId = metadata?.planId;
+
+    if (!userId || !planId) {
+      console.warn("[StripeService] Missing userId or planId in subscription session metadata");
+      return;
+    }
+
+    const updateData: Record<string, unknown> = {
+      stripeCustomerId: customerId ?? null,
+      subscriptionStatus: "active",
+    };
+
+    if (subscriptionId) {
+      updateData.stripeSubscriptionId = subscriptionId;
+    }
+
+    // Set current period end from the session (line items have period info)
+    // For simplicity, we set it to 30 days from now; webhook will correct it
+    updateData.currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    // Update the user's plan
+    if (planId) {
+      updateData.subscriptionPlanId = planId;
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    console.log(`[StripeService] Subscription activated for user ${userId} — plan: ${planId}`);
+  }
+
+  /**
+   * Handle customer.subscription.updated — sync status changes.
+   */
+  async handleSubscriptionUpdated(subscription: Record<string, unknown>) {
+    const metadata = subscription.metadata as Record<string, string> | undefined;
+    let userId = metadata?.userId;
+    const status = subscription.status as string;
+    const currentPeriodEnd = subscription.current_period_end as number | undefined;
+
+    if (!userId) {
+      // Fallback: find user by customer ID
+      const customerId = subscription.customer as string;
+      if (customerId) {
+        const user = await prisma.user.findFirst({
+          where: { stripeCustomerId: customerId },
+        });
+        if (user) {
+          userId = user.id;
+        }
+      }
+
+      if (!userId) {
+        console.warn("[StripeService] Could not resolve user for subscription update");
+        return;
+      }
+    }
+
+    const updateData: Record<string, unknown> = {
+      subscriptionStatus: status,
+    };
+
+    if (currentPeriodEnd) {
+      updateData.currentPeriodEnd = new Date(currentPeriodEnd * 1000);
+    }
+
+    // Handle specific statuses
+    if (status === "canceled" || status === "incomplete_expired") {
+      updateData.subscriptionPlanId = null;
+      updateData.subscriptionStatus = "canceled";
+    }
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    console.log(`[StripeService] Subscription updated for user ${userId} — status: ${status}`);
+  }
+
+  /**
+   * Handle invoice.paid — confirm subscription is active.
+   */
+  async handleInvoicePaid(invoice: Record<string, unknown>) {
+    const subscriptionId = invoice.subscription as string | undefined;
+    const customerId = invoice.customer as string | undefined;
+    const periodEnd = invoice.period_end as number | undefined;
+    const amountPaid = invoice.amount_paid as number | undefined;
+
+    if (!subscriptionId) return;
+
+    // Find user by stripeSubscriptionId
+    const user = await prisma.user.findFirst({
+      where: { stripeSubscriptionId: subscriptionId },
+    });
+
+    if (!user) {
+      // Try finding by stripeCustomerId
+      if (!customerId) return;
+      const userByCustomer = await prisma.user.findFirst({
+        where: { stripeCustomerId: customerId },
+      });
+      if (!userByCustomer) return;
+
+      // Update the subscription ID on the user record
+      await prisma.user.update({
+        where: { id: userByCustomer.id },
+        data: {
+          stripeSubscriptionId: subscriptionId,
+          subscriptionStatus: "active",
+          currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : undefined,
+        },
+      });
+      return;
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        subscriptionStatus: "active",
+        currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : undefined,
+      },
+    });
+
+    console.log(`[StripeService] Invoice paid for user ${user.id} — amount: ${amountPaid ? amountPaid / 100 : "?"}`);
+  }
+
+  /**
+   * Handle invoice.payment_failed — mark subscription as past_due.
+   */
+  async handleInvoicePaymentFailed(invoice: Record<string, unknown>) {
+    const subscriptionId = invoice.subscription as string | undefined;
+    if (!subscriptionId) return;
+
+    const user = await prisma.user.findFirst({
+      where: { stripeSubscriptionId: subscriptionId },
+    });
+
+    if (!user) {
+      // Try finding by customer ID
+      const customerId = invoice.customer as string | undefined;
+      if (customerId) {
+        const userByCustomer = await prisma.user.findFirst({
+          where: { stripeCustomerId: customerId },
+        });
+        if (userByCustomer) {
+          await prisma.user.update({
+            where: { id: userByCustomer.id },
+            data: { subscriptionStatus: "past_due" },
+          });
+        }
+      }
+      return;
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { subscriptionStatus: "past_due" },
+    });
+
+    console.log(`[StripeService] Invoice payment failed for user ${user.id} — subscription past_due`);
+  }
+
+  /**
+   * Handle customer.subscription.deleted — clean up.
+   */
+  async handleSubscriptionDeleted(subscription: Record<string, unknown>) {
+    const metadata = subscription.metadata as Record<string, string> | undefined;
+    const userId = metadata?.userId;
+    const customerId = subscription.customer as string;
+
+    if (userId) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          subscriptionPlanId: null,
+          subscriptionStatus: "canceled",
+          stripeSubscriptionId: null,
+          currentPeriodEnd: null,
+        },
+      });
+      console.log(`[StripeService] Subscription deleted for user ${userId}`);
+      return;
+    }
+
+    // Fallback: find by customer ID
+    if (customerId) {
+      const user = await prisma.user.findFirst({
+        where: { stripeCustomerId: customerId },
+      });
+      if (user) {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            subscriptionPlanId: null,
+            subscriptionStatus: "canceled",
+            stripeSubscriptionId: null,
+            currentPeriodEnd: null,
+          },
+        });
+        console.log(`[StripeService] Subscription deleted for user ${user.id} (via customer lookup)`);
+      }
+    }
   }
 
   /**

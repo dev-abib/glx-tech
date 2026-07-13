@@ -143,5 +143,5 @@ BookedSlot:
 BookedTimes:
   type: array
   items:
-    $ref: "#/BookedSlot"
+    $ref: "#/components/schemas/BookedSlot"
   description: List of already-booked slots for a listing (with date and time)

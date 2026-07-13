@@ -228,3 +228,38 @@
   $ref: "./stripe-donate.yaml#/get-donation-stats"
 /stripe/webhook:
   $ref: "./stripe-donate.yaml#/stripe-webhook"
+
+# ── Plans & Subscriptions ────────────────────────────────────────────
+/plans:
+  $ref: "./plans.yaml#/get-public-plans"
+/stripe/subscription/checkout:
+  $ref: "./plans.yaml#/create-subscription-checkout"
+/stripe/subscription/portal:
+  $ref: "./plans.yaml#/create-billing-portal"
+
+# ── Admin — Plans ───────────────────────────────────────────────────
+/admin/plans:
+  get:
+    $ref: "./plans.yaml#/admin-get-all-plans/get"
+  post:
+    $ref: "./plans.yaml#/admin-create-plan/post"
+/admin/plans/{id}:
+  get:
+    $ref: "./plans.yaml#/admin-get-plan-by-id/get"
+  patch:
+    $ref: "./plans.yaml#/admin-update-plan/patch"
+  delete:
+    $ref: "./plans.yaml#/admin-delete-plan/delete"
+/admin/plans/{id}/features:
+  patch:
+    $ref: "./plans.yaml#/admin-bulk-set-features/patch"
+/admin/feature-definitions:
+  get:
+    $ref: "./plans.yaml#/admin-get-feature-definitions/get"
+  post:
+    $ref: "./plans.yaml#/admin-create-feature-definition/post"
+/admin/feature-definitions/{id}:
+  patch:
+    $ref: "./plans.yaml#/admin-update-feature-definition/patch"
+  delete:
+    $ref: "./plans.yaml#/admin-delete-feature-definition/delete"
