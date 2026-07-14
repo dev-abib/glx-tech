@@ -21,15 +21,31 @@ export const getAbout: RequestHandler = asyncHandler(async (_req: Request, res: 
   return res.status(200).json(new ApiResponse(200, "About Us section fetched successfully", about));
 });
 
+/**
+ * Extract files from upload.any() — returns an array of files
+ */
+function extractFiles(req: Request) {
+  const allFiles = (req.files as Express.Multer.File[] | undefined) ?? [];
+  return {
+    image1Buffer: allFiles.find((f) => f.fieldname === "image1")?.buffer,
+    image2Buffer: allFiles.find((f) => f.fieldname === "image2")?.buffer,
+    serviceIconFiles: allFiles
+      .filter((f) => f.fieldname.startsWith("serviceIcon_"))
+      .sort((a, b) => {
+        const idxA = parseInt(a.fieldname.replace("serviceIcon_", ""), 10);
+        const idxB = parseInt(b.fieldname.replace("serviceIcon_", ""), 10);
+        return idxA - idxB;
+      }),
+  };
+}
+
 export const createAbout: RequestHandler<
   {},
   ApiResponse<unknown>,
   CreateAboutInput
 > = asyncHandler(async (req: Request, res: Response) => {
-  const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-  const image1Buffer = files?.image1?.[0]?.buffer;
-  const image2Buffer = files?.image2?.[0]?.buffer;
-  const about = await aboutService.createAbout(req.body, image1Buffer, image2Buffer);
+  const { image1Buffer, image2Buffer, serviceIconFiles } = extractFiles(req);
+  const about = await aboutService.createAbout(req.body, image1Buffer, image2Buffer, serviceIconFiles);
   return res.status(201).json(new ApiResponse(201, "About Us section created successfully", about));
 });
 
@@ -39,10 +55,8 @@ export const updateAbout: RequestHandler<
   UpdateAboutInput
 > = asyncHandler(async (req: Request, res: Response) => {
   const id = req.params.id as string;
-  const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-  const image1Buffer = files?.image1?.[0]?.buffer;
-  const image2Buffer = files?.image2?.[0]?.buffer;
-  const about = await aboutService.updateAbout(id, req.body, image1Buffer, image2Buffer);
+  const { image1Buffer, image2Buffer, serviceIconFiles } = extractFiles(req);
+  const about = await aboutService.updateAbout(id, req.body, image1Buffer, image2Buffer, serviceIconFiles);
   return res.status(200).json(new ApiResponse(200, "About Us section updated successfully", about));
 });
 

@@ -20,7 +20,7 @@ create-about:
   post:
     tags: ["11 — CMS — About Us"]
     summary: Create About Us section (Admin only)
-    description: Creates the About Us section. Only one section can exist. Supports up to 2 image uploads (multipart/form-data).
+    description: Creates the About Us section. Only one section can exist. Supports image uploads and per-service icon uploads (multipart/form-data).
     security:
       - bearerAuth: []
     requestBody:
@@ -41,6 +41,9 @@ create-about:
                 minLength: 10
                 maxLength: 10000
                 description: About Us description text
+              services:
+                type: string
+                description: JSON string of services array with description fields (icon and iconPublicId are set via file upload)
               image1:
                 type: string
                 format: binary
@@ -49,6 +52,14 @@ create-about:
                 type: string
                 format: binary
                 description: Second about image (jpg, png, webp)
+              serviceIcon_0:
+                type: string
+                format: binary
+                description: Icon image for the first service (jpg, png, webp, svg)
+              serviceIcon_1:
+                type: string
+                format: binary
+                description: Icon image for the second service (jpg, png, webp, svg)
     responses:
       "201":
         description: About Us section created successfully
@@ -66,7 +77,7 @@ update-about:
   put:
     tags: ["11 — CMS — About Us"]
     summary: Update About Us section (Admin only)
-    description: Updates the About Us section by ID. Supports optional image uploads.
+    description: Updates the About Us section by ID. Supports optional image and service icon uploads.
     security:
       - bearerAuth: []
     parameters:
@@ -93,6 +104,9 @@ update-about:
                 minLength: 10
                 maxLength: 10000
                 description: Updated about section description
+              services:
+                type: string
+                description: JSON string of services array (include existing icon/iconPublicId to keep them, or omit icon for file-upload replacement)
               image1:
                 type: string
                 format: binary
@@ -101,6 +115,14 @@ update-about:
                 type: string
                 format: binary
                 description: New second about image (jpg, png, webp)
+              serviceIcon_0:
+                type: string
+                format: binary
+                description: New icon image for the first service (jpg, png, webp, svg)
+              serviceIcon_1:
+                type: string
+                format: binary
+                description: New icon image for the second service (jpg, png, webp, svg)
     responses:
       "200":
         description: About Us section updated successfully

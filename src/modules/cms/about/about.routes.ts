@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { authenticate } from "../../../middlewares/auth.middleware.js";
 import { validate } from "../../../middlewares/validation.middleware.js";
-import { uploadFields } from "../../../middlewares/file-validation.middleware.js";
+import { upload } from "../../../middlewares/file-validation.middleware.js";
 import {
   getAbout,
   createAbout,
@@ -25,10 +25,12 @@ router
   .route("/create-about")
   .post(
     authenticate({ type: "admin" }),
-    uploadFields([
-      { name: "image1", maxCount: 1 },
-      { name: "image2", maxCount: 1 },
-    ]),
+    (req, _res, next) => {
+      upload.any()(req, _res, (err) => {
+        if (err) return next(err);
+        next();
+      });
+    },
     validate(createAboutSchema),
     createAbout
   );
@@ -37,10 +39,12 @@ router
   .route("/update-about/:id")
   .put(
     authenticate({ type: "admin" }),
-    uploadFields([
-      { name: "image1", maxCount: 1 },
-      { name: "image2", maxCount: 1 },
-    ]),
+    (req, _res, next) => {
+      upload.any()(req, _res, (err) => {
+        if (err) return next(err);
+        next();
+      });
+    },
     validate(updateAboutSchema),
     updateAbout
   );

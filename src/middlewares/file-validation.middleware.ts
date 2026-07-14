@@ -25,6 +25,8 @@ const upload = multer({
   fileFilter,
 });
 
+export { upload };
+
 export const uploadSingle = (fieldName: string) => {
   return upload.single(fieldName);
 };

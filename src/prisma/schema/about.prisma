@@ -2,6 +2,8 @@ model AboutUs {
   id             String   @id @default(uuid())
   title          String
   description    String
+  highlightText  String?  @map("highlight_text")
+  services       Json     @default("[]")
   image1         String?
   image1PublicId String?  @map("image1_public_id")
   image2         String?
