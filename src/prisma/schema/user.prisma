@@ -60,7 +60,7 @@ model User {
   updatedAt       DateTime     @updatedAt @map("updated_at")
   subscriptionPlanId String?          @map("subscription_plan_id")
   subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
-  subscriptionStatus String?           @map("subscription_status")  // active, past_due, canceled, etc.
+  subscriptionStatus String?           @map("subscription_status")
   stripeCustomerId   String?           @map("stripe_customer_id")
   stripeSubscriptionId String?         @map("stripe_subscription_id")
   currentPeriodEnd   DateTime?         @map("current_period_end")
