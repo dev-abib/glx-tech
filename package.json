@@ -9,13 +9,14 @@
     "start": "node dist/server.js",
     "generate:env-example": "tsx scripts/generate-env-example.ts",
     "check:env-example": "tsx scripts/check-env-example.ts",
+    "check:migrations": "tsx scripts/check-migrations.ts",
     "seed": "tsx src/seeders/super-admin.seeder.ts",
     "seed:listings": "tsx src/seeders/listing.seeder.ts",
 "seed:plans": "tsx src/seeders/plans.seeder.ts",
     "postinstall": "prisma generate",
     "test": "vitest run",
     "test:watch": "vitest",
-    "vercel-build": "npx prisma generate && npm run build"
+    "vercel-build": "npx prisma migrate deploy && npx prisma generate && npm run build"
   },
   "keywords": [],
   "author": "",
