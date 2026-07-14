@@ -194,9 +194,9 @@ export const updateAsSeller: RequestHandler<
   {},
   ApiResponse<{ message: string }>,
   UpdateUserAsSellerInput
-> = asyncHandler(async(req: Request, res: Response) => {
+> = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.id;
-  const result = await userService.updateUserAsSeller(userId,req.body);
+  const result = await userService.updateUserAsSeller(userId, req.body);
 
   return res
     .status(200)

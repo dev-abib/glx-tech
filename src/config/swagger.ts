@@ -55,7 +55,7 @@ S("listing.yaml", "Listing"); S("listing.yaml", "CreateListingInput"); S("listin
 S("listing.yaml", "UserReview"); S("listing.yaml", "CreateUserReviewInput"); S("listing.yaml", "UpdateUserReviewInput");
 S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "UpdateUserAsSellerInput");
 S("admin-campaigns.yaml", "Campaign"); S("admin-campaigns.yaml", "CreateCampaignInput");
-S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes"); S("appointment.yaml", "BookedSlot");
+S("appointment.yaml", "Appointment"); S("appointment.yaml", "CreateAppointmentInput"); S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes"); S("appointment.yaml", "BookedSlot");
 S("stripe-donate.yaml", "CreateDonationInput"); S("stripe-donate.yaml", "DonationPaymentLinkResponse");
 S("stripe-donate.yaml", "Donation"); S("stripe-donate.yaml", "DonationListResponse"); S("stripe-donate.yaml", "DonationCheckoutResponse"); S("stripe-donate.yaml", "DonationStatsResponse");
 S("subscription-plans.yaml", "SubscriptionPlan"); S("subscription-plans.yaml", "PlanFeature"); S("subscription-plans.yaml", "FeatureDefinition");
@@ -176,6 +176,13 @@ P("newsletter.yaml", "/newsletter/unsubscribe", "unsubscribe");
 P("admin-campaigns.yaml", "/admin/campaigns", "campaigns");
 P("admin-campaigns.yaml", "/admin/campaigns/{id}/send", "send-campaign");
 P("admin-campaigns.yaml", "/admin/campaigns/subscriber-count", "get-subscriber-count");
+
+// ── Appointments ──────────────────────────────────────────────────────
+P("appointments.yaml", "/appointments/create-appointment", "create-appointment");
+P("appointments.yaml", "/appointments/my-bookings", "get-my-bookings");
+P("appointments.yaml", "/appointments/seller/my-appointments", "seller-get-my-appointments");
+P("appointments.yaml", "/appointments/booked-times/{listingId}", "get-booked-times");
+P("appointments.yaml", "/appointments/update-status/{appointmentId}", "update-appointment-status");
 
 // ── Donations / Stripe ────────────────────────────────────────────────
 P("stripe-donate.yaml", "/stripe/donate/checkout", "quick-donate");
