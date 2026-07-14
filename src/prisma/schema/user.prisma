@@ -41,20 +41,20 @@ model User {
   password        String
   role            Role         @default(user)
   avatar          String?
-  avatarPublicId  String?
+  avatarPublicId  String?    @map("avatar_public_id")
   phone           String?
   isEmailVerified Boolean      @default(false) @map("is_email_verified")
   otp             String?
-  otpExpiresAt    DateTime?
-  otpAttempts     Int?         @default(0)
+  otpExpiresAt    DateTime?  @map("otp_expires_at")
+  otpAttempts     Int?         @default(0) @map("otp_attempts")
   isActive        Boolean      @default(true) @map("is_active")
-  isPaid          Boolean      @default(false)
-  isResetRequest  Boolean      @default(false)
-  blockedUntil    DateTime?
+  isPaid          Boolean      @default(false) @map("is_paid")
+  isResetRequest  Boolean      @default(false) @map("is_reset_request")
+  blockedUntil    DateTime?    @map("blocked_until")
   address         String?
   refreshToken    String?      @map("refresh_token")
-  accessToken     String?      @map("accessToken")
-  resetToken      String?      @map("resetToken")
+  accessToken     String?      @map("access_token")
+  resetToken      String?      @map("reset_token")
   lastLoginAt     DateTime?    @map("last_login_at")
   createdAt       DateTime     @default(now()) @map("created_at")
   updatedAt       DateTime     @updatedAt @map("updated_at")
@@ -66,7 +66,7 @@ model User {
   currentPeriodEnd   DateTime?         @map("current_period_end")
   listings           Listing[]
   userReview         UserReview[]
-  isSeller           Boolean           @default(false)
+  isSeller           Boolean           @default(false) @map("is_seller")
   sellerInfo         SellerInfo?
 
   @@map("users")

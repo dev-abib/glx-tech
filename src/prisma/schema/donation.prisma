@@ -9,11 +9,11 @@ model Donation {
   id                  String         @id @default(uuid())
   amount              Float?
   currency            String         @default("usd")
-  stripeSessionId     String?        @unique
-  stripePaymentId     String?
-  stripePaymentLinkId String?
-  customerEmail       String?
-  customerName        String?
+  stripeSessionId     String?        @unique @map("stripe_session_id")
+  stripePaymentId     String?        @map("stripe_payment_id")
+  stripePaymentLinkId String?        @map("stripe_payment_link_id")
+  customerEmail       String?        @map("customer_email")
+  customerName        String?        @map("customer_name")
   message             String?
   status              DonationStatus @default(pending)
   metadata            Json?
