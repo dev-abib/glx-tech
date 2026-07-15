@@ -88,6 +88,18 @@ Service:
       nullable: true
       example: We build modern web applications using cutting-edge technologies
       description: Service description
+    title:
+      type: string
+      minLength: 1
+      maxLength: 200
+      example: Modern Web Solutions
+      description: Service display title
+    details:
+      type: string
+      minLength: 1
+      maxLength: 1000
+      example: We build responsive, high-performance websites and web applications tailored to your business needs.
+      description: Service details/description
     icon:
       type: string
       format: uri
@@ -104,16 +116,29 @@ Service:
       nullable: true
       example: 550e8400-e29b-41d4-a716-446655440400
       description: Parent hero-section ID
+
 CreateServiceInput:
   type: object
-  required: [name]
+  required: [name, title, details]
   properties:
     name:
       type: string
       example: Web Development
-      minLength: 2
+      minLength: 1
       maxLength: 100
       description: Service name
+    title:
+      type: string
+      example: Modern Web Solutions
+      minLength: 1
+      maxLength: 200
+      description: Service display title
+    details:
+      type: string
+      example: We build responsive, high-performance websites and web applications tailored to your business needs.
+      minLength: 1
+      maxLength: 1000
+      description: Service details/description
     description:
       type: string
       example: We build modern web applications using cutting-edge technologies
@@ -124,15 +149,28 @@ CreateServiceInput:
       format: uri
       example: https://res.cloudinary.com/demo/image/upload/v1/cms/services/web-dev.svg
       description: Service icon URL
+
 UpdateServiceInput:
   type: object
   properties:
     name:
       type: string
       example: Mobile Development
-      minLength: 2
+      minLength: 1
       maxLength: 100
       description: Updated service name
+    title:
+      type: string
+      example: Modern Mobile Apps
+      minLength: 1
+      maxLength: 200
+      description: Updated service display title
+    details:
+      type: string
+      example: iOS & Android apps built with modern frameworks, from concept to deployment.
+      minLength: 1
+      maxLength: 1000
+      description: Updated service details
     description:
       type: string
       example: iOS & Android apps built with modern frameworks

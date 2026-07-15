@@ -122,13 +122,23 @@ create-service:
         multipart/form-data:
           schema:
             type: object
-            required: [name]
+            required: [name, title, details]
             properties:
               name:
                 type: string
-                minLength: 2
+                minLength: 1
                 maxLength: 100
                 description: Service name
+              title:
+                type: string
+                minLength: 1
+                maxLength: 200
+                description: Service display title
+              details:
+                type: string
+                minLength: 1
+                maxLength: 1000
+                description: Service details/description
               description:
                 type: string
                 maxLength: 500
@@ -136,7 +146,7 @@ create-service:
               icon:
                 type: string
                 format: binary
-                description: Service icon image (jpg, png, webp, svg; max 5MB)
+                description: Service icon image (jpg, png, webp; max 5MB)
     responses:
       "201":
         description: Service created successfully
@@ -173,9 +183,19 @@ update-service:
             properties:
               name:
                 type: string
-                minLength: 2
+                minLength: 1
                 maxLength: 100
                 description: Updated service name
+              title:
+                type: string
+                minLength: 1
+                maxLength: 200
+                description: Updated service display title
+              details:
+                type: string
+                minLength: 1
+                maxLength: 1000
+                description: Updated service details
               description:
                 type: string
                 maxLength: 500
@@ -183,7 +203,7 @@ update-service:
               icon:
                 type: string
                 format: binary
-                description: New service icon image (jpg, png, webp, svg)
+                description: New service icon image (jpg, png, webp)
     responses:
       "200":
         description: Service updated successfully
