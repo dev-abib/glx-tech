@@ -16,12 +16,12 @@ model Campaign {
   id        String         @id @default(uuid())
   subject   String
   heading   String
-  bodyHtml  String   @map("body_html")
-  ctaText   String?  @map("cta_text")
-  ctaLink   String?  @map("cta_link")
+  bodyHtml  String         @map("body_html")
+  ctaText   String?        @map("cta_text")
+  ctaLink   String?        @map("cta_link")
   status    CampaignStatus @default(draft)
   createdAt DateTime       @default(now()) @map("created_at")
-  sentAt    DateTime?  @map("sent_at")
+  sentAt    DateTime?      @map("sent_at")
 
   @@map("campaigns")
 }

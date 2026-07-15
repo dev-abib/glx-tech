@@ -16,58 +16,65 @@ enum Insurance {
   not_applicable
 }
 
+model Selleraddress {
+  id            String     @id @default(uuid())
+  streetAddress String
+  city          String
+  state         String
+  zipCode       String
+  sellerId      String
+  seller        SellerInfo @relation(fields: [sellerId], references: [id])
+}
+
 model SellerInfo {
-  id              String    @id @default(uuid())
-  userId          String    @unique
-  user            User      @relation(fields: [userId], references: [id])
+  id              String          @id @default(uuid())
+  userId          String          @unique
+  user            User            @relation(fields: [userId], references: [id])
   storeName       String
   servicesId      String[]
   insuranceStatus Insurance
   socialLInk      String
   businessNumber  String
   businessEmail   String
-  streetAddress   String
-  city            String
-  state           String
-  zipCode         String
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  sellerAddress   Selleraddress[]
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
 }
 
 model User {
-  id              String       @id @default(uuid())
-  name            String
-  email           String       @unique
-  password        String
-  role            Role         @default(user)
-  avatar          String?
-  avatarPublicId  String?    @map("avatar_public_id")
-  phone           String?
-  isEmailVerified Boolean      @default(false) @map("is_email_verified")
-  otp             String?
-  otpExpiresAt    DateTime?  @map("otp_expires_at")
-  otpAttempts     Int?         @default(0) @map("otp_attempts")
-  isActive        Boolean      @default(true) @map("is_active")
-  isPaid          Boolean      @default(false) @map("is_paid")
-  isResetRequest  Boolean      @default(false) @map("is_reset_request")
-  blockedUntil    DateTime?    @map("blocked_until")
-  address         String?
-  refreshToken    String?      @map("refresh_token")
-  accessToken     String?      @map("access_token")
-  resetToken      String?      @map("reset_token")
-  lastLoginAt     DateTime?    @map("last_login_at")
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
-  subscriptionPlanId String?          @map("subscription_plan_id")
-  subscriptionPlan   SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
-  subscriptionStatus String?           @map("subscription_status")
-  stripeCustomerId   String?           @map("stripe_customer_id")
-  stripeSubscriptionId String?         @map("stripe_subscription_id")
-  currentPeriodEnd   DateTime?         @map("current_period_end")
-  listings           Listing[]
-  userReview         UserReview[]
-  isSeller           Boolean           @default(false) @map("is_seller")
-  sellerInfo         SellerInfo?
+  id                   String            @id @default(uuid())
+  name                 String
+  email                String            @unique
+  password             String
+  role                 Role              @default(user)
+  avatar               String?
+  avatarPublicId       String?           @map("avatar_public_id")
+  phone                String?
+  isEmailVerified      Boolean           @default(false) @map("is_email_verified")
+  otp                  String?
+  otpExpiresAt         DateTime?         @map("otp_expires_at")
+  otpAttempts          Int?              @default(0) @map("otp_attempts")
+  isActive             Boolean           @default(true) @map("is_active")
+  isPaid               Boolean           @default(false) @map("is_paid")
+  isResetRequest       Boolean           @default(false) @map("is_reset_request")
+  blockedUntil         DateTime?         @map("blocked_until")
+  address              String?
+  refreshToken         String?           @map("refresh_token")
+  accessToken          String?           @map("access_token")
+  resetToken           String?           @map("reset_token")
+  lastLoginAt          DateTime?         @map("last_login_at")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+  subscriptionPlanId   String?           @map("subscription_plan_id")
+  subscriptionPlan     SubscriptionPlan? @relation(fields: [subscriptionPlanId], references: [id])
+  subscriptionStatus   String?           @map("subscription_status")
+  stripeCustomerId     String?           @map("stripe_customer_id")
+  stripeSubscriptionId String?           @map("stripe_subscription_id")
+  currentPeriodEnd     DateTime?         @map("current_period_end")
+  listings             Listing[]
+  userReview           UserReview[]
+  isSeller             Boolean           @default(false) @map("is_seller")
+  sellerInfo           SellerInfo?
 
   @@map("users")
 }

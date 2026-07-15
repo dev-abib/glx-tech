@@ -1,13 +1,14 @@
 model Service {
-  id           String  @id @default(uuid())
+  id           String    @id @default(uuid())
   name         String?
   description  String?
   icon         String?
   iconPublicId String
-
-  heroId   String?
-  hero     Hero?     @relation(fields: [heroId], references: [id])
-  listings Listing[]
+  title        String
+  details      String
+  heroId       String?
+  hero         Hero?     @relation(fields: [heroId], references: [id])
+  listings     Listing[]
 }
 
 model Hero {

@@ -4,35 +4,35 @@
 /// A subscription tier (e.g. "Starter", "Professional") created via admin panel.
 /// Each plan can have multiple features toggled on/off.
 model SubscriptionPlan {
-  id                  String          @id @default(uuid()) @map("id")
-  name                String          @map("name")
-  slug                String          @unique @map("slug")
-  description         String?         @map("description")
-  priceMonthly        Int             @map("price_monthly")
-  priceAnnual         Int             @map("price_annual")
-  stripePriceIdMonthly  String?       @map("stripe_price_id_monthly")
-  stripePriceIdAnnual   String?       @map("stripe_price_id_annual")
-  maxActiveListings   Int             @default(0) @map("max_active_listings")
-  platformFeePercent  Decimal         @default(0) @map("platform_fee_percent")
-  isActive            Boolean         @default(true) @map("is_active")
-  isPublic            Boolean         @default(true) @map("is_public")
-  displayOrder        Int             @default(0) @map("display_order")
-  createdAt           DateTime        @default(now()) @map("created_at")
-  updatedAt           DateTime        @updatedAt @map("updated_at")
+  id                   String   @id @default(uuid()) @map("id")
+  name                 String   @map("name")
+  slug                 String   @unique @map("slug")
+  description          String?  @map("description")
+  priceMonthly         Int      @map("price_monthly")
+  priceAnnual          Int      @map("price_annual")
+  stripePriceIdMonthly String?  @map("stripe_price_id_monthly")
+  stripePriceIdAnnual  String?  @map("stripe_price_id_annual")
+  maxActiveListings    Int      @default(0) @map("max_active_listings")
+  platformFeePercent   Decimal  @default(0) @map("platform_fee_percent")
+  isActive             Boolean  @default(true) @map("is_active")
+  isPublic             Boolean  @default(true) @map("is_public")
+  displayOrder         Int      @default(0) @map("display_order")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
 
-  features            PlanFeature[]
-  users               User[]
+  features PlanFeature[]
+  users    User[]
 
   @@map("subscription_plans")
 }
 
 /// Feature toggles per plan. Allows adding new features without a migration.
 model PlanFeature {
-  id      String  @id @default(uuid()) @map("id")
-  planId  String  @map("plan_id")
+  id      String           @id @default(uuid()) @map("id")
+  planId  String           @map("plan_id")
   plan    SubscriptionPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
-  key     String  @map("key")
-  enabled Boolean @default(false) @map("enabled")
+  key     String           @map("key")
+  enabled Boolean          @default(false) @map("enabled")
 
   @@unique([planId, key])
   @@map("plan_features")
