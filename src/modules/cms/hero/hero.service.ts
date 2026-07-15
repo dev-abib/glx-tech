@@ -90,6 +90,8 @@ export class HeroService {
       data: {
         name: data.name,
         description: data.description ?? null,
+        title: data.title,
+        details: data.details,
         icon: iconUrl ?? data.icon ?? null,
         iconPublicId: iconPublicId ?? "",
         heroId,
@@ -111,6 +113,8 @@ export class HeroService {
 
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.details !== undefined) updateData.details = data.details;
 
     if (iconBuffer) {
       if (service.iconPublicId) {

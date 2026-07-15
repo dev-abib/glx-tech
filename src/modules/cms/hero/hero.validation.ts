@@ -33,6 +33,8 @@ export const createServiceSchema = z
   .object({
     name: z.string().trim().min(1, "Service name is required").max(100),
     description: z.string().trim().max(500).optional(),
+    title: z.string().trim().min(1, "Service title is required").max(200),
+    details: z.string().trim().min(1, "Service details are required").max(1000),
     icon: z.string().trim().optional(),
   })
   .strict();
@@ -43,6 +45,8 @@ export const updateServiceSchema = z
   .object({
     name: z.string().trim().min(1).max(100).optional(),
     description: z.string().trim().max(500).optional(),
+    title: z.string().trim().min(1).max(200).optional(),
+    details: z.string().trim().min(1).max(1000).optional(),
     icon: z.string().trim().optional(),
   })
   .strict();
