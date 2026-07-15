@@ -2,7 +2,11 @@ import { stripe } from "../../config/stripe.config.js";
 import { getPrismaClient } from "../../config/database.js";
 import { env } from "../../config/env.js";
 import { ApiError } from "../../utils/api-error.js";
-import type { CreateDonationInput, DonationQueryInput, CreateSubscriptionCheckoutInput } from "./stripe.validation.js";
+import type {
+  CreateDonationInput,
+  DonationQueryInput,
+  CreateSubscriptionCheckoutInput,
+} from "./stripe.validation.js";
 import type { Prisma } from "@prisma/client";
 
 const prisma = getPrismaClient();
@@ -139,7 +143,10 @@ export class StripeService {
    * Create a Stripe Checkout Session for subscribing to a plan.
    * Requires authentication — user must be logged in.
    */
-  async createSubscriptionCheckoutSession(data: CreateSubscriptionCheckoutInput, userId: string) {
+  async createSubscriptionCheckoutSession(
+    data: CreateSubscriptionCheckoutInput,
+    userId: string
+  ) {
     // Look up the plan
     const plan = await prisma.subscriptionPlan.findUnique({
       where: { id: data.planId },
@@ -155,10 +162,15 @@ export class StripeService {
 
     // Determine which price ID to use
     const isMonthly = data.billingCycle === "monthly";
-    const priceId = isMonthly ? plan.stripePriceIdMonthly : plan.stripePriceIdAnnual;
+    const priceId = isMonthly
+      ? plan.stripePriceIdMonthly
+      : plan.stripePriceIdAnnual;
 
     if (!priceId) {
-      throw new ApiError(400, `No Stripe price configured for ${data.billingCycle} billing on this plan`);
+      throw new ApiError(
+        400,
+        `No Stripe price configured for ${data.billingCycle} billing on this plan`
+      );
     }
 
     // Get or create Stripe customer for this user
@@ -186,10 +198,8 @@ export class StripeService {
         data: { stripeCustomerId: customerId },
       });
     }
-
-    const baseUrl = this.getFrontendUrl();
-    const successUrl = data.successUrl || `${baseUrl}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = data.cancelUrl || `${baseUrl}/pricing`;
+    const successUrl = "https://glxtech-seller.vercel.app/donate/success";
+    const cancelUrl = "https://glxtech-seller.vercel.app/donate/cancel";
 
     // Create the checkout session
     const session = await stripe.checkout.sessions.create({
@@ -230,7 +240,10 @@ export class StripeService {
     });
 
     if (!user?.stripeCustomerId) {
-      throw new ApiError(400, "No Stripe customer record found. Subscribe to a plan first.");
+      throw new ApiError(
+        400,
+        "No Stripe customer record found. Subscribe to a plan first."
+      );
     }
 
     const baseUrl = this.getFrontendUrl();
@@ -260,7 +273,9 @@ export class StripeService {
     const paymentIntentId = session.payment_intent as string | undefined;
     const amountTotal = session.amount_total as number | undefined;
     const currency = session.currency as string | undefined;
-    const customerDetails = session.customer_details as Record<string, unknown> | undefined;
+    const customerDetails = session.customer_details as
+      | Record<string, unknown>
+      | undefined;
 
     // Find donation by stripePaymentLinkId OR stripeSessionId
     let donation = null;
@@ -337,7 +352,9 @@ export class StripeService {
     const planId = metadata?.planId;
 
     if (!userId || !planId) {
-      console.warn("[StripeService] Missing userId or planId in subscription session metadata");
+      console.warn(
+        "[StripeService] Missing userId or planId in subscription session metadata"
+      );
       return;
     }
 
@@ -352,7 +369,9 @@ export class StripeService {
 
     // Set current period end from the session (line items have period info)
     // For simplicity, we set it to 30 days from now; webhook will correct it
-    updateData.currentPeriodEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    updateData.currentPeriodEnd = new Date(
+      Date.now() + 30 * 24 * 60 * 60 * 1000
+    );
 
     // Update the user's plan
     if (planId) {
@@ -364,17 +383,23 @@ export class StripeService {
       data: updateData,
     });
 
-    console.log(`[StripeService] Subscription activated for user ${userId} — plan: ${planId}`);
+    console.log(
+      `[StripeService] Subscription activated for user ${userId} — plan: ${planId}`
+    );
   }
 
   /**
    * Handle customer.subscription.updated — sync status changes.
    */
   async handleSubscriptionUpdated(subscription: Record<string, unknown>) {
-    const metadata = subscription.metadata as Record<string, string> | undefined;
+    const metadata = subscription.metadata as
+      | Record<string, string>
+      | undefined;
     let userId = metadata?.userId;
     const status = subscription.status as string;
-    const currentPeriodEnd = subscription.current_period_end as number | undefined;
+    const currentPeriodEnd = subscription.current_period_end as
+      | number
+      | undefined;
 
     if (!userId) {
       // Fallback: find user by customer ID
@@ -389,7 +414,9 @@ export class StripeService {
       }
 
       if (!userId) {
-        console.warn("[StripeService] Could not resolve user for subscription update");
+        console.warn(
+          "[StripeService] Could not resolve user for subscription update"
+        );
         return;
       }
     }
@@ -413,7 +440,9 @@ export class StripeService {
       data: updateData,
     });
 
-    console.log(`[StripeService] Subscription updated for user ${userId} — status: ${status}`);
+    console.log(
+      `[StripeService] Subscription updated for user ${userId} — status: ${status}`
+    );
   }
 
   /**
@@ -460,7 +489,9 @@ export class StripeService {
       },
     });
 
-    console.log(`[StripeService] Invoice paid for user ${user.id} — amount: ${amountPaid ? amountPaid / 100 : "?"}`);
+    console.log(
+      `[StripeService] Invoice paid for user ${user.id} — amount: ${amountPaid ? amountPaid / 100 : "?"}`
+    );
   }
 
   /**
@@ -496,14 +527,18 @@ export class StripeService {
       data: { subscriptionStatus: "past_due" },
     });
 
-    console.log(`[StripeService] Invoice payment failed for user ${user.id} — subscription past_due`);
+    console.log(
+      `[StripeService] Invoice payment failed for user ${user.id} — subscription past_due`
+    );
   }
 
   /**
    * Handle customer.subscription.deleted — clean up.
    */
   async handleSubscriptionDeleted(subscription: Record<string, unknown>) {
-    const metadata = subscription.metadata as Record<string, string> | undefined;
+    const metadata = subscription.metadata as
+      | Record<string, string>
+      | undefined;
     const userId = metadata?.userId;
     const customerId = subscription.customer as string;
 
@@ -536,7 +571,9 @@ export class StripeService {
             currentPeriodEnd: null,
           },
         });
-        console.log(`[StripeService] Subscription deleted for user ${user.id} (via customer lookup)`);
+        console.log(
+          `[StripeService] Subscription deleted for user ${user.id} (via customer lookup)`
+        );
       }
     }
   }
