@@ -3,31 +3,6 @@ import { z } from "zod";
 const GenericDataSchema = z.record(z.string(), z.unknown()).optional();
 
 /**
- * Preprocessor that accepts either an array of strings or a string
- * (JSON-encoded or comma-separated) and normalises it to an array.
- * This is needed because multer/multipart form-data sends all fields
- * as strings, so array fields arrive as plain strings from Swagger UI.
- */
-const parseStringToArray = (val: unknown): unknown => {
-  if (Array.isArray(val)) return val;
-  if (typeof val === "string") {
-    // Try JSON-parsed array first
-    try {
-      const parsed = JSON.parse(val);
-      if (Array.isArray(parsed)) return parsed;
-    } catch {
-      // not JSON — fall through
-    }
-    // Comma-separated fallback
-    return val
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
-  return val;
-};
-
-/**
  * Preprocessor that accepts a string "true"/"false" or a boolean
  * and normalises it to a boolean.
  * This is needed because multer/multipart form-data sends all fields
@@ -42,19 +17,12 @@ const parseBoolean = (val: unknown): unknown => {
 
 const BooleanField = () => z.preprocess(parseBoolean, z.boolean());
 
-const ArrayField = () => z.preprocess(parseStringToArray, z.array(z.string()));
-const ArrayFieldOptional = () =>
-  z.preprocess(parseStringToArray, z.array(z.string()).optional());
-
 export const CreateListingSchema = z.looseObject({
   title: z.string(),
   slug: z.string(),
   serviceId: z.string(),
   description: z.string(),
-  address: z.string(),
-  days: ArrayField(),
-  weekend: ArrayField(),
-  timeSlot: ArrayField(),
+  addressId: z.string(),
   basePrice: z.string(),
   hourlyPrice: z.string(),
   dailyPrice: z.string(),
@@ -70,10 +38,6 @@ export const UpdateListingSchema = z.looseObject({
   slug: z.string().optional(),
   serviceId: z.string().optional(),
   description: z.string().optional(),
-  address: z.string().optional(),
-  days: ArrayFieldOptional(),
-  weekend: ArrayFieldOptional(),
-  timeSlot: ArrayFieldOptional(),
   basePrice: z.string().optional(),
   hourlyPrice: z.string().optional(),
   dailyPrice: z.string().optional(),

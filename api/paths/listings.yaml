@@ -16,10 +16,7 @@ create-listing:
               - slug
               - serviceId
               - description
-              - address
-              - days
-              - weekend
-              - timeSlot
+              - addressId
               - basePrice
               - hourlyPrice
               - dailyPrice
@@ -43,29 +40,10 @@ create-listing:
                 minLength: 10
                 maxLength: 5000
                 description: Listing description
-              address:
+              addressId:
                 type: string
-                minLength: 5
-                maxLength: 500
-                description: Physical address (will be geocoded)
-              days:
-                type: array
-                items:
-                  type: string
-                  example: Monday
-                description: Available weekdays (day names)
-              weekend:
-                type: array
-                items:
-                  type: string
-                  example: Saturday
-                description: Available weekend days (day names)
-              timeSlot:
-                type: array
-                items:
-                  type: string
-                  example: "09:00"
-                description: Available time slots in HH:MM 24-hour format
+                format: uuid
+                description: ID of the seller's stored address (will be geocoded for lat/lng)
               basePrice:
                 type: string
                 description: Base price as a numeric string
@@ -368,26 +346,6 @@ update-listing:
                 minLength: 10
                 maxLength: 5000
                 description: Updated listing description
-              address:
-                type: string
-                minLength: 5
-                maxLength: 500
-                description: Updated physical address (will be re-geocoded)
-              days:
-                type: array
-                items:
-                  type: string
-                description: Updated weekday availability
-              weekend:
-                type: array
-                items:
-                  type: string
-                description: Updated weekend availability
-              timeSlot:
-                type: array
-                items:
-                  type: string
-                description: Updated time slots in HH:MM 24-hour format
               basePrice:
                 type: string
                 description: Updated base price as a numeric string

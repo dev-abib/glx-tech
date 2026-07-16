@@ -502,6 +502,11 @@ export class UserRepository {
   async getMe(userId: string) {
     const user = await this.findUser("id", userId, true);
 
+    const sellerInfo = await prisma.sellerInfo.findUnique({
+      where: { userId: user.id },
+      include: { sellerAddress: true },
+    });
+
     const {
       password,
       otp: _otp,
@@ -513,7 +518,10 @@ export class UserRepository {
       ...safeUser
     } = user;
 
-    return safeUser;
+    return {
+      sellerInfo, // includes sellerInfo.sellerAddress[]
+      safeUser,
+    };
   }
 
   // get all users (admin only)

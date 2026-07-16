@@ -22,8 +22,6 @@ model Listing {
   addressId   String
   address     Selleraddress @relation(fields: [addressId], references: [id])
   media       Json
-  days        String[]
-  weekend     String[]
 
   basePrice         String
   hourlyPrice       String

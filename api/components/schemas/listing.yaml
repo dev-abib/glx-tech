@@ -33,12 +33,11 @@ Listing:
       maxLength: 5000
       example: We build modern web applications using the latest technologies...
       description: Detailed description of the listing
-    address:
+    addressId:
       type: string
-      minLength: 5
-      maxLength: 500
-      example: 123 Tech Street, San Francisco, CA 94105
-      description: Physical address of the listing (geocoded for map display)
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440005
+      description: Reference to the seller's stored address
     media:
       type: array
       items:
@@ -54,29 +53,6 @@ Listing:
             example: listings/abc123
             description: Cloudinary public ID (used for deletion/updates)
       description: Array of uploaded listing images
-    days:
-      type: array
-      items:
-        type: string
-        example: Monday
-      example: [Monday, Tuesday, Wednesday]
-      description: Weekday availability (day names)
-    weekend:
-      type: array
-      items:
-        type: string
-        example: Saturday
-      example: [Saturday, Sunday]
-      description: Weekend availability (day names)
-    timeSlot:
-      type: array
-      items:
-        type: string
-        format: time
-        pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
-        example: "09:00"
-      example: ["09:00", "10:00", "11:00"]
-      description: Available time slots in 24-hour HH:MM format
     basePrice:
       type: string
       pattern: "^\\d+(\\.\\d{1,2})?$"
@@ -127,10 +103,7 @@ CreateListingInput:
     - slug
     - serviceId
     - description
-    - address
-    - days
-    - weekend
-    - timeSlot
+    - addressId
     - basePrice
     - hourlyPrice
     - dailyPrice
@@ -159,35 +132,11 @@ CreateListingInput:
       maxLength: 5000
       example: We build modern web applications using the latest technologies...
       description: Detailed description of the service offered
-    address:
+    addressId:
       type: string
-      minLength: 5
-      maxLength: 500
-      example: 123 Tech Street, San Francisco, CA 94105
-      description: Physical address (will be geocoded to lat/lng)
-    days:
-      type: array
-      items:
-        type: string
-        example: Monday
-      example: [Monday, Tuesday, Wednesday]
-      description: Weekday availability
-    weekend:
-      type: array
-      items:
-        type: string
-        example: Saturday
-      example: [Saturday, Sunday]
-      description: Weekend availability
-    timeSlot:
-      type: array
-      items:
-        type: string
-        format: time
-        pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
-        example: "09:00"
-      example: ["09:00", "10:00", "11:00"]
-      description: Available time slots in 24-hour HH:MM format
+      format: uuid
+      example: 550e8400-e29b-41d4-a716-446655440005
+      description: ID of the seller's stored address (will be geocoded for lat/lng)
     basePrice:
       type: string
       pattern: "^\\d+(\\.\\d{1,2})?$"
@@ -241,32 +190,6 @@ UpdateListingInput:
       maxLength: 5000
       example: Updated description with more details about the service...
       description: Detailed description of the service
-    address:
-      type: string
-      minLength: 5
-      maxLength: 500
-      example: 456 New Street, San Francisco, CA 94105
-      description: Physical address (will be re-geocoded)
-    days:
-      type: array
-      items:
-        type: string
-        example: Monday
-      description: Updated weekday availability
-    weekend:
-      type: array
-      items:
-        type: string
-        example: Saturday
-      description: Updated weekend availability
-    timeSlot:
-      type: array
-      items:
-        type: string
-        format: time
-        pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
-        example: "09:00"
-      description: Updated time slots in 24-hour HH:MM format
     basePrice:
       type: string
       pattern: "^\\d+(\\.\\d{1,2})?$"

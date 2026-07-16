@@ -20,7 +20,6 @@ export class AppointmentService {
       select: {
         id: true,
         userId: true,
-        timeSlot: true,
         isAvailable: true,
       },
     });
@@ -31,14 +30,6 @@ export class AppointmentService {
 
     if (!listing.isAvailable) {
       throw new ApiError(400, "Listing is not available for bookings");
-    }
-
-    // Ensure the requested time is one of the listing's available time slots
-    if (!listing.timeSlot.includes(data.bookingTime)) {
-      throw new ApiError(
-        400,
-        `Invalid booking time "${data.bookingTime}". Available times: ${listing.timeSlot.join(", ")}`
-      );
     }
 
     // Prevent self-booking (buyer cannot be the same as seller/owner)
@@ -106,18 +97,16 @@ export class AppointmentService {
         skip,
         take: limit,
         orderBy: { id: "desc" },
-        include: {
-          listing: {
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-              address: true,
-              timeSlot: true,
-              media: true,
-            },
+      include: {
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            media: true,
           },
         },
+      },
       }),
       prisma.appointment.count({ where }),
     ]);
@@ -151,18 +140,16 @@ export class AppointmentService {
         skip,
         take: limit,
         orderBy: { id: "desc" },
-        include: {
-          listing: {
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-              address: true,
-              timeSlot: true,
-              media: true,
-            },
+      include: {
+        listing: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            media: true,
           },
         },
+      },
       }),
       prisma.appointment.count({ where }),
     ]);

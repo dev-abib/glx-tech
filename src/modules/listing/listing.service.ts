@@ -38,7 +38,17 @@ export class ListingService {
       );
     }
 
-    const { lat, lng } = await this.geocodeAddress(data.address);
+    // Resolve the seller's address record
+    const sellerAddress = await prisma.selleraddress.findUnique({
+      where: { id: data.addressId },
+    });
+    if (!sellerAddress) {
+      throw new ApiError(404, "Seller address not found");
+    }
+
+    // Geocode the full street address from Selleraddress
+    const fullAddress = `${sellerAddress.streetAddress}, ${sellerAddress.city}, ${sellerAddress.state} ${sellerAddress.zipCode}`;
+    const { lat, lng } = await this.geocodeAddress(fullAddress);
 
     const uploadedImages = [] as Array<{ url: string; publicId: string }>;
 
@@ -57,10 +67,7 @@ export class ListingService {
         description: data.description,
         slug: data.slug,
         serviceId: data.serviceId,
-        address: data.address,
-        days: data.days,
-        weekend: data.weekend,
-        timeSlot: data.timeSlot,
+        addressId: data.addressId,
         basePrice: data.basePrice,
         hourlyPrice: data.hourlyPrice,
         dailyPrice: data.dailyPrice,
@@ -191,7 +198,11 @@ export class ListingService {
       where.OR = [
         { slug: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
-        { address: { contains: search, mode: "insensitive" } },
+        {
+          address: {
+            streetAddress: { contains: search, mode: "insensitive" },
+          },
+        },
       ];
     }
 
@@ -553,10 +564,7 @@ export class ListingService {
     if (data.serviceId !== undefined) updateData.serviceId = data.serviceId;
     if (data.description !== undefined)
       updateData.description = data.description;
-    if (data.address !== undefined) updateData.address = data.address;
-    if (data.days !== undefined) updateData.days = data.days;
-    if (data.weekend !== undefined) updateData.weekend = data.weekend;
-    if (data.timeSlot !== undefined) updateData.timeSlot = data.timeSlot;
+
     if (data.basePrice !== undefined) updateData.basePrice = data.basePrice;
     if (data.hourlyPrice !== undefined)
       updateData.hourlyPrice = data.hourlyPrice;
