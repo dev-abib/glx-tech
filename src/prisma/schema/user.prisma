@@ -24,6 +24,7 @@ model Selleraddress {
   zipCode       String
   sellerId      String
   seller        SellerInfo @relation(fields: [sellerId], references: [id])
+  listings      Listing[]
 }
 
 model SellerInfo {
