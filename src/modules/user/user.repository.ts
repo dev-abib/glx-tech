@@ -638,10 +638,14 @@ export class UserRepository {
           socialLInk: data.socialLInk,
           businessNumber: data.businessNumber,
           businessEmail: data.businessEmail,
-          streetAddress: data.streetAddress,
-          city: data.city,
-          state: data.state,
-          zipCode: data.zipCode,
+          sellerAddress: {
+            create: {
+              streetAddress: data.streetAddress,
+              city: data.city,
+              state: data.state,
+              zipCode: data.zipCode,
+            },
+          },
         },
       }),
       prisma.user.update({
