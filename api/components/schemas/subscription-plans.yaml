@@ -200,15 +200,54 @@ PublicPlansResponse:
   properties:
     plans:
       type: array
+      description: Public plans with enabledFeatureKeys instead of features array
       items:
-        allOf:
-          - $ref: "#/components/schemas/SubscriptionPlan"
-          - type: object
-            properties:
-              enabledFeatureKeys:
-                type: array
-                items:
-                  type: string
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+          name:
+            type: string
+          slug:
+            type: string
+          description:
+            type: string
+            nullable: true
+          priceMonthly:
+            type: integer
+            description: Price in cents
+          priceAnnual:
+            type: integer
+            description: Price in cents
+          stripePriceIdMonthly:
+            type: string
+            nullable: true
+          stripePriceIdAnnual:
+            type: string
+            nullable: true
+          maxActiveListings:
+            type: integer
+          platformFeePercent:
+            type: number
+            format: decimal
+          isActive:
+            type: boolean
+          isPublic:
+            type: boolean
+          displayOrder:
+            type: integer
+          enabledFeatureKeys:
+            type: array
+            items:
+              type: string
+            description: List of feature keys that are enabled for this plan
+          createdAt:
+            type: string
+            format: date-time
+          updatedAt:
+            type: string
+            format: date-time
     featureDefinitions:
       type: array
       items:
@@ -222,16 +261,25 @@ CreateSubscriptionCheckoutInput:
     planId:
       type: string
       format: uuid
+      example: c54faefc-f312-4842-8e20-588dd110a3f6
     billingCycle:
       type: string
       enum: [monthly, annual]
       default: monthly
+      example: monthly
     successUrl:
       type: string
       format: uri
+      description: Optional custom success URL to redirect after checkout
+      example: https://example.com/success
     cancelUrl:
       type: string
       format: uri
+      description: Optional custom cancel URL if user aborts checkout
+      example: https://example.com/cancel
+  example:
+    planId: c54faefc-f312-4842-8e20-588dd110a3f6
+    billingCycle: monthly
 
 SubscriptionCheckoutResponse:
   type: object

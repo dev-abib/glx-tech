@@ -1,6 +1,37 @@
 import { z } from "zod";
 
-const GenericDataSchema = z.record(z.string(), z.unknown()).optional();
+/**
+ * Preprocessor for genericData — accepts a JSON-string or an already-parsed object.
+ * Multipart form-data sends everything as strings, so a JSON string like
+ * '{"customField": "value"}' needs to be parsed into an object.
+ * An empty string or the Swagger placeholder "string" is treated as undefined (omitted).
+ */
+const parseGenericData = (val: unknown): unknown => {
+  if (val === undefined || val === null) return undefined;
+  if (typeof val === "object") return val;
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (trimmed === "" || trimmed === "string") return undefined;
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      throw new Error(
+        `genericData: Invalid JSON string — expected a valid JSON object like {"key": "value"} or omit the field.`
+      );
+    }
+  }
+  return val;
+};
+
+const GenericDataSchema = z.preprocess(
+  parseGenericData,
+  z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe(
+      "Optional arbitrary data as a JSON object. Send as a JSON string via form-data (e.g. '{\"key\": \"value\"}') or omit/leave empty."
+    )
+);
 
 /**
  * Preprocessor that accepts a string "true"/"false" or a boolean

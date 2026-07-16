@@ -12,7 +12,7 @@
  * Run: npx tsx scripts/test-listing-flow.ts
  */
 
-const BASE = "http://localhost:5000/v1";
+const BASE = "http://localhost:5000/api/v1";
 
 const TEST_USER = {
   name: "Test Seller",

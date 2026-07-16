@@ -519,7 +519,7 @@ export class UserRepository {
     } = user;
 
     return {
-      sellerInfo, // includes sellerInfo.sellerAddress[]
+      sellerInfo,
       safeUser,
     };
   }

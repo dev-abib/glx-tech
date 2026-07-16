@@ -40,7 +40,7 @@ router
   .route("/create-listing")
   .post(
     authenticate({ type: "seller" }),
-    uploadMultiple("images", 10),
+    uploadMultiple("media", 10),
     validate(CreateListingSchema),
     createListing
   );
@@ -55,7 +55,7 @@ router
   .route("/update-listing/:id")
   .put(
     authenticate({ type: "seller" }),
-    uploadMultiple("images", 10),
+    uploadMultiple("media", 10),
     validate(UpdateListingSchema),
     updateListing
   );

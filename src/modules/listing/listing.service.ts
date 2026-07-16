@@ -38,6 +38,21 @@ export class ListingService {
       );
     }
 
+    // Validate that the seller has this serviceId in their servicesId array
+    const sellerInfo = await prisma.sellerInfo.findUnique({
+      where: { userId },
+    });
+    if (!sellerInfo) {
+      throw new ApiError(400, "Seller profile not found. Please set up your business account first.");
+    }
+    if (!sellerInfo.servicesId.includes(data.serviceId)) {
+      throw new ApiError(
+        403,
+        `You are not authorized to create listings for this service category. ` +
+        `Your account only supports the following service IDs: ${sellerInfo.servicesId.join(", ")}.`
+      );
+    }
+
     // Resolve the seller's address record
     const sellerAddress = await prisma.selleraddress.findUnique({
       where: { id: data.addressId },
@@ -555,6 +570,23 @@ export class ListingService {
 
     if (listing.userId !== userId) {
       throw new ApiError(403, "You can only update your own listings");
+    }
+
+    // If serviceId is being changed, validate it against the seller's servicesId
+    if (data.serviceId !== undefined) {
+      const sellerInfo = await prisma.sellerInfo.findUnique({
+        where: { userId },
+      });
+      if (!sellerInfo) {
+        throw new ApiError(400, "Seller profile not found. Please set up your business account first.");
+      }
+      if (!sellerInfo.servicesId.includes(data.serviceId)) {
+        throw new ApiError(
+          403,
+          `You are not authorized to assign this service category to your listing. ` +
+          `Your account only supports the following service IDs: ${sellerInfo.servicesId.join(", ")}.`
+        );
+      }
     }
 
     const updateData: Record<string, unknown> = {};

@@ -34,7 +34,7 @@ create-listing:
               serviceId:
                 type: string
                 format: uuid
-                description: Service category ID
+                description: "Service category ID — must be one of the service IDs assigned to your seller account"
               description:
                 type: string
                 minLength: 10
