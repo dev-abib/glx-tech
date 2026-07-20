@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import { User, Prisma } from "@prisma/client";
 
 export interface IUser {
   id: string;
@@ -17,6 +17,17 @@ export type SafeUser = Omit<
   | "accessToken"
   | "resetToken"
 >;
+
+// Seller info with addresses as returned by getMe
+export type SellerInfoWithAddress = Prisma.SellerInfoGetPayload<{
+  include: { sellerAddress: true };
+}>;
+
+// Shape returned by getMe (sellerInfo + sanitized user)
+export interface GetMeResponse {
+  sellerInfo: SellerInfoWithAddress | null;
+  safeUser: SafeUser;
+}
 
 // Login response data shape
 export interface LoginResponseData {

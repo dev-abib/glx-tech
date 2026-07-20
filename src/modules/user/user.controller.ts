@@ -16,6 +16,7 @@ import {
   VerifyUserAccountInput,
 } from "./user.validation.js";
 import type {
+  GetMeResponse,
   SafeUser,
   LoginResponseData,
   RefreshTokenResponseData,
@@ -122,17 +123,22 @@ export const changePassword: RequestHandler<
 // ── Profile & User management ───────────────────────────────────────────
 
 // get current user profile
-export const getMe: RequestHandler<{}, ApiResponse<SafeUser>> = asyncHandler(
-  async (req: Request, res: Response) => {
-    const user = await userService.getMe(req.user!.id);
+export const getMe: RequestHandler<
+  {},
+  ApiResponse<GetMeResponse>
+> = asyncHandler(async (req: Request, res: Response) => {
+  const user = await userService.getMe(req.user!.id);
 
-    return res
-      .status(200)
-      .json(
-        new ApiResponse<SafeUser>(200, "Profile fetched successfully", user)
-      );
-  }
-);
+  return res
+    .status(200)
+    .json(
+      new ApiResponse<GetMeResponse>(
+        200,
+        "Profile fetched successfully",
+        user
+      )
+    );
+});
 
 // get all users (admin)
 export const getAllUsers: RequestHandler<

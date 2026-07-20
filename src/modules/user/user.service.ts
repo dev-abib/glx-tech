@@ -12,7 +12,7 @@ import {
   UpdateUserInput,
   VerifyUserAccountInput,
 } from "./user.validation.js";
-import type { LoginResponseData, SafeUser } from "./user.interface.js";
+import type { GetMeResponse, LoginResponseData, SafeUser } from "./user.interface.js";
 
 const userRepo = new UserRepository();
 
@@ -87,7 +87,7 @@ export class UserService {
   // ── Profile & User management ─────────────────────────────────────────
 
   // get current user profile
-  async getMe(userId: string): Promise<SafeUser> {
+  async getMe(userId: string): Promise<GetMeResponse> {
     return userRepo.getMe(userId);
   }
 
