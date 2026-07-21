@@ -23,16 +23,32 @@ const __dirname = path.dirname(__filename);
 
 const helmet = helmetModule as unknown as (
   options?: Record<string, unknown>
-) => (req: Request, res: Response, next: NextFunction) => void;app.use(helmet({
+) => (req: Request, res: Response, next: NextFunction) => void;
+app.use(
+  helmet({
     crossOriginResourcePolicy: false,
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com", "https://vercel.live"],
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",
+          "https://unpkg.com",
+          "https://vercel.live",
+        ],
         styleSrc: ["'self'", "'unsafe-inline'", "https://unpkg.com"],
-        imgSrc: ["'self'", "data:", "https://unpkg.com", "https://validator.swagger.io"],
+        imgSrc: [
+          "'self'",
+          "data:",
+          "https://unpkg.com",
+          "https://validator.swagger.io",
+        ],
         fontSrc: ["'self'", "https://unpkg.com", "data:"],
-        connectSrc: ["'self'", "https://unpkg.com", "https://glx-tech-pink.vercel.app"],
+        connectSrc: [
+          "'self'",
+          "https://unpkg.com",
+          "https://glx-tech-pink.vercel.app",
+        ],
       },
     },
   })
@@ -40,9 +56,12 @@ const helmet = helmetModule as unknown as (
 
 app.use(cors());
 
-
 import { stripeWebhook } from "./modules/stripe/stripe.controllers.js";
-app.post(`${env.API_VERSION}/stripe/webhook`, express.raw({ type: "application/json" }), stripeWebhook);
+app.post(
+  `${env.API_VERSION}/stripe/webhook`,
+  express.raw({ type: "application/json" }),
+  stripeWebhook
+);
 
 app.use(express.json());
 
@@ -58,7 +77,6 @@ app.use(
     extended: true,
   })
 );
-
 
 // System health report (also available at /api/v1/health)
 app.get("/health", getSystemReport);

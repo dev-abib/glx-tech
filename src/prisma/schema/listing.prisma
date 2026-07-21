@@ -24,8 +24,8 @@ model Listing {
   media       Json
 
   basePrice         String
-  hourlyPrice       String
-  dailyPrice        String
+  hourlyPrice       String?
+  dailyPrice        String?
   estimatedDuration String
   createdAt         DateTime      @default(now()) @map("created_at")
   updatedAt         DateTime      @updatedAt @map("updated_at")

@@ -105,8 +105,6 @@ CreateListingInput:
     - description
     - addressId
     - basePrice
-    - hourlyPrice
-    - dailyPrice
     - estimatedDuration
     - isAvailable
   properties:
