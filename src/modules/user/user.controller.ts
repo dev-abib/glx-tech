@@ -11,6 +11,7 @@ import {
   ResendOtpInput,
   ResetPasswordInput,
   SwitchRoleInput,
+  UpdateSellerDetailsInput,
   UpdateUserAsSellerInput,
   UpdateUserInput,
   VerifyUserAccountInput,
@@ -207,6 +208,38 @@ export const updateAsSeller: RequestHandler<
   return res
     .status(200)
     .json(new ApiResponse<{ message: string }>(200, result.message, result));
+});
+
+// update seller details
+export const updateSellerDetails: RequestHandler<
+  {},
+  ApiResponse<{ message: string }>,
+  UpdateSellerDetailsInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const result = await userService.updateSellerDetails(userId, req.body);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse<{ message: string }>(200, result.message, result)
+    );
+});
+
+// delete seller address (by addressId)
+export const deleteSellerAddress: RequestHandler<
+  { addressId: string },
+  ApiResponse<{ message: string }>
+> = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const addressId = req.params.addressId as string;
+  const result = await userService.deleteSellerAddress(userId, addressId);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse<{ message: string }>(200, result.message, result)
+    );
 });
 
 // delete user

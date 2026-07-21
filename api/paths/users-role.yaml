@@ -73,3 +73,89 @@ switch-role:
         description: Only users can switch between user and seller roles
       "401":
         description: Unauthorized
+
+update-seller-details:
+  put:
+    tags: ["04 — Users — Role"]
+    summary: Update seller details
+    description: >
+      Updates the authenticated seller's business profile details (store name,
+      services, contact info) and addresses. 
+
+      **Address rules:**
+      - Users with the `multiple_locations` feature (Professional & Premium plans)
+        can add **multiple addresses**.
+      - Free-plan users can only **update existing addresses** — they cannot add
+        new ones.
+      - Include `id` in an address object to update an existing address.
+      - Omit `id` to add a new address (premium only).
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UpdateSellerDetailsInput"
+    responses:
+      "200":
+        description: Seller details updated successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: Seller details updated successfully
+      "400":
+        description: Validation error or user not a seller
+      "401":
+        description: Unauthorized
+      "403":
+        description: Only premium users can add multiple addresses
+      "404":
+        description: Seller profile not found
+
+delete-address:
+  delete:
+    tags: ["04 — Users — Role"]
+    summary: Delete a seller address
+    description: Deletes an address belonging to the authenticated seller. Validates that the address belongs to the seller before deletion.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: addressId
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+        description: ID of the address to delete
+    responses:
+      "200":
+        description: Address deleted successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        message:
+                          type: string
+                          example: Address deleted successfully
+      "400":
+        description: User is not a seller
+      "401":
+        description: Unauthorized
+      "403":
+        description: Address does not belong to this seller
+      "404":
+        description: Address not found or seller profile not found

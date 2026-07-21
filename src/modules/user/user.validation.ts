@@ -166,3 +166,29 @@ export const updateUserAsSellerSchema = z
   .strict();
 
 export type UpdateUserAsSellerInput = z.infer<typeof updateUserAsSellerSchema>;
+
+export const updateSellerDetailsSchema = z
+  .object({
+    storeName: z.string().optional(),
+    servicesId: z.array(z.string()).optional(),
+    insuranceStatus: z.enum(["yes", "no", "not_applicable"]).optional(),
+    socialLInk: z.string().optional(),
+    businessNumber: z.string().optional(),
+    businessEmail: z.string().email().optional(),
+    addresses: z
+      .array(
+        z
+          .object({
+            id: z.string().uuid().optional(),
+            streetAddress: z.string(),
+            city: z.string(),
+            state: z.string(),
+            zipCode: z.string(),
+          })
+          .strict()
+      )
+      .optional(),
+  })
+  .strict();
+
+export type UpdateSellerDetailsInput = z.infer<typeof updateSellerDetailsSchema>;

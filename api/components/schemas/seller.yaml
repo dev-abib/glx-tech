@@ -59,3 +59,72 @@ UpdateUserAsSellerInput:
       type: string
       example: "94105"
       description: ZIP / postal code of the business
+
+UpdateSellerDetailsInput:
+  type: object
+  properties:
+    storeName:
+      type: string
+      example: GLX-Tech Store
+      description: Updated name of the store/business
+    servicesId:
+      type: array
+      items:
+        type: string
+        format: uuid
+      example: ["550e8400-e29b-41d4-a716-446655440002", "550e8400-e29b-41d4-a716-446655440003"]
+      description: Array of service IDs the seller offers
+    insuranceStatus:
+      type: string
+      enum: [yes, no, not_applicable]
+      example: yes
+      description: Insurance status
+    socialLInk:
+      type: string
+      format: uri
+      example: https://facebook.com/glxtech
+      description: Social media profile link
+    businessNumber:
+      type: string
+      example: "+1234567890"
+      description: Updated business phone number
+    businessEmail:
+      type: string
+      format: email
+      example: business@glxtech.com
+      description: Updated business email address
+    addresses:
+      type: array
+      description: >
+        List of addresses. Premium users (with the "multiple_locations" feature)
+        can add multiple addresses. Free users can only update existing addresses.
+        Omit the `id` field to create a new address; include it to update an existing one.
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+            description: ID of an existing address to update. Omit to create a new address.
+            example: 550e8400-e29b-41d4-a716-446655440010
+          streetAddress:
+            type: string
+            example: 123 Tech Street, Suite 100
+            description: Street address
+          city:
+            type: string
+            example: San Francisco
+            description: City
+          state:
+            type: string
+            example: California
+            description: State
+          zipCode:
+            type: string
+            example: "94105"
+            description: ZIP / postal code
+        required:
+          - streetAddress
+          - city
+          - state
+          - zipCode

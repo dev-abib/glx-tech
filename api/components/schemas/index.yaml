@@ -157,6 +157,8 @@ DonationStatsResponse:
 # ── Seller ───────────────────────────────────────────────────────────
 UpdateUserAsSellerInput:
   $ref: "./seller.yaml#/UpdateUserAsSellerInput"
+UpdateSellerDetailsInput:
+  $ref: "./seller.yaml#/UpdateSellerDetailsInput"
 
 # ── Subscription Plans ───────────────────────────────────────────────
 SubscriptionPlan:

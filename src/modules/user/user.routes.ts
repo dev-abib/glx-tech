@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   changePassword,
   createUser,
+  deleteSellerAddress,
   deleteUser,
   forgotPassword,
   getAllUsers,
@@ -12,6 +13,7 @@ import {
   resendOtp,
   resetPassword,
   switchRole,
+  updateSellerDetails,
   updateUser,
   updateAsSeller,
   verifyResetOtp,
@@ -28,6 +30,7 @@ import {
   resendOtpSchema,
   resetPasswordSchema,
   switchRoleSchema,
+  updateSellerDetailsSchema,
   updateUserAsSellerSchema,
   updateUserSchema,
   verifyUserAccountSchema,
@@ -76,6 +79,10 @@ router.route("/gt-all-users").get(authenticate({ type: "admin" }), getAllUsers);
 // update user to seller
 router.route("/update-as-seller").post(authenticate({ type: 'user' }), validate(updateUserAsSellerSchema), updateAsSeller)
 
-// router.route("")
+// update seller details (requires seller role)
+router.route("/update-seller-details").put(authenticate({ type: "seller" }), validate(updateSellerDetailsSchema), updateSellerDetails)
+
+// delete seller address (requires seller role)
+router.route("/delete-address/:addressId").delete(authenticate({ type: "seller" }), deleteSellerAddress)
 
 export default router;

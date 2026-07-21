@@ -40,6 +40,10 @@
   $ref: "./users-role.yaml#/update-as-seller"
 /users/switch-role:
   $ref: "./users-role.yaml#/switch-role"
+/users/update-seller-details:
+  $ref: "./users-role.yaml#/update-seller-details"
+/users/delete-address/{addressId}:
+  $ref: "./users-role.yaml#/delete-address"
 
 # ── Users — Admin ───────────────────────────────────────────────────
 /users/gt-all-users:

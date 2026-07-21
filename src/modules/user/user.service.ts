@@ -8,13 +8,16 @@ import {
   RefreshTokenInput,
   ResendOtpInput,
   ResetPasswordInput,
+  UpdateSellerDetailsInput,
   UpdateUserAsSellerInput,
   UpdateUserInput,
   VerifyUserAccountInput,
 } from "./user.validation.js";
 import type { GetMeResponse, LoginResponseData, SafeUser } from "./user.interface.js";
+import { SubscriptionService } from "../plans/subscription.service.js";
 
 const userRepo = new UserRepository();
+const subscriptionService = new SubscriptionService();
 
 export class UserService {
   // create user service
@@ -111,6 +114,26 @@ export class UserService {
     data: UpdateUserAsSellerInput
   ): Promise<{ message: string }> {
     return userRepo.updateUserAsSeller(userId, data);
+  }
+
+  // update seller details (premium check for multiple addresses)
+  async updateSellerDetails(
+    userId: string,
+    data: UpdateSellerDetailsInput
+  ): Promise<{ message: string }> {
+    const canAddMultipleAddresses = await subscriptionService.hasFeature(
+      userId,
+      "multiple_locations"
+    );
+    return userRepo.updateSellerDetails(userId, data, canAddMultipleAddresses);
+  }
+
+  // delete a seller address (by addressId)
+  async deleteSellerAddress(
+    userId: string,
+    addressId: string
+  ): Promise<{ message: string }> {
+    return userRepo.deleteSellerAddress(userId, addressId);
   }
 
   // delete user
