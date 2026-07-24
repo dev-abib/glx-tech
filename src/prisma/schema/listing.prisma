@@ -23,15 +23,14 @@ model Listing {
   address     Selleraddress @relation(fields: [addressId], references: [id])
   media       Json
 
-  basePrice         String
-  hourlyPrice       String?
-  dailyPrice        String?
-  estimatedDuration String
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
-  userReview        UserReview[]
-  latitude          Float
-  longitude         Float
-  isAvailable       Boolean       @default(true)
-  bookings          Appointment[]
+  basePrice   String
+  hourlyPrice String?
+  dailyPrice  String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+  userReview  UserReview[]
+  latitude    Float
+  longitude   Float
+  isAvailable Boolean       @default(true)
+  bookings    Appointment[]
 }

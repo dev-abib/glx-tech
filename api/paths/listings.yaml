@@ -18,7 +18,6 @@ create-listing:
               - description
               - addressId
               - basePrice
-              - estimatedDuration
               - isAvailable
             properties:
               title:
@@ -51,9 +50,6 @@ create-listing:
               dailyPrice:
                 type: string
                 description: Daily rate as a numeric string
-              estimatedDuration:
-                type: string
-                description: Estimated duration (e.g. "2 weeks", "3 hours")
               isAvailable:
                 type: string
                 description: "Availability status (send \"true\" or \"false\")"
@@ -353,9 +349,6 @@ update-listing:
               dailyPrice:
                 type: string
                 description: Updated daily rate as a numeric string
-              estimatedDuration:
-                type: string
-                description: Updated estimated duration
               isAvailable:
                 type: string
                 description: "Updated availability (send \"true\" or \"false\")"

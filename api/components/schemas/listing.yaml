@@ -68,10 +68,6 @@ Listing:
       pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "200"
       description: Daily rate as a numeric string
-    estimatedDuration:
-      type: string
-      example: 2 weeks
-      description: Estimated duration of the service (e.g. "2 weeks", "3 hours")
     latitude:
       type: number
       example: 40.7128
@@ -84,6 +80,58 @@ Listing:
       type: boolean
       example: true
       description: Whether the listing is currently accepting bookings
+    user:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440001
+          description: Seller user ID
+        name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: John Doe
+          description: Seller display name
+        email:
+          type: string
+          format: email
+          example: seller@example.com
+          description: Seller email address
+        phone:
+          type: string
+          nullable: true
+          example: "+1234567890"
+          description: Seller phone number (available on detail view)
+        avatar:
+          type: string
+          format: uri
+          nullable: true
+          example: https://res.cloudinary.com/demo/image/upload/v1/avatars/abc123.jpg
+          description: Seller avatar URL (null if not set)
+      description: Seller (user) who owns this listing
+    service:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440002
+          description: Service category ID
+        name:
+          type: string
+          example: Web Development
+          description: Service category name
+      description: Service category this listing belongs to
+    _count:
+      type: object
+      properties:
+        userReview:
+          type: integer
+          example: 5
+          description: Total number of reviews for this listing
+      description: Aggregated relation counts
     avgRating:
       type: number
       example: 4.5
@@ -105,7 +153,6 @@ CreateListingInput:
     - description
     - addressId
     - basePrice
-    - estimatedDuration
     - isAvailable
   properties:
     title:
@@ -150,10 +197,6 @@ CreateListingInput:
       pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "200"
       description: Daily rate as a numeric string
-    estimatedDuration:
-      type: string
-      example: 2 weeks
-      description: Estimated duration (e.g. "2 weeks", "3 hours")
     isAvailable:
       type: boolean
       example: true
@@ -203,10 +246,6 @@ UpdateListingInput:
       pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "250"
       description: Daily rate as a numeric string
-    estimatedDuration:
-      type: string
-      example: 3 weeks
-      description: Estimated duration
     isAvailable:
       type: boolean
       example: true
@@ -268,6 +307,11 @@ UserReview:
           maxLength: 100
           example: John Doe
           description: Reviewer display name
+        email:
+          type: string
+          format: email
+          example: reviewer@example.com
+          description: Reviewer email address
         avatar:
           type: string
           format: uri

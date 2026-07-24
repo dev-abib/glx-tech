@@ -57,7 +57,6 @@ export const CreateListingSchema = z.looseObject({
   basePrice: z.string(),
   hourlyPrice: z.string().optional(),
   dailyPrice: z.string().optional(),
-  estimatedDuration: z.string(),
   genericData: GenericDataSchema,
   isAvailable: BooleanField(),
 });
@@ -72,7 +71,6 @@ export const UpdateListingSchema = z.looseObject({
   basePrice: z.string().optional(),
   hourlyPrice: z.string().optional(),
   dailyPrice: z.string().optional(),
-  estimatedDuration: z.string().optional(),
   genericData: GenericDataSchema,
 });
 

@@ -86,7 +86,6 @@ export class ListingService {
         basePrice: data.basePrice,
         hourlyPrice: data.hourlyPrice ?? null,
         dailyPrice: data.dailyPrice ?? null,
-        estimatedDuration: data.estimatedDuration,
         isAvailable: data.isAvailable,
         latitude: lat,
         longitude: lng,
@@ -270,6 +269,7 @@ export class ListingService {
         select: {
           id: true,
           name: true,
+          email: true,
           avatar: true,
         },
       },
@@ -425,6 +425,7 @@ export class ListingService {
             select: {
               id: true,
               name: true,
+              email: true,
               avatar: true,
             },
           },
@@ -485,6 +486,7 @@ export class ListingService {
           select: {
             id: true,
             name: true,
+            email: true,
             avatar: true,
             phone: true,
           },
@@ -601,8 +603,6 @@ export class ListingService {
     if (data.hourlyPrice !== undefined)
       updateData.hourlyPrice = data.hourlyPrice;
     if (data.dailyPrice !== undefined) updateData.dailyPrice = data.dailyPrice;
-    if (data.estimatedDuration !== undefined)
-      updateData.estimatedDuration = data.estimatedDuration;
 
     // Handle new image uploads
     if (imageBuffers.length > 0) {

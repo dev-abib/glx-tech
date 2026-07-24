@@ -182,7 +182,6 @@ async function main() {
     basePrice: "500",
     hourlyPrice: "50",
     dailyPrice: "200",
-    estimatedDuration: "2 weeks",
     isAvailable: "true",
   };
 

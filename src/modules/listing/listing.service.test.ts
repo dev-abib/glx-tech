@@ -61,7 +61,6 @@ describe("ListingService — getListingBySlug", () => {
       media: [],
       hourlyPrice: "50",
       dailyPrice: "200",
-      estimatedDuration: "2 weeks",
     };
 
     (mockPrisma.listing.findUnique as Mock).mockResolvedValue(fakeListing);
