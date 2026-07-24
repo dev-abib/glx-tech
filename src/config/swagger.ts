@@ -53,7 +53,7 @@ S("cms-reviews.yaml", "ReviewSection"); S("cms-reviews.yaml", "CreateReviewSecti
 S("cms-reviews.yaml", "Review"); S("cms-reviews.yaml", "CreateReviewInput"); S("cms-reviews.yaml", "UpdateReviewInput");
 S("listing.yaml", "Listing"); S("listing.yaml", "CreateListingInput"); S("listing.yaml", "UpdateListingInput");
 S("listing.yaml", "UserReview"); S("listing.yaml", "CreateUserReviewInput"); S("listing.yaml", "UpdateUserReviewInput");
-S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "UpdateUserAsSellerInput"); S("seller.yaml", "UpdateSellerDetailsInput");
+S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "SellerAddressInput"); S("seller.yaml", "UpdateUserAsSellerInput"); S("seller.yaml", "UpdateSellerDetailsInput");
 S("admin-campaigns.yaml", "Campaign"); S("admin-campaigns.yaml", "CreateCampaignInput");
 S("appointment.yaml", "Appointment"); S("appointment.yaml", "CreateAppointmentInput"); S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes"); S("appointment.yaml", "BookedSlot");
 S("stripe-donate.yaml", "CreateDonationInput"); S("stripe-donate.yaml", "DonationPaymentLinkResponse");

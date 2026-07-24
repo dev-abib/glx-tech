@@ -637,6 +637,10 @@ export class UserRepository {
       throw new ApiError(400, "servicesId must be an array of strings");
     }
 
+    if (!data.addresses || data.addresses.length === 0) {
+      throw new ApiError(400, "At least one address is required to create a seller profile");
+    }
+
     await prisma.$transaction([
       prisma.sellerInfo.create({
         data: {
@@ -648,11 +652,13 @@ export class UserRepository {
           businessNumber: data.businessNumber,
           businessEmail: data.businessEmail,
           sellerAddress: {
-            create: {
-              streetAddress: data.streetAddress,
-              city: data.city,
-              state: data.state,
-              zipCode: data.zipCode,
+            createMany: {
+              data: data.addresses.map((addr) => ({
+                streetAddress: addr.streetAddress,
+                city: addr.city,
+                state: addr.state,
+                zipCode: addr.zipCode,
+              })),
             },
           },
         },

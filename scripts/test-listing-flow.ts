@@ -29,10 +29,14 @@ const SELLER_DATA = {
   socialLInk: "https://example.com",
   businessNumber: "BUS-12345",
   businessEmail: "test-seller@example.com",
-  streetAddress: "1600 Amphitheatre Parkway",
-  city: "Mountain View",
-  state: "CA",
-  zipCode: "94043",
+  addresses: [
+    {
+      streetAddress: "1600 Amphitheatre Parkway",
+      city: "Mountain View",
+      state: "CA",
+      zipCode: "94043",
+    },
+  ],
 };
 
 async function main() {

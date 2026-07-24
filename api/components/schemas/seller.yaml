@@ -1,3 +1,70 @@
+# ══════════════════════════════════════════════════════════════════════════
+# Seller / Business Profile Schemas
+#
+# These schemas support a full address lifecycle:
+#   • CREATE  — POST /users/update-as-seller  → use the addresses[] array
+#               (omit the `id` field to create new addresses)
+#   • UPDATE  — PUT  /users/update-seller-details → use the addresses[] array
+#               (include `id` to update, omit `id` to create — premium only)
+#   • DELETE  — DELETE /users/delete-address/:addressId → separate endpoint
+# ══════════════════════════════════════════════════════════════════════════
+
+# ────────────────────────────────────────────────────────────────────────────
+# Address sub-schema (reused in both input schemas below)
+# ────────────────────────────────────────────────────────────────────────────
+SellerAddressInput:
+  type: object
+  description: >
+    A single address for the seller's business location.
+    - Omit the `id` field to **create** a new address.
+    - Include the `id` field to **update** an existing address.
+  properties:
+    id:
+      type: string
+      format: uuid
+      description: >
+        ID of an existing address to **update**.  
+        **Omit this field** when creating a new address.  
+        Only include this when you want to modify an address that already exists
+        in the database (you can get the ID from the GET /users/get-me response).
+      example: 550e8400-e29b-41d4-a716-446655440010
+    streetAddress:
+      type: string
+      example: 123 Tech Street, Suite 100
+      description: Street address of the business location
+    city:
+      type: string
+      example: San Francisco
+      description: City of the business location
+    state:
+      type: string
+      example: California
+      description: State of the business location
+    zipCode:
+      type: string
+      example: "94105"
+      description: ZIP / postal code of the business location
+  required:
+    - streetAddress
+    - city
+    - state
+    - zipCode
+
+# ────────────────────────────────────────────────────────────────────────────
+# POST /users/update-as-seller — Initial seller profile creation
+#
+# 💡 WORKFLOW STAGE 1: Create your seller business profile
+#
+# This endpoint creates your seller account with business details and
+# one or more addresses.
+#
+# 📍 Address rules:
+#   - Pass an array of addresses (even if just one).
+#   - Omit the `id` field — addresses are always NEW at this stage.
+#   - All users can add at least 1 address here.
+#   - Premium users (Professional & Premium plans with the
+#     "multiple_locations" feature) can add multiple addresses now.
+# ────────────────────────────────────────────────────────────────────────────
 UpdateUserAsSellerInput:
   type: object
   required:
@@ -7,33 +74,31 @@ UpdateUserAsSellerInput:
     - socialLInk
     - businessNumber
     - businessEmail
-    - streetAddress
-    - city
-    - state
-    - zipCode
+    - addresses
   properties:
     storeName:
       type: string
       example: GLX-Tech Store
-      description: Name of the store/business
+      description: Name of the store / business
     servicesId:
       type: array
       items:
         type: string
         format: uuid
-        example: 550e8400-e29b-41d4-a716-446655440002
-      example: ["550e8400-e29b-41d4-a716-446655440002", "550e8400-e29b-41d4-a716-446655440003"]
-      description: Array of service IDs the seller offers
+      example:
+        - 550e8400-e29b-41d4-a716-446655440002
+        - 550e8400-e29b-41d4-a716-446655440003
+      description: Array of service category IDs this seller offers
     insuranceStatus:
       type: string
       enum: [yes, no, not_applicable]
       example: yes
-      description: Insurance status
+      description: Insurance status of the business
     socialLInk:
       type: string
       format: uri
       example: https://facebook.com/glxtech
-      description: Social media profile link
+      description: Social media profile link for the business
     businessNumber:
       type: string
       example: "+1234567890"
@@ -43,88 +108,128 @@ UpdateUserAsSellerInput:
       format: email
       example: business@glxtech.com
       description: Business email address
-    streetAddress:
-      type: string
-      example: 123 Tech Street, Suite 100
-      description: Street address of the business
-    city:
-      type: string
-      example: San Francisco
-      description: City of the business
-    state:
-      type: string
-      example: California
-      description: State of the business
-    zipCode:
-      type: string
-      example: "94105"
-      description: ZIP / postal code of the business
+    addresses:
+      type: array
+      description: >
+        **Addresses for your business locations.**
 
+        - All users can add **at least 1** address here.
+        - Premium users (Professional & Premium plans with the
+          "multiple_locations" feature) can add **multiple** addresses.
+        - **Do NOT include an `id` field** — addresses are always new
+          at this stage. IDs are only used when *updating* existing
+          addresses via the PUT update-seller-details endpoint.
+      items:
+        $ref: "#/components/schemas/SellerAddressInput"
+      minItems: 1
+      example:
+        - streetAddress: "123 Tech Street, Suite 100"
+          city: "San Francisco"
+          state: "California"
+          zipCode: "94105"
+        - streetAddress: "456 Innovation Drive"
+          city: "Los Angeles"
+          state: "California"
+          zipCode: "90001"
+
+# ────────────────────────────────────────────────────────────────────────────
+# PUT /users/update-seller-details — Update existing seller profile
+#
+# 💡 WORKFLOW STAGE 2: Manage your business locations
+#
+# This endpoint lets you update your business info AND manage addresses
+# in a single request.
+#
+# 📍 Address CRUD rules:
+#
+#   🔵 CREATE a new address:
+#      → Include an address object WITHOUT an `id` field.
+#      → Premium users (with "multiple_locations" feature) can add new addresses.
+#      → Free-plan users cannot add new addresses.
+#
+#   🟡 UPDATE an existing address:
+#      → Include the address object WITH the existing `id` field
+#        (get IDs from GET /users/get-me).
+#      → All users can update existing addresses.
+#
+#   🔴 DELETE an address:
+#      → Use the SEPARATE endpoint: DELETE /users/delete-address/:addressId
+#      → This endpoint does NOT support address deletion — you must use
+#        the dedicated delete endpoint for that.
+#
+# 💡 Example — Add 1 new address + update 1 existing address:
+#   {
+#     "addresses": [
+#       { "id": "550e8400-e29b-41d4-a716-446655440010",     ← UPDATE this one
+#         "streetAddress": "123 Tech Street, Suite 200",
+#         "city": "San Francisco",
+#         "state": "California",
+#         "zipCode": "94105" },
+#       { "streetAddress": "789 New Road",                    ← CREATE this one
+#         "city": "Austin",
+#         "state": "Texas",
+#         "zipCode": "73301" }
+#     ]
+#   }
+# ────────────────────────────────────────────────────────────────────────────
 UpdateSellerDetailsInput:
   type: object
   properties:
     storeName:
       type: string
-      example: GLX-Tech Store
-      description: Updated name of the store/business
+      example: GLX-Tech Store (Updated)
+      description: Updated name of the store / business
     servicesId:
       type: array
       items:
         type: string
         format: uuid
-      example: ["550e8400-e29b-41d4-a716-446655440002", "550e8400-e29b-41d4-a716-446655440003"]
-      description: Array of service IDs the seller offers
+      example:
+        - 550e8400-e29b-41d4-a716-446655440002
+        - 550e8400-e29b-41d4-a716-446655440004
+      description: Updated array of service category IDs
     insuranceStatus:
       type: string
       enum: [yes, no, not_applicable]
       example: yes
-      description: Insurance status
+      description: Updated insurance status
     socialLInk:
       type: string
       format: uri
-      example: https://facebook.com/glxtech
-      description: Social media profile link
+      example: https://instagram.com/glxtech
+      description: Updated social media profile link
     businessNumber:
       type: string
-      example: "+1234567890"
+      example: "+1987654321"
       description: Updated business phone number
     businessEmail:
       type: string
       format: email
-      example: business@glxtech.com
+      example: updated-business@glxtech.com
       description: Updated business email address
     addresses:
       type: array
       description: >
-        List of addresses. Premium users (with the "multiple_locations" feature)
-        can add multiple addresses. Free users can only update existing addresses.
-        Omit the `id` field to create a new address; include it to update an existing one.
+        **Manage your business locations in one request.**
+
+        - To **UPDATE** an existing address → include the address
+          object WITH its `id` (found via GET /users/get-me).
+        - To **CREATE** a new address → include the address object
+          WITHOUT an `id` (premium users only).
+        - To **DELETE** an address → use the dedicated
+          DELETE /users/delete-address/:addressId endpoint.
+
+        ⚠️ **Important:** Omitting an existing address from this array
+        does NOT delete it. Use the delete endpoint separately.
       items:
-        type: object
-        properties:
-          id:
-            type: string
-            format: uuid
-            description: ID of an existing address to update. Omit to create a new address.
-            example: 550e8400-e29b-41d4-a716-446655440010
-          streetAddress:
-            type: string
-            example: 123 Tech Street, Suite 100
-            description: Street address
-          city:
-            type: string
-            example: San Francisco
-            description: City
-          state:
-            type: string
-            example: California
-            description: State
-          zipCode:
-            type: string
-            example: "94105"
-            description: ZIP / postal code
-        required:
-          - streetAddress
-          - city
-          - state
-          - zipCode
+        $ref: "#/components/schemas/SellerAddressInput"
+      example:
+        - id: "550e8400-e29b-41d4-a716-446655440010"
+          streetAddress: "123 Tech Street, Suite 200"
+          city: "San Francisco"
+          state: "California"
+          zipCode: "94105"
+        - streetAddress: "789 New Road"
+          city: "Austin"
+          state: "Texas"
+          zipCode: "73301"

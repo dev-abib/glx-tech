@@ -155,6 +155,8 @@ DonationStatsResponse:
   $ref: "./stripe-donate.yaml#/DonationStatsResponse"
 
 # ── Seller ───────────────────────────────────────────────────────────
+SellerAddressInput:
+  $ref: "./seller.yaml#/SellerAddressInput"
 UpdateUserAsSellerInput:
   $ref: "./seller.yaml#/UpdateUserAsSellerInput"
 UpdateSellerDetailsInput:

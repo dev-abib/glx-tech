@@ -1,8 +1,109 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# 04 — Users — Role
+#
+# This file documents all seller-related endpoints for managing a seller's
+# business profile and locations / addresses.
+#
+# ────────────────────────────────────────────────────────────────────────────
+# 💡 WORKFLOW STAGES — Seller Location (Address) Management
+# ────────────────────────────────────────────────────────────────────────────
+#
+# Managing addresses is a multi-step process. Below are the 3 stages:
+#
+# ────────────────────────────────────────────────────────────────────────────
+# STAGE 1 — CREATE: POST /users/update-as-seller
+# ────────────────────────────────────────────────────────────────────────────
+#   Creates your seller business profile. You can add ONE OR MORE addresses
+#   right from the start using the `addresses[]` array.
+#
+#   🔵 All users can add at least 1 address.
+#   🔵 Premium users (Professional & Premium plans with the
+#      "multiple_locations" feature) can add multiple addresses.
+#
+#   👉 Sample request body:
+#      {
+#        "storeName": "GLX-Tech Store",
+#        "servicesId": ["550e8400-e29b-41d4-a716-446655440002"],
+#        "insuranceStatus": "yes",
+#        "socialLInk": "https://facebook.com/glxtech",
+#        "businessNumber": "+1234567890",
+#        "businessEmail": "business@glxtech.com",
+#        "addresses": [
+#          { "streetAddress": "123 Tech Street", "city": "San Francisco",
+#            "state": "California", "zipCode": "94105" }
+#        ]
+#      }
+#
+# ────────────────────────────────────────────────────────────────────────────
+# STAGE 2 — UPDATE: PUT /users/update-seller-details
+# ────────────────────────────────────────────────────────────────────────────
+#   Update your business info AND manage addresses in a single request.
+#
+#   🔵 CREATE a new address → omit the `id` field (premium users only)
+#   🟡 UPDATE an existing address → include the `id` field
+#   🔴 DELETE an address → use the SEPARATE DELETE endpoint below
+#
+#   👉 Get existing address IDs from: GET /users/get-me
+#
+#   👉 Sample: update an existing address + add a new one
+#      {
+#        "storeName": "GLX-Tech Store (Updated)",
+#        "addresses": [
+#          {
+#            "id": "550e8400-e29b-41d4-a716-446655440010",  ← UPDATE
+#            "streetAddress": "123 Tech Street, Suite 200",
+#            "city": "San Francisco",
+#            "state": "California",
+#            "zipCode": "94105"
+#          },
+#          {
+#            "streetAddress": "789 New Road",                ← CREATE
+#            "city": "Austin",
+#            "state": "Texas",
+#            "zipCode": "73301"
+#          }
+#        ]
+#      }
+#
+# ────────────────────────────────────────────────────────────────────────────
+# STAGE 3 — DELETE: DELETE /users/delete-address/{addressId}
+# ────────────────────────────────────────────────────────────────────────────
+#   Permanently remove an address by its ID.
+#
+#   👉 Get existing address IDs from: GET /users/get-me
+#   👉 Example: DELETE /users/delete-address/550e8400-e29b-41d4-a716-446655440010
+#
+# ═══════════════════════════════════════════════════════════════════════════
+
 update-as-seller:
   post:
     tags: ["04 — Users — Role"]
-    summary: Update user profile as seller
-    description: Marks the authenticated user as a seller by creating their seller profile (SellerInfo record). Requires an authenticated user role. Creates a seller business profile with store details, services, and contact information.
+    summary: "STAGE 1: Create seller business profile"
+    description: >
+      **Marks the authenticated user as a seller** and creates their business
+      profile with store details, service categories, and one or more addresses.
+
+
+      ### 📍 Address rules
+
+      - Pass an **`addresses[]` array** with at least 1 address.
+      - Omit the `id` field — all addresses are NEW at this stage.
+      - **All users** can add at least 1 address.
+      - **Premium users** (with the `multiple_locations` feature) can add
+        multiple addresses in this initial creation.
+
+
+      ### 🗺️ What happens next?
+
+      After creating your seller profile, you can:
+
+      1. **Add more addresses** → `PUT /users/update-seller-details`
+         (include address objects WITHOUT `id`)
+
+      2. **Update existing addresses** → `PUT /users/update-seller-details`
+         (include address objects WITH `id`)
+
+      3. **Delete addresses** → `DELETE /users/delete-address/{addressId}`
     security:
       - bearerAuth: []
     requestBody:
@@ -11,6 +112,42 @@ update-as-seller:
         application/json:
           schema:
             $ref: "#/components/schemas/UpdateUserAsSellerInput"
+          examples:
+            singleAddress:
+              summary: Single address (all users)
+              value:
+                storeName: "GLX-Tech Store"
+                servicesId:
+                  - "550e8400-e29b-41d4-a716-446655440002"
+                insuranceStatus: "yes"
+                socialLInk: "https://facebook.com/glxtech"
+                businessNumber: "+1234567890"
+                businessEmail: "business@glxtech.com"
+                addresses:
+                  - streetAddress: "123 Tech Street, Suite 100"
+                    city: "San Francisco"
+                    state: "California"
+                    zipCode: "94105"
+            multipleAddresses:
+              summary: Premium — add multiple locations
+              value:
+                storeName: "GLX-Tech Multi-Location Store"
+                servicesId:
+                  - "550e8400-e29b-41d4-a716-446655440002"
+                  - "550e8400-e29b-41d4-a716-446655440003"
+                insuranceStatus: "yes"
+                socialLInk: "https://instagram.com/glxtech"
+                businessNumber: "+1234567890"
+                businessEmail: "business@glxtech.com"
+                addresses:
+                  - streetAddress: "123 Tech Street, Suite 100"
+                    city: "San Francisco"
+                    state: "California"
+                    zipCode: "94105"
+                  - streetAddress: "456 Innovation Drive"
+                    city: "Los Angeles"
+                    state: "California"
+                    zipCode: "90001"
     responses:
       "200":
         description: User updated as seller successfully
@@ -30,11 +167,17 @@ update-as-seller:
         description: User already marked as a seller or validation error
       "401":
         description: Unauthorized
+
 switch-role:
   post:
     tags: ["04 — Users — Role"]
     summary: Switch between user and seller roles
-    description: Toggles the authenticated user's role between 'user' and 'seller'. Returns new access/refresh tokens with the updated role claim.
+    description: >
+      Toggles the authenticated user's role between `user` and `seller`.
+      Returns new access/refresh tokens with the updated role claim.
+
+      **Prerequisite:** You must have already created a seller profile via
+      `POST /users/update-as-seller` before you can switch to the seller role.
     security:
       - bearerAuth: []
     requestBody:
@@ -72,23 +215,71 @@ switch-role:
       "400":
         description: Only users can switch between user and seller roles
       "401":
-        description: Unauthorized
+        description: Unauthorized — must set up business account first
 
 update-seller-details:
   put:
     tags: ["04 — Users — Role"]
-    summary: Update seller details
+    summary: "STAGE 2: Update seller details & manage addresses"
     description: >
       Updates the authenticated seller's business profile details (store name,
-      services, contact info) and addresses. 
+      services, contact info) and manages addresses.
 
-      **Address rules:**
-      - Users with the `multiple_locations` feature (Professional & Premium plans)
-        can add **multiple addresses**.
-      - Free-plan users can only **update existing addresses** — they cannot add
-        new ones.
-      - Include `id` in an address object to update an existing address.
-      - Omit `id` to add a new address (premium only).
+
+      ### 📍 Address management rules
+
+      You can **create** and **update** addresses within this endpoint.
+      Use the separate **DELETE** endpoint to remove addresses.
+
+
+      #### 🟢 CREATE a new address
+      Add an address object **without** an `id` field.
+
+      > ⚠️ **Premium-only:** Only users with the `multiple_locations`
+      > feature (Professional & Premium plans) can add new addresses.
+      > Free-plan users cannot add new addresses.
+
+
+      #### 🟡 UPDATE an existing address
+      Include the address object **with** its `id` field.
+
+      > ✅ All sellers can update their existing addresses.
+
+      > 💡 Get existing address IDs by calling `GET /users/get-me`.
+      > The `sellerInfo.sellerAddress` array contains all addresses
+      > with their IDs.
+
+
+      #### 🔴 DELETE an address
+      Use the **dedicated endpoint**: `DELETE /users/delete-address/{addressId}`
+
+      > ⚠️ Omitting an existing address from this array does **NOT** delete it.
+      > You must use the delete endpoint separately.
+
+
+      ### 💡 Full example — Update store info + add 1 address + update 1 address
+
+      ```json
+      {
+        "storeName": "GLX-Tech Store v2",
+        "socialLInk": "https://instagram.com/glxtech",
+        "addresses": [
+          {
+            "id": "550e8400-e29b-41d4-a716-446655440010",
+            "streetAddress": "123 Tech Street, Suite 200",
+            "city": "San Francisco",
+            "state": "California",
+            "zipCode": "94105"
+          },
+          {
+            "streetAddress": "789 New Road",
+            "city": "Austin",
+            "state": "Texas",
+            "zipCode": "73301"
+          }
+        ]
+      }
+      ```
     security:
       - bearerAuth: []
     requestBody:
@@ -124,8 +315,25 @@ update-seller-details:
 delete-address:
   delete:
     tags: ["04 — Users — Role"]
-    summary: Delete a seller address
-    description: Deletes an address belonging to the authenticated seller. Validates that the address belongs to the seller before deletion.
+    summary: "STAGE 3: Delete a seller address"
+    description: >
+      Permanently removes an address belonging to the authenticated seller.
+
+
+      ### 📋 Before you delete
+
+      1. Get your address IDs by calling `GET /users/get-me`.
+         Look under `sellerInfo.sellerAddress[]` — each entry has an `id` field.
+
+      2. Pass the address ID as a path parameter.
+
+
+      ### ⚠️ Notes
+
+      - Validates that the address belongs to the current seller before
+        deleting (returns 403 if it doesn't).
+      - This action is **permanent** and cannot be undone.
+      - You can get the ID from the `/users/get-me` endpoint response.
     security:
       - bearerAuth: []
     parameters:
@@ -135,7 +343,11 @@ delete-address:
         schema:
           type: string
           format: uuid
-        description: ID of the address to delete
+        description: >
+          ID of the address to delete.
+          📌 Find this in the `GET /users/get-me` response under
+          `sellerInfo.sellerAddress[].id`.
+        example: 550e8400-e29b-41d4-a716-446655440010
     responses:
       "200":
         description: Address deleted successfully

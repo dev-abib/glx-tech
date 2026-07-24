@@ -157,10 +157,18 @@ export const updateUserAsSellerSchema = z
     socialLInk: z.string(),
     businessNumber: z.string(),
     businessEmail: z.string(),
-    streetAddress: z.string(),
-    city: z.string(),
-    state: z.string(),
-    zipCode: z.string(),
+    addresses: z
+      .array(
+        z
+          .object({
+            streetAddress: z.string(),
+            city: z.string(),
+            state: z.string(),
+            zipCode: z.string(),
+          })
+          .strict()
+      )
+      .min(1, "At least one address is required"),
   })
 
   .strict();
