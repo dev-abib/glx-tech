@@ -11,6 +11,9 @@ import {
   quickDonateCheckout,
   createSubscriptionCheckout,
   createBillingPortal,
+  getMySubscription,
+  cancelMySubscription,
+  renewMySubscription,
 } from "./stripe.controllers.js";
 import { authenticate } from "../../middlewares/auth.middleware.js";
 
@@ -34,18 +37,33 @@ router.route("/donations/stats").get(getDonationStats);
 
 // ── Subscriptions ────────────────────────────────────────────────────────
 
-// Create a subscription checkout session (authenticated)
+// Create a subscription checkout session (authenticated sellers)
 router
   .route("/subscription/checkout")
   .post(
-    authenticate({ type: "user" }),
+    authenticate({ type: "seller" }),
     validate(CreateSubscriptionCheckoutSchema),
     createSubscriptionCheckout
   );
 
-// Create a billing portal session (authenticated)
+// Create a billing portal session (authenticated sellers)
 router
   .route("/subscription/portal")
-  .get(authenticate({ type: "user" }), createBillingPortal);
+  .get(authenticate({ type: "seller" }), createBillingPortal);
+
+// Get my subscription details (authenticated sellers)
+router
+  .route("/subscription/my-plan")
+  .get(authenticate({ type: "seller" }), getMySubscription);
+
+// Cancel my subscription at period end (authenticated sellers)
+router
+  .route("/subscription/cancel")
+  .post(authenticate({ type: "seller" }), cancelMySubscription);
+
+// Renew/reactivate my subscription (authenticated sellers)
+router
+  .route("/subscription/renew")
+  .post(authenticate({ type: "seller" }), renewMySubscription);
 
 export default router;

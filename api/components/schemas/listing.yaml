@@ -38,6 +38,32 @@ Listing:
       format: uuid
       example: 550e8400-e29b-41d4-a716-446655440005
       description: Reference to the seller's stored address
+    address:
+      type: object
+      nullable: true
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 550e8400-e29b-41d4-a716-446655440005
+          description: Address identifier
+        streetAddress:
+          type: string
+          example: 123 Main St
+          description: Street address
+        city:
+          type: string
+          example: New York
+          description: City
+        state:
+          type: string
+          example: NY
+          description: State
+        zipCode:
+          type: string
+          example: "10001"
+          description: ZIP code
+      description: Full seller address details (populated from the addressId on creation)
     media:
       type: array
       items:

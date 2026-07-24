@@ -182,6 +182,10 @@
   $ref: "./listings.yaml#/update-review"
 /listings/delete-review/{reviewId}:
   $ref: "./listings.yaml#/delete-review"
+/listings/toggle-status/{id}:
+  $ref: "./listings.yaml#/toggle-listing-status"
+/listings/toggle-featured/{id}:
+  $ref: "./listings.yaml#/toggle-listing-featured"
 
 # ── Admin — Listings, Reviews & Dashboard ───────────────────────────
 /admin/listings:
@@ -240,6 +244,12 @@
   $ref: "./plans.yaml#/create-subscription-checkout"
 /stripe/subscription/portal:
   $ref: "./plans.yaml#/create-billing-portal"
+/stripe/subscription/my-plan:
+  $ref: "./stripe-donate.yaml#/get-my-subscription"
+/stripe/subscription/cancel:
+  $ref: "./stripe-donate.yaml#/cancel-subscription"
+/stripe/subscription/renew:
+  $ref: "./stripe-donate.yaml#/renew-subscription"
 
 # ── Admin — Plans ───────────────────────────────────────────────────
 /admin/plans:

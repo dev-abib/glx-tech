@@ -70,6 +70,7 @@ export class PlansService {
         stripePriceIdMonthly,
         stripePriceIdAnnual,
         maxActiveListings: data.maxActiveListings,
+        maxFeaturedListings: data.maxFeaturedListings,
         platformFeePercent: data.platformFeePercent,
         isActive: data.isActive,
         isPublic: data.isPublic,
@@ -223,6 +224,7 @@ export class PlansService {
     if (stripePriceIdMonthly !== plan.stripePriceIdMonthly) updateData.stripePriceIdMonthly = stripePriceIdMonthly;
     if (stripePriceIdAnnual !== plan.stripePriceIdAnnual) updateData.stripePriceIdAnnual = stripePriceIdAnnual;
     if (data.maxActiveListings !== undefined) updateData.maxActiveListings = data.maxActiveListings;
+    if (data.maxFeaturedListings !== undefined) updateData.maxFeaturedListings = data.maxFeaturedListings;
     if (data.platformFeePercent !== undefined) updateData.platformFeePercent = data.platformFeePercent;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
     if (data.isPublic !== undefined) updateData.isPublic = data.isPublic;

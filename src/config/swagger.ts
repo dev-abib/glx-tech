@@ -166,6 +166,8 @@ P("listings.yaml", "/listings/review/{reviewId}", "get-review");
 P("listings.yaml", "/listings/listing/{listingId}/create-review", "create-review");
 P("listings.yaml", "/listings/update-review/{reviewId}", "update-review");
 P("listings.yaml", "/listings/delete-review/{reviewId}", "delete-review");
+P("listings.yaml", "/listings/toggle-status/{id}", "toggle-listing-status");
+P("listings.yaml", "/listings/toggle-featured/{id}", "toggle-listing-featured");
 // ── Admin — Listings, Reviews & Dashboard ───────────────────────────
 P("admin-listings.yaml", "/admin/listings", "get-all-listings");
 P("admin-listings.yaml", "/admin/listings/listing/{slug}", "get-listing-by-slug");
@@ -200,6 +202,9 @@ P("stripe-donate.yaml", "/stripe/webhook", "stripe-webhook");
 P("plans.yaml", "/plans", "get-public-plans");
 P("plans.yaml", "/stripe/subscription/checkout", "create-subscription-checkout");
 P("plans.yaml", "/stripe/subscription/portal", "create-billing-portal");
+P("stripe-donate.yaml", "/stripe/subscription/my-plan", "get-my-subscription");
+P("stripe-donate.yaml", "/stripe/subscription/cancel", "cancel-subscription");
+P("stripe-donate.yaml", "/stripe/subscription/renew", "renew-subscription");
 
 // ── Admin — Plans ───────────────────────────────────────────────────
 P("plans.yaml", "/admin/plans", "admin-create-plan");

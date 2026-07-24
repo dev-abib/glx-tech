@@ -39,7 +39,7 @@ function invalidateCache(pattern?: string): void {
 interface UserPlanResult {
   planId: string | null;
   isFree: boolean;
-  plan: { id: string; maxActiveListings: number; platformFeePercent: number } | null;
+  plan: { id: string; maxActiveListings: number; maxFeaturedListings: number; platformFeePercent: number } | null;
 }
 
 export class SubscriptionService {
@@ -59,6 +59,7 @@ export class SubscriptionService {
           select: {
             id: true,
             maxActiveListings: true,
+            maxFeaturedListings: true,
             platformFeePercent: true,
           },
         },
@@ -127,6 +128,23 @@ export class SubscriptionService {
 
     setCache(cacheKey, result);
     return result;
+  }
+
+  /**
+   * Check if a user can feature a listing based on their plan's maxFeaturedListings.
+   */
+  async canFeatureListing(userId: string): Promise<{ allowed: boolean; currentCount: number; maxAllowed: number }> {
+    const userPlan = await this.getPlanForUser(userId);
+
+    // Free users get a default limit of 0 featured listings
+    const maxAllowed = userPlan.plan?.maxFeaturedListings ?? 0;
+
+    const currentCount = await prisma.listing.count({
+      where: { userId, isFeatured: true },
+    });
+
+    const allowed = currentCount < maxAllowed || maxAllowed === -1; // -1 means unlimited
+    return { allowed, currentCount, maxAllowed };
   }
 
   /**

@@ -32,5 +32,6 @@ model Listing {
   latitude    Float
   longitude   Float
   isAvailable Boolean       @default(true)
+  isFeatured  Boolean       @default(false)
   bookings    Appointment[]
 }

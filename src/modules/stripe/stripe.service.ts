@@ -257,6 +257,230 @@ export class StripeService {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
+  // SELLER SUBSCRIPTION MANAGEMENT
+  // ══════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Get the authenticated seller's current subscription details.
+   */
+  async getMySubscription(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        subscriptionPlanId: true,
+        subscriptionPlan: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            description: true,
+            priceMonthly: true,
+            priceAnnual: true,
+            maxActiveListings: true,
+            maxFeaturedListings: true,
+            platformFeePercent: true,
+            isActive: true,
+            features: {
+              where: { enabled: true },
+              select: { key: true },
+            },
+          },
+        },
+        subscriptionStatus: true,
+        stripeSubscriptionId: true,
+        currentPeriodEnd: true,
+        stripeCustomerId: true,
+      },
+    });
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Determine billing cycle from Stripe subscription if available
+    let billingCycle: "monthly" | "annual" | null = null;
+    if (user.stripeSubscriptionId) {
+      try {
+        const stripeSubscription = await stripe.subscriptions.retrieve(
+          user.stripeSubscriptionId
+        );
+        const price = stripeSubscription.items.data[0]?.price;
+        if (price?.recurring?.interval === "month") {
+          billingCycle = "monthly";
+        } else if (price?.recurring?.interval === "year") {
+          billingCycle = "annual";
+        }
+      } catch {
+        // If Stripe fetch fails, just leave billingCycle as null
+      }
+    }
+
+    const isActive =
+      user.subscriptionStatus === "active" ||
+      user.subscriptionStatus === "trialing";
+
+    return {
+      plan: user.subscriptionPlan
+        ? {
+            id: user.subscriptionPlan.id,
+            name: user.subscriptionPlan.name,
+            slug: user.subscriptionPlan.slug,
+            description: user.subscriptionPlan.description,
+            priceMonthly: user.subscriptionPlan.priceMonthly,
+            priceAnnual: user.subscriptionPlan.priceAnnual,
+            maxActiveListings: user.subscriptionPlan.maxActiveListings,
+            maxFeaturedListings: user.subscriptionPlan.maxFeaturedListings,
+            platformFeePercent: Number(
+              user.subscriptionPlan.platformFeePercent
+            ),
+            enabledFeatures: user.subscriptionPlan.features.map(
+              (f) => f.key
+            ),
+          }
+        : null,
+      subscriptionStatus: user.subscriptionStatus,
+      currentPeriodEnd: user.currentPeriodEnd,
+      billingCycle,
+      isActive,
+      hasStripeSubscription: !!user.stripeSubscriptionId,
+      hasStripeCustomer: !!user.stripeCustomerId,
+    };
+  }
+
+  /**
+   * Cancel the seller's Stripe subscription at the end of the current billing period.
+   */
+  async cancelSubscription(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        stripeSubscriptionId: true,
+        subscriptionStatus: true,
+      },
+    });
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    if (!user.stripeSubscriptionId) {
+      throw new ApiError(400, "No active subscription to cancel");
+    }
+
+    if (user.subscriptionStatus === "canceled") {
+      throw new ApiError(400, "Subscription is already canceled");
+    }
+
+    // Cancel at period end so the user retains access until the end of the billing cycle
+    const updatedSubscription = (await stripe.subscriptions.update(
+      user.stripeSubscriptionId,
+      {
+        cancel_at_period_end: true,
+      }
+    )) as { current_period_end?: number };
+
+    // Update local status
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        subscriptionStatus: "canceled",
+        currentPeriodEnd: updatedSubscription.current_period_end
+          ? new Date(updatedSubscription.current_period_end * 1000)
+          : undefined,
+      },
+    });
+
+    return {
+      message:
+        "Subscription will be canceled at the end of the current billing period.",
+      currentPeriodEnd: updatedSubscription.current_period_end
+        ? new Date(updatedSubscription.current_period_end * 1000)
+        : null,
+    };
+  }
+
+  /**
+   * Create a new checkout session to renew/reactivate the subscription.
+   */
+  async renewSubscription(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        subscriptionPlanId: true,
+        subscriptionPlan: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            stripePriceIdMonthly: true,
+            stripePriceIdAnnual: true,
+            isActive: true,
+          },
+        },
+        stripeCustomerId: true,
+      },
+    });
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    if (!user.subscriptionPlanId || !user.subscriptionPlan) {
+      throw new ApiError(
+        400,
+        "You don't have a subscription plan assigned. Please select a plan first."
+      );
+    }
+
+    if (!user.subscriptionPlan.isActive) {
+      throw new ApiError(400, "Your current plan is no longer available");
+    }
+
+    // Determine which price ID to use (prefer monthly, fallback to annual)
+    const priceId =
+      user.subscriptionPlan.stripePriceIdMonthly ||
+      user.subscriptionPlan.stripePriceIdAnnual;
+
+    if (!priceId) {
+      throw new ApiError(
+        400,
+        "No Stripe price configured for your current plan. Contact support."
+      );
+    }
+
+    const baseUrl = this.getFrontendUrl();
+    const successUrl = `${baseUrl}/donate/success`;
+    const cancelUrl = `${baseUrl}/donate/cancel`;
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: user.stripeCustomerId || undefined,
+      client_reference_id: userId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: {
+        planId: user.subscriptionPlan.id,
+        planSlug: user.subscriptionPlan.slug,
+        userId,
+        action: "renew",
+      },
+      subscription_data: {
+        metadata: {
+          planId: user.subscriptionPlan.id,
+          planSlug: user.subscriptionPlan.slug,
+          userId,
+        },
+      },
+    });
+
+    return {
+      url: session.url,
+      sessionId: session.id,
+    };
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
   // WEBHOOK HANDLERS
   // ══════════════════════════════════════════════════════════════════════════
 

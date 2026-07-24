@@ -53,6 +53,11 @@ export const getAllListings: RequestHandler = asyncHandler(
         : req.query.isAvailable === "false"
           ? false
           : undefined,
+      isFeatured: req.query.isFeatured === "true"
+        ? true
+        : req.query.isFeatured === "false"
+          ? false
+          : undefined,
       sortBy: (req.query.sortBy as string) || "createdAt",
       sortOrder: (req.query.sortOrder as "asc" | "desc") || "desc",
     });
@@ -82,6 +87,16 @@ export const getMyListings: RequestHandler = asyncHandler(
     const result = await listingService.getMyListings(userId, {
       page: Number(req.query.page) || 1,
       limit: Number(req.query.limit) || 10,
+      isAvailable: req.query.isAvailable === "true"
+        ? true
+        : req.query.isAvailable === "false"
+          ? false
+          : undefined,
+      isFeatured: req.query.isFeatured === "true"
+        ? true
+        : req.query.isFeatured === "false"
+          ? false
+          : undefined,
       sortBy: (req.query.sortBy as string) || "createdAt",
       sortOrder: (req.query.sortOrder as "asc" | "desc") || "desc",
     });
@@ -126,6 +141,33 @@ export const deleteListing: RequestHandler<{ id: string }> = asyncHandler(
     return res
       .status(200)
       .json(new ApiResponse(200, result.message));
+  }
+);
+
+
+// toggle listing available/unavailable status
+export const toggleListingStatus: RequestHandler<{ id: string }> = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const userId = req.user?.id as string;
+    const result = await listingService.toggleListingStatus(id, userId);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, result.message, { isAvailable: result.isAvailable }));
+  }
+);
+
+// toggle listing featured status
+export const toggleListingFeatured: RequestHandler<{ id: string }> = asyncHandler(
+  async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    const userId = req.user?.id as string;
+    const result = await listingService.toggleListingFeatured(id, userId);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, result.message, { isFeatured: result.isFeatured }));
   }
 );
 

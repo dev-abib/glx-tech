@@ -71,6 +71,7 @@ export const UpdateListingSchema = z.looseObject({
   basePrice: z.string().optional(),
   hourlyPrice: z.string().optional(),
   dailyPrice: z.string().optional(),
+  isAvailable: BooleanField().optional(),
   genericData: GenericDataSchema,
 });
 
@@ -87,6 +88,14 @@ export const GetListingsQuerySchema = z
     radius: z.coerce.number().positive().max(30).optional(),
     minRating: z.coerce.number().min(1).max(5).optional(),
     isAvailable: z
+      .preprocess((val) => {
+        if (typeof val === "boolean") return val;
+        if (val === "true") return true;
+        if (val === "false") return false;
+        return undefined;
+      }, z.boolean())
+      .optional(),
+    isFeatured: z
       .preprocess((val) => {
         if (typeof val === "boolean") return val;
         if (val === "true") return true;

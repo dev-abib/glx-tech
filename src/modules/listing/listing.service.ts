@@ -101,6 +101,13 @@ export class ListingService {
       data: {
         ...data,
         listingId: listing.id,
+        address: {
+          id: sellerAddress.id,
+          streetAddress: sellerAddress.streetAddress,
+          city: sellerAddress.city,
+          state: sellerAddress.state,
+          zipCode: sellerAddress.zipCode,
+        },
       },
       userId,
       images: uploadedImages,
@@ -199,6 +206,7 @@ export class ListingService {
       radius,
       minRating,
       isAvailable,
+      isFeatured,
       sortBy,
       sortOrder,
     } = query;
@@ -253,6 +261,11 @@ export class ListingService {
       where.isAvailable = isAvailable;
     }
 
+    // Filter by featured status
+    if (isFeatured !== undefined) {
+      where.isFeatured = isFeatured;
+    }
+
     // ── Geocode address only when both address AND radius are provided ──
     let originCoords: { lat: number; lng: number } | null = null;
     if (address && radius !== undefined) {
@@ -271,6 +284,15 @@ export class ListingService {
           name: true,
           email: true,
           avatar: true,
+        },
+      },
+      address: {
+        select: {
+          id: true,
+          streetAddress: true,
+          city: true,
+          state: true,
+          zipCode: true,
         },
       },
       service: {
@@ -304,7 +326,10 @@ export class ListingService {
     if (needsInMemoryFiltering) {
       let allListings = await prisma.listing.findMany({
         where,
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: [
+          { isFeatured: "desc" },
+          { [sortBy]: sortOrder },
+        ],
         include: includeWithRatings,
       });
 
@@ -360,7 +385,10 @@ export class ListingService {
         where,
         skip,
         take: limit,
-        orderBy: { [sortBy]: sortOrder },
+        orderBy: [
+          { isFeatured: "desc" },
+          { [sortBy]: sortOrder },
+        ],
         include: includeWithRatings,
       }),
       prisma.listing.count({ where }),
@@ -429,6 +457,15 @@ export class ListingService {
               avatar: true,
             },
           },
+          address: {
+            select: {
+              id: true,
+              streetAddress: true,
+              city: true,
+              state: true,
+              zipCode: true,
+            },
+          },
           service: {
             select: {
               id: true,
@@ -491,6 +528,15 @@ export class ListingService {
             phone: true,
           },
         },
+        address: {
+          select: {
+            id: true,
+            streetAddress: true,
+            city: true,
+            state: true,
+            zipCode: true,
+          },
+        },
         service: {
           select: {
             id: true,
@@ -521,10 +567,18 @@ export class ListingService {
 
   // get my listings (authenticated seller)
   async getMyListings(userId: string, query: GetListingsQueryInput) {
-    const { page, limit, sortBy, sortOrder } = query;
+    const { page, limit, sortBy, sortOrder, isAvailable, isFeatured } = query;
     const skip = (page - 1) * limit;
 
-    const where = { userId };
+    const where: Record<string, unknown> = { userId };
+
+    if (isAvailable !== undefined) {
+      where.isAvailable = isAvailable;
+    }
+
+    if (isFeatured !== undefined) {
+      where.isFeatured = isFeatured;
+    }
 
     const [listings, total] = await Promise.all([
       prisma.listing.findMany({
@@ -533,6 +587,15 @@ export class ListingService {
         take: limit,
         orderBy: { [sortBy]: sortOrder },
         include: {
+          address: {
+            select: {
+              id: true,
+              streetAddress: true,
+              city: true,
+              state: true,
+              zipCode: true,
+            },
+          },
           service: {
             select: {
               id: true,
@@ -603,6 +666,8 @@ export class ListingService {
     if (data.hourlyPrice !== undefined)
       updateData.hourlyPrice = data.hourlyPrice;
     if (data.dailyPrice !== undefined) updateData.dailyPrice = data.dailyPrice;
+    if (data.isAvailable !== undefined)
+      updateData.isAvailable = data.isAvailable;
 
     // Handle new image uploads
     if (imageBuffers.length > 0) {
@@ -671,6 +736,76 @@ export class ListingService {
     await prisma.listing.delete({ where: { id } });
 
     return { message: "Listing deleted successfully" };
+  }
+
+  // ════════════════════════════════════════════════════════════════════════
+  // TOGGLE STATUS & FEATURED
+  // ════════════════════════════════════════════════════════════════════════
+
+  // toggle listing available/unavailable status (seller - owner only)
+  async toggleListingStatus(id: string, userId: string) {
+    const listing = await prisma.listing.findUnique({ where: { id } });
+    if (!listing) {
+      throw new ApiError(404, "Listing not found");
+    }
+
+    if (listing.userId !== userId) {
+      throw new ApiError(403, "You can only toggle the status of your own listings");
+    }
+
+    const updated = await prisma.listing.update({
+      where: { id },
+      data: { isAvailable: !listing.isAvailable },
+    });
+
+    return {
+      message: `Listing is now ${updated.isAvailable ? "available" : "unavailable"}`,
+      isAvailable: updated.isAvailable,
+    };
+  }
+
+  // toggle listing featured status (seller - owner only, subscription check)
+  async toggleListingFeatured(id: string, userId: string) {
+    const listing = await prisma.listing.findUnique({ where: { id } });
+    if (!listing) {
+      throw new ApiError(404, "Listing not found");
+    }
+
+    if (listing.userId !== userId) {
+      throw new ApiError(403, "You can only toggle the featured status of your own listings");
+    }
+
+    // If trying to feature, check subscription has the feature and slot available
+    if (!listing.isFeatured) {
+      const hasFeature = await subscriptionService.hasFeature(userId, "featured_listing");
+      if (!hasFeature) {
+        throw new ApiError(
+          403,
+          "Your subscription plan does not include featured listings. " +
+          "Upgrade your plan to enable this feature."
+        );
+      }
+
+      // Check featured listing limit
+      const featureCheck = await subscriptionService.canFeatureListing(userId);
+      if (!featureCheck.allowed) {
+        throw new ApiError(
+          403,
+          `Featured listing limit reached. Your plan allows a maximum of ${featureCheck.maxAllowed} featured listing(s). ` +
+          `You currently have ${featureCheck.currentCount}. Unfeature another listing or upgrade your plan.`
+        );
+      }
+    }
+
+    const updated = await prisma.listing.update({
+      where: { id },
+      data: { isFeatured: !listing.isFeatured },
+    });
+
+    return {
+      message: `Listing is now ${updated.isFeatured ? "featured" : "unfeatured"}`,
+      isFeatured: updated.isFeatured,
+    };
   }
 
   // ════════════════════════════════════════════════════════════════════════

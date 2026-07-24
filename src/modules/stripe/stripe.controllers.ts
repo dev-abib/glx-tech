@@ -115,6 +115,45 @@ export const createBillingPortal: RequestHandler<
 });
 
 /**
+ * Get the authenticated user's current subscription details.
+ */
+export const getMySubscription: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await stripeService.getMySubscription(req.user!.id);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Subscription fetched successfully", result));
+  }
+);
+
+/**
+ * Cancel the authenticated user's subscription at period end.
+ */
+export const cancelMySubscription: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await stripeService.cancelSubscription(req.user!.id);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, result.message, { currentPeriodEnd: result.currentPeriodEnd }));
+  }
+);
+
+/**
+ * Renew/reactivate the authenticated user's subscription.
+ */
+export const renewMySubscription: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await stripeService.renewSubscription(req.user!.id);
+
+    return res
+      .status(201)
+      .json(new ApiResponse(201, "Subscription renewal initiated", { checkoutUrl: result.url, sessionId: result.sessionId }));
+  }
+);
+
+/**
  * Stripe webhook handler for checkout.session.completed AND subscription events.
  * This endpoint is called by Stripe — no auth, but verifies the Stripe webhook signature.
  */

@@ -87,6 +87,7 @@ interface PlanSeed {
   priceMonthly: number; // cents
   priceAnnual: number; // cents
   maxActiveListings: number;
+  maxFeaturedListings: number;
   platformFeePercent: number;
   isPublic: boolean;
   displayOrder: number;
@@ -101,6 +102,7 @@ const PLANS: PlanSeed[] = [
     priceMonthly: 0,
     priceAnnual: 0,
     maxActiveListings: 1,
+    maxFeaturedListings: 0,
     platformFeePercent: 5,
     isPublic: true,
     displayOrder: 1,
@@ -113,6 +115,7 @@ const PLANS: PlanSeed[] = [
     priceMonthly: 2999, // $29.99
     priceAnnual: 29999, // $299.99
     maxActiveListings: 10,
+    maxFeaturedListings: 3,
     platformFeePercent: 2,
     isPublic: true,
     displayOrder: 2,
@@ -132,6 +135,7 @@ const PLANS: PlanSeed[] = [
     priceMonthly: 7999, // $79.99
     priceAnnual: 79999, // $799.99
     maxActiveListings: 50,
+    maxFeaturedListings: 10,
     platformFeePercent: 0,
     isPublic: true,
     displayOrder: 3,
@@ -259,6 +263,7 @@ async function seedPlans(): Promise<void> {
             priceMonthly: planData.priceMonthly,
             priceAnnual: planData.priceAnnual,
             maxActiveListings: planData.maxActiveListings,
+            maxFeaturedListings: planData.maxFeaturedListings,
             platformFeePercent: planData.platformFeePercent,
             isPublic: planData.isPublic,
             displayOrder: planData.displayOrder,
@@ -319,6 +324,7 @@ async function seedPlans(): Promise<void> {
           stripePriceIdMonthly,
           stripePriceIdAnnual,
           maxActiveListings: planData.maxActiveListings,
+          maxFeaturedListings: planData.maxFeaturedListings,
           platformFeePercent: planData.platformFeePercent,
           isActive: true,
           isPublic: planData.isPublic,

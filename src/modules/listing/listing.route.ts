@@ -13,6 +13,8 @@ import {
   getMyListings,
   updateListing,
   deleteListing,
+  toggleListingStatus,
+  toggleListingFeatured,
   createUserReview,
   getListingReviews,
   getRelatedListings,
@@ -64,6 +66,16 @@ router
 router
   .route("/delete-listing/:id")
   .delete(authenticate({ type: "seller" }), deleteListing);
+
+// Toggle listing available/unavailable (seller only - owner)
+router
+  .route("/toggle-status/:id")
+  .patch(authenticate({ type: "seller" }), toggleListingStatus);
+
+// Toggle listing featured status (seller only - owner, subscription check)
+router
+  .route("/toggle-featured/:id")
+  .patch(authenticate({ type: "seller" }), toggleListingFeatured);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // USER REVIEWS — Public

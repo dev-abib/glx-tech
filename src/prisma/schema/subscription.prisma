@@ -13,6 +13,7 @@ model SubscriptionPlan {
   stripePriceIdMonthly String?  @map("stripe_price_id_monthly")
   stripePriceIdAnnual  String?  @map("stripe_price_id_annual")
   maxActiveListings    Int      @default(0) @map("max_active_listings")
+  maxFeaturedListings  Int      @default(0) @map("max_featured_listings")
   platformFeePercent   Decimal  @default(0) @map("platform_fee_percent")
   isActive             Boolean  @default(true) @map("is_active")
   isPublic             Boolean  @default(true) @map("is_public")

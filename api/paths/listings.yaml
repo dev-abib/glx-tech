@@ -151,6 +151,12 @@ get-all-listings:
           type: string
           enum: ["true", "false"]
         description: Filter by availability
+      - name: isFeatured
+        in: query
+        schema:
+          type: string
+          enum: ["true", "false"]
+        description: Filter by featured status
       - name: sortBy
         in: query
         schema:
@@ -395,6 +401,72 @@ delete-listing:
         description: Listing deleted successfully
       "403":
         description: Forbidden — Not the listing owner
+      "404":
+        description: Listing not found
+toggle-listing-status:
+  patch:
+    tags: ["14 — Listings & Reviews"]
+    summary: Toggle listing available/unavailable status (Owner/Seller only)
+    description: Toggles the isAvailable field of a listing. Only the listing owner can toggle.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing ID
+    responses:
+      "200":
+        description: Listing status toggled successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        isAvailable:
+                          type: boolean
+                          description: The new availability status
+      "403":
+        description: Forbidden — Not the listing owner
+      "404":
+        description: Listing not found
+toggle-listing-featured:
+  patch:
+    tags: ["14 — Listings & Reviews"]
+    summary: Toggle listing featured status (Owner/Seller only, subscription required)
+    description: Toggles the isFeatured field of a listing. Requires a subscription plan with the "featured_listing" feature enabled.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Listing ID
+    responses:
+      "200":
+        description: Listing featured status toggled successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        isFeatured:
+                          type: boolean
+                          description: The new featured status
+      "403":
+        description: Forbidden — Not the listing owner or subscription does not include featured listing feature
       "404":
         description: Listing not found
 get-listing-reviews:

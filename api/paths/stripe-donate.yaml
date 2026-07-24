@@ -117,3 +117,127 @@ stripe-webhook:
           application/json:
             schema:
               $ref: "#/components/schemas/ApiError"
+
+get-my-subscription:
+  get:
+    tags: ["21 — Plans & Subscriptions"]
+    summary: Get my subscription details (Authenticated)
+    description: Returns the authenticated user's current subscription plan, status, renewal date, and billing cycle.
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Subscription fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        plan:
+                          type: object
+                          nullable: true
+                          properties:
+                            id:
+                              type: string
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                            description:
+                              type: string
+                              nullable: true
+                            priceMonthly:
+                              type: integer
+                            priceAnnual:
+                              type: integer
+                            maxActiveListings:
+                              type: integer
+                            maxFeaturedListings:
+                              type: integer
+                            platformFeePercent:
+                              type: number
+                            enabledFeatures:
+                              type: array
+                              items:
+                                type: string
+                        subscriptionStatus:
+                          type: string
+                          nullable: true
+                        currentPeriodEnd:
+                          type: string
+                          format: date-time
+                          nullable: true
+                        billingCycle:
+                          type: string
+                          nullable: true
+                          enum: [monthly, annual]
+                        isActive:
+                          type: boolean
+                        hasStripeSubscription:
+                          type: boolean
+                        hasStripeCustomer:
+                          type: boolean
+      "401":
+        description: Unauthorized
+
+cancel-subscription:
+  post:
+    tags: ["21 — Plans & Subscriptions"]
+    summary: Cancel subscription (Authenticated)
+    description: Cancels the authenticated user's Stripe subscription at the end of the current billing period.
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Subscription canceled successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        currentPeriodEnd:
+                          type: string
+                          format: date-time
+                          nullable: true
+      "400":
+        description: No active subscription to cancel or already canceled
+      "401":
+        description: Unauthorized
+
+renew-subscription:
+  post:
+    tags: ["21 — Plans & Subscriptions"]
+    summary: Renew/reactivate subscription (Authenticated)
+    description: Creates a new Stripe Checkout Session to renew or reactivate the authenticated user's current plan subscription.
+    security:
+      - bearerAuth: []
+    responses:
+      "201":
+        description: Subscription renewal initiated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        checkoutUrl:
+                          type: string
+                          description: Stripe Checkout session URL to complete payment
+                        sessionId:
+                          type: string
+                          description: Stripe Checkout session ID
+      "400":
+        description: No plan assigned or plan unavailable
+      "401":
+        description: Unauthorized

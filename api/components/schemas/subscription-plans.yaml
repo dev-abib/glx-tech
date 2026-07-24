@@ -25,6 +25,8 @@ SubscriptionPlan:
       nullable: true
     maxActiveListings:
       type: integer
+    maxFeaturedListings:
+      type: integer
     platformFeePercent:
       type: number
       format: decimal
@@ -103,6 +105,9 @@ CreatePlanInput:
     maxActiveListings:
       type: integer
       default: 0
+    maxFeaturedListings:
+      type: integer
+      default: 0
     platformFeePercent:
       type: number
       default: 0
@@ -129,6 +134,8 @@ UpdatePlanInput:
     priceAnnual:
       type: integer
     maxActiveListings:
+      type: integer
+    maxFeaturedListings:
       type: integer
     platformFeePercent:
       type: number
