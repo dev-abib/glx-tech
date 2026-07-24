@@ -1,18 +1,21 @@
 import { Router } from "express";
 import {
   changePassword,
+  createSellerAddress,
   createUser,
   deleteSellerAddress,
   deleteUser,
   forgotPassword,
   getAllUsers,
   getMe,
+  getSellerAddresses,
   loginUserAccount,
   logout,
   refreshToken,
   resendOtp,
   resetPassword,
   switchRole,
+  updateSellerAddress,
   updateSellerDetails,
   updateUser,
   updateAsSeller,
@@ -23,6 +26,7 @@ import { authenticate } from "../../middlewares/auth.middleware.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import {
   changePasswordSchema,
+  createSellerAddressSchema,
   createUserSchema,
   forgotPasswordSchema,
   loginUserSchema,
@@ -30,6 +34,7 @@ import {
   resendOtpSchema,
   resetPasswordSchema,
   switchRoleSchema,
+  updateSellerAddressSchema,
   updateSellerDetailsSchema,
   updateUserAsSellerSchema,
   updateUserSchema,
@@ -82,7 +87,18 @@ router.route("/update-as-seller").post(authenticate({ type: 'user' }), validate(
 // update seller details (requires seller role)
 router.route("/update-seller-details").put(authenticate({ type: "seller" }), validate(updateSellerDetailsSchema), updateSellerDetails)
 
-// delete seller address (requires seller role)
+// ── Seller Address CRUD routes (all require seller role) ─────────────────
+
+// get all seller addresses
+router.route("/addresses").get(authenticate({ type: "seller" }), getSellerAddresses);
+
+// create a new seller address
+router.route("/addresses").post(authenticate({ type: "seller" }), validate(createSellerAddressSchema), createSellerAddress);
+
+// update an existing seller address
+router.route("/addresses/:addressId").put(authenticate({ type: "seller" }), validate(updateSellerAddressSchema), updateSellerAddress);
+
+// delete seller address (by addressId)
 router.route("/delete-address/:addressId").delete(authenticate({ type: "seller" }), deleteSellerAddress)
 
 export default router;

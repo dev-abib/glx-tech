@@ -1,33 +1,25 @@
 # ══════════════════════════════════════════════════════════════════════════
 # Seller / Business Profile Schemas
 #
-# These schemas support a full address lifecycle:
-#   • CREATE  — POST /users/update-as-seller  → use the addresses[] array
-#               (omit the `id` field to create new addresses)
-#   • UPDATE  — PUT  /users/update-seller-details → use the addresses[] array
-#               (include `id` to update, omit `id` to create — premium only)
-#   • DELETE  — DELETE /users/delete-address/:addressId → separate endpoint
+# Address lifecycle:
+#   • CREATE  — POST /users/addresses          → dedicated address creation
+#   • LIST    — GET  /users/addresses          → list all seller addresses
+#   • UPDATE  — PUT  /users/addresses/{id}     → update an address
+#   • DELETE  — DELETE /users/delete-address/{id} → delete an address
+#
+# Initial seller creation (with addresses) is done via:
+#   • POST /users/update-as-seller — uses addresses[] array at signup
 # ══════════════════════════════════════════════════════════════════════════
 
 # ────────────────────────────────────────────────────────────────────────────
-# Address sub-schema (reused in both input schemas below)
+# Address sub-schema (reused in initial seller creation)
 # ────────────────────────────────────────────────────────────────────────────
 SellerAddressInput:
   type: object
   description: >
     A single address for the seller's business location.
-    - Omit the `id` field to **create** a new address.
-    - Include the `id` field to **update** an existing address.
+    Used during initial seller profile creation (POST /users/update-as-seller).
   properties:
-    id:
-      type: string
-      format: uuid
-      description: >
-        ID of an existing address to **update**.  
-        **Omit this field** when creating a new address.  
-        Only include this when you want to modify an address that already exists
-        in the database (you can get the ID from the GET /users/get-me response).
-      example: 550e8400-e29b-41d4-a716-446655440010
     streetAddress:
       type: string
       example: 123 Tech Street, Suite 100
@@ -49,6 +41,65 @@ SellerAddressInput:
     - city
     - state
     - zipCode
+
+# ────────────────────────────────────────────────────────────────────────────
+# POST /users/addresses — Create a new seller address
+# ────────────────────────────────────────────────────────────────────────────
+CreateSellerAddressInput:
+  type: object
+  description: >
+    Input for creating a new seller address.
+    - All sellers can have at least 1 address.
+    - Only premium users (with the `multiple_locations` feature) can have
+      more than 1 address.
+  required:
+    - streetAddress
+    - city
+    - state
+    - zipCode
+  properties:
+    streetAddress:
+      type: string
+      example: "123 Tech Street, Suite 100"
+      description: Street address of the business location
+    city:
+      type: string
+      example: "San Francisco"
+      description: City of the business location
+    state:
+      type: string
+      example: "California"
+      description: State of the business location
+    zipCode:
+      type: string
+      example: "94105"
+      description: ZIP / postal code of the business location
+
+# ────────────────────────────────────────────────────────────────────────────
+# PUT /users/addresses/{addressId} — Update an existing seller address
+# ────────────────────────────────────────────────────────────────────────────
+UpdateSellerAddressInput:
+  type: object
+  description: >
+    Input for updating an existing seller address.
+    All fields are optional — only provided fields will be updated.
+  properties:
+    streetAddress:
+      type: string
+      example: "123 Tech Street, Suite 200"
+      description: Updated street address
+    city:
+      type: string
+      example: "San Francisco"
+      description: Updated city
+    state:
+      type: string
+      example: "California"
+      description: Updated state
+    zipCode:
+      type: string
+      example: "94106"
+      description: Updated ZIP / postal code
 
 # ────────────────────────────────────────────────────────────────────────────
 # POST /users/update-as-seller — Initial seller profile creation
@@ -135,42 +186,12 @@ UpdateUserAsSellerInput:
 # ────────────────────────────────────────────────────────────────────────────
 # PUT /users/update-seller-details — Update existing seller profile
 #
-# 💡 WORKFLOW STAGE 2: Manage your business locations
-#
-# This endpoint lets you update your business info AND manage addresses
-# in a single request.
-#
-# 📍 Address CRUD rules:
-#
-#   🔵 CREATE a new address:
-#      → Include an address object WITHOUT an `id` field.
-#      → Premium users (with "multiple_locations" feature) can add new addresses.
-#      → Free-plan users cannot add new addresses.
-#
-#   🟡 UPDATE an existing address:
-#      → Include the address object WITH the existing `id` field
-#        (get IDs from GET /users/get-me).
-#      → All users can update existing addresses.
-#
-#   🔴 DELETE an address:
-#      → Use the SEPARATE endpoint: DELETE /users/delete-address/:addressId
-#      → This endpoint does NOT support address deletion — you must use
-#        the dedicated delete endpoint for that.
-#
-# 💡 Example — Add 1 new address + update 1 existing address:
-#   {
-#     "addresses": [
-#       { "id": "550e8400-e29b-41d4-a716-446655440010",     ← UPDATE this one
-#         "streetAddress": "123 Tech Street, Suite 200",
-#         "city": "San Francisco",
-#         "state": "California",
-#         "zipCode": "94105" },
-#       { "streetAddress": "789 New Road",                    ← CREATE this one
-#         "city": "Austin",
-#         "state": "Texas",
-#         "zipCode": "73301" }
-#     ]
-#   }
+# 💡 This endpoint updates seller info ONLY.
+# Address management is handled through dedicated CRUD endpoints:
+#   - GET    /users/addresses
+#   - POST   /users/addresses
+#   - PUT    /users/addresses/{addressId}
+#   - DELETE /users/delete-address/{addressId}
 # ────────────────────────────────────────────────────────────────────────────
 UpdateSellerDetailsInput:
   type: object
@@ -207,29 +228,3 @@ UpdateSellerDetailsInput:
       format: email
       example: updated-business@glxtech.com
       description: Updated business email address
-    addresses:
-      type: array
-      description: >
-        **Manage your business locations in one request.**
-
-        - To **UPDATE** an existing address → include the address
-          object WITH its `id` (found via GET /users/get-me).
-        - To **CREATE** a new address → include the address object
-          WITHOUT an `id` (premium users only).
-        - To **DELETE** an address → use the dedicated
-          DELETE /users/delete-address/:addressId endpoint.
-
-        ⚠️ **Important:** Omitting an existing address from this array
-        does NOT delete it. Use the delete endpoint separately.
-      items:
-        $ref: "#/components/schemas/SellerAddressInput"
-      example:
-        - id: "550e8400-e29b-41d4-a716-446655440010"
-          streetAddress: "123 Tech Street, Suite 200"
-          city: "San Francisco"
-          state: "California"
-          zipCode: "94105"
-        - streetAddress: "789 New Road"
-          city: "Austin"
-          state: "Texas"
-          zipCode: "73301"

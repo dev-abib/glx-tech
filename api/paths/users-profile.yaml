@@ -62,11 +62,6 @@ update-me:
               phone:
                 type: string
                 description: Phone number
-              address:
-                type: string
-                minLength: 5
-                maxLength: 500
-                description: Physical address
               avatar:
                 type: string
                 format: binary

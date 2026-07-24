@@ -2,12 +2,14 @@ import { JwtPayload } from "jsonwebtoken";
 import { UserRepository } from "./user.repository.js";
 import {
   ChangePasswordInput,
+  CreateSellerAddressInput,
   CreateUserInput,
   ForgotPasswordInput,
   LoginUserInput,
   RefreshTokenInput,
   ResendOtpInput,
   ResetPasswordInput,
+  UpdateSellerAddressInput,
   UpdateSellerDetailsInput,
   UpdateUserAsSellerInput,
   UpdateUserInput,
@@ -116,16 +118,38 @@ export class UserService {
     return userRepo.updateUserAsSeller(userId, data);
   }
 
-  // update seller details (premium check for multiple addresses)
+  // update seller details (no address management — use address CRUD routes)
   async updateSellerDetails(
     userId: string,
     data: UpdateSellerDetailsInput
   ): Promise<{ message: string }> {
+    return userRepo.updateSellerDetails(userId, data);
+  }
+
+  // get all addresses for the authenticated seller
+  async getSellerAddresses(userId: string) {
+    return userRepo.getSellerAddresses(userId);
+  }
+
+  // create a new seller address (premium check for multiple)
+  async createSellerAddress(
+    userId: string,
+    data: CreateSellerAddressInput
+  ) {
     const canAddMultipleAddresses = await subscriptionService.hasFeature(
       userId,
       "multiple_locations"
     );
-    return userRepo.updateSellerDetails(userId, data, canAddMultipleAddresses);
+    return userRepo.createSellerAddress(userId, data, canAddMultipleAddresses);
+  }
+
+  // update an existing seller address
+  async updateSellerAddress(
+    userId: string,
+    addressId: string,
+    data: UpdateSellerAddressInput
+  ) {
+    return userRepo.updateSellerAddress(userId, addressId, data);
   }
 
   // delete a seller address (by addressId)

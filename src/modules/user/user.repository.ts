@@ -3,10 +3,12 @@ import { env } from "../../config/env.js";
 import { ApiError } from "../../utils/api-error.js";
 import {
   ChangePasswordInput,
+  CreateSellerAddressInput,
   CreateUserInput,
   LoginUserInput,
   ResendOtpInput,
   ResetPasswordInput,
+  UpdateSellerAddressInput,
   UpdateSellerDetailsInput,
   UpdateUserAsSellerInput,
   UpdateUserInput,
@@ -574,7 +576,6 @@ export class UserRepository {
 
     if (data.name !== undefined) updateData.name = data.name;
     if (data.phone !== undefined) updateData.phone = data.phone;
-    if (data.address !== undefined) updateData.address = data.address;
 
     // Handle email change — check uniqueness first
     if (data.email !== undefined) {
@@ -712,11 +713,10 @@ export class UserRepository {
     return { message: "Logged out successfully" };
   }
 
-  // update seller details repo
+  // update seller details repo (seller info fields only — no address management)
   async updateSellerDetails(
     userId: string,
-    data: UpdateSellerDetailsInput,
-    canAddMultipleAddresses: boolean
+    data: UpdateSellerDetailsInput
   ): Promise<{ message: string }> {
     const user = await this.findUser("id", userId, true);
 
@@ -729,7 +729,6 @@ export class UserRepository {
 
     const sellerInfo = await prisma.sellerInfo.findUnique({
       where: { userId },
-      include: { sellerAddress: true },
     });
 
     if (!sellerInfo) {
@@ -748,83 +747,137 @@ export class UserRepository {
     if (data.businessEmail !== undefined)
       updateData.businessEmail = data.businessEmail;
 
-    // ── Handle addresses ────────────────────────────────────────────────
-    if (data.addresses && data.addresses.length > 0) {
-      const existingAddressIds = new Set(
-        sellerInfo.sellerAddress.map((a) => a.id)
-      );
-
-      const newAddresses = data.addresses.filter((addr) => !addr.id);
-      const updateAddresses = data.addresses.filter(
-        (addr) => addr.id && existingAddressIds.has(addr.id)
-      );
-
-      // Reject addresses with IDs that don't exist in the database
-      const invalidIds = data.addresses.filter(
-        (addr) => addr.id && !existingAddressIds.has(addr.id)
-      );
-      if (invalidIds.length > 0) {
-        throw new ApiError(
-          400,
-          `Address not found: ${invalidIds.map((a) => a.id).join(", ")}`
-        );
-      }
-
-      // Non-premium users cannot add new addresses
-      if (!canAddMultipleAddresses && newAddresses.length > 0) {
-        throw new ApiError(
-          403,
-          "Only premium users can add multiple addresses. Upgrade your plan to add more locations."
-        );
-      }
-
-      // Wrap everything in a single transaction for atomicity
-      await prisma.$transaction(async (tx) => {
-        // Update existing addresses
-        for (const addr of updateAddresses) {
-          await tx.selleraddress.update({
-            where: { id: addr.id },
-            data: {
-              streetAddress: addr.streetAddress,
-              city: addr.city,
-              state: addr.state,
-              zipCode: addr.zipCode,
-            },
-          });
-        }
-
-        // Create new addresses
-        for (const addr of newAddresses) {
-          await tx.selleraddress.create({
-            data: {
-              sellerId: sellerInfo.id,
-              streetAddress: addr.streetAddress,
-              city: addr.city,
-              state: addr.state,
-              zipCode: addr.zipCode,
-            },
-          });
-        }
-
-        // Update seller info fields in the same transaction
-        if (Object.keys(updateData).length > 0) {
-          await tx.sellerInfo.update({
-            where: { id: sellerInfo.id },
-            data: updateData,
-          });
-        }
+    if (Object.keys(updateData).length > 0) {
+      await prisma.sellerInfo.update({
+        where: { id: sellerInfo.id },
+        data: updateData,
       });
-    } else {
-      // No addresses — just update seller info fields
-      if (Object.keys(updateData).length > 0) {
-        await prisma.sellerInfo.update({
-          where: { id: sellerInfo.id },
-          data: updateData,
-        });
-      }
     }
 
     return { message: "Seller details updated successfully" };
+  }
+
+  // ── Seller Address CRUD ────────────────────────────────────────────────
+
+  // get all addresses for the authenticated seller
+  async getSellerAddresses(userId: string) {
+    const user = await this.findUser("id", userId, true);
+
+    if (!user.isSeller) {
+      throw new ApiError(
+        400,
+        "User is not a seller. Please set up your business account first."
+      );
+    }
+
+    const sellerInfo = await prisma.sellerInfo.findUnique({
+      where: { userId },
+      include: { sellerAddress: true },
+    });
+
+    if (!sellerInfo) {
+      throw new ApiError(404, "Seller profile not found");
+    }
+
+    return sellerInfo.sellerAddress;
+  }
+
+  // create a new seller address (with premium check for multiple addresses)
+  async createSellerAddress(
+    userId: string,
+    data: CreateSellerAddressInput,
+    canAddMultipleAddresses: boolean
+  ) {
+    const user = await this.findUser("id", userId, true);
+
+    if (!user.isSeller) {
+      throw new ApiError(
+        400,
+        "User is not a seller. Please set up your business account first."
+      );
+    }
+
+    const sellerInfo = await prisma.sellerInfo.findUnique({
+      where: { userId },
+      include: { sellerAddress: true },
+    });
+
+    if (!sellerInfo) {
+      throw new ApiError(404, "Seller profile not found");
+    }
+
+    // Non-premium users can only have 1 address total
+    if (!canAddMultipleAddresses && sellerInfo.sellerAddress.length >= 1) {
+      throw new ApiError(
+        403,
+        "Only premium users can add multiple addresses. Upgrade your plan to add more locations."
+      );
+    }
+
+    const address = await prisma.selleraddress.create({
+      data: {
+        sellerId: sellerInfo.id,
+        streetAddress: data.streetAddress,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+      },
+    });
+
+    return address;
+  }
+
+  // update an existing seller address (validate ownership)
+  async updateSellerAddress(
+    userId: string,
+    addressId: string,
+    data: UpdateSellerAddressInput
+  ) {
+    const user = await this.findUser("id", userId, true);
+
+    if (!user.isSeller) {
+      throw new ApiError(
+        400,
+        "User is not a seller. Please set up your business account first."
+      );
+    }
+
+    const sellerInfo = await prisma.sellerInfo.findUnique({
+      where: { userId },
+    });
+
+    if (!sellerInfo) {
+      throw new ApiError(404, "Seller profile not found");
+    }
+
+    // Verify the address belongs to this seller
+    const address = await prisma.selleraddress.findUnique({
+      where: { id: addressId },
+    });
+
+    if (!address) {
+      throw new ApiError(404, "Address not found");
+    }
+
+    if (address.sellerId !== sellerInfo.id) {
+      throw new ApiError(
+        403,
+        "Address does not belong to this seller"
+      );
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (data.streetAddress !== undefined) updateData.streetAddress = data.streetAddress;
+    if (data.city !== undefined) updateData.city = data.city;
+    if (data.state !== undefined) updateData.state = data.state;
+    if (data.zipCode !== undefined) updateData.zipCode = data.zipCode;
+
+    const updated = await prisma.selleraddress.update({
+      where: { id: addressId },
+      data: updateData,
+    });
+
+    return updated;
   }
 
   // delete a seller address (validate ownership)

@@ -53,7 +53,7 @@ S("cms-reviews.yaml", "ReviewSection"); S("cms-reviews.yaml", "CreateReviewSecti
 S("cms-reviews.yaml", "Review"); S("cms-reviews.yaml", "CreateReviewInput"); S("cms-reviews.yaml", "UpdateReviewInput");
 S("listing.yaml", "Listing"); S("listing.yaml", "CreateListingInput"); S("listing.yaml", "UpdateListingInput");
 S("listing.yaml", "UserReview"); S("listing.yaml", "CreateUserReviewInput"); S("listing.yaml", "UpdateUserReviewInput");
-S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "SellerAddressInput"); S("seller.yaml", "UpdateUserAsSellerInput"); S("seller.yaml", "UpdateSellerDetailsInput");
+S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "SellerAddressInput"); S("seller.yaml", "UpdateUserAsSellerInput"); S("seller.yaml", "UpdateSellerDetailsInput"); S("seller.yaml", "CreateSellerAddressInput"); S("seller.yaml", "UpdateSellerAddressInput");
 S("admin-campaigns.yaml", "Campaign"); S("admin-campaigns.yaml", "CreateCampaignInput");
 S("appointment.yaml", "Appointment"); S("appointment.yaml", "CreateAppointmentInput"); S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes"); S("appointment.yaml", "BookedSlot");
 S("stripe-donate.yaml", "CreateDonationInput"); S("stripe-donate.yaml", "DonationPaymentLinkResponse");
@@ -93,6 +93,9 @@ P("users-profile.yaml", "/users/logout", "logout");
 P("users-role.yaml", "/users/update-as-seller", "update-as-seller");
 P("users-role.yaml", "/users/switch-role", "switch-role");
 P("users-role.yaml", "/users/update-seller-details", "update-seller-details");
+P("users-role.yaml", "/users/addresses", "get-seller-addresses");
+PM("users-role.yaml", "/users/addresses", "create-seller-address");
+P("users-role.yaml", "/users/addresses/{addressId}", "update-seller-address");
 P("users-role.yaml", "/users/delete-address/{addressId}", "delete-address");
 // ── Users — Admin ───────────────────────────────────────────────────
 P("users-admin.yaml", "/users/gt-all-users", "gt-all-users");

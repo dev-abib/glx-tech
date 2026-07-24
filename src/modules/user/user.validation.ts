@@ -35,7 +35,6 @@ export const updateUserSchema = z
       .string()
       .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")
       .optional(),
-    address: z.string().trim().max(255).optional(),
   })
   .strict();
 
@@ -183,20 +182,31 @@ export const updateSellerDetailsSchema = z
     socialLInk: z.string().optional(),
     businessNumber: z.string().optional(),
     businessEmail: z.string().email().optional(),
-    addresses: z
-      .array(
-        z
-          .object({
-            id: z.string().uuid().optional(),
-            streetAddress: z.string(),
-            city: z.string(),
-            state: z.string(),
-            zipCode: z.string(),
-          })
-          .strict()
-      )
-      .optional(),
   })
   .strict();
 
 export type UpdateSellerDetailsInput = z.infer<typeof updateSellerDetailsSchema>;
+
+// ── Seller Address CRUD schemas ───────────────────────────────────────────
+
+export const createSellerAddressSchema = z
+  .object({
+    streetAddress: z.string().min(1, "Street address is required"),
+    city: z.string().min(1, "City is required"),
+    state: z.string().min(1, "State is required"),
+    zipCode: z.string().min(1, "Zip code is required"),
+  })
+  .strict();
+
+export type CreateSellerAddressInput = z.infer<typeof createSellerAddressSchema>;
+
+export const updateSellerAddressSchema = z
+  .object({
+    streetAddress: z.string().optional(),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    zipCode: z.string().optional(),
+  })
+  .strict();
+
+export type UpdateSellerAddressInput = z.infer<typeof updateSellerAddressSchema>;

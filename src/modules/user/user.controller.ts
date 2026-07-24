@@ -5,12 +5,14 @@ import { ApiResponse } from "../../utils/api-response.js";
 
 type MulterFile = { buffer: Buffer };
 import {
+  CreateSellerAddressInput,
   CreateUserInput,
   ForgotPasswordInput,
   RefreshTokenInput,
   ResendOtpInput,
   ResetPasswordInput,
   SwitchRoleInput,
+  UpdateSellerAddressInput,
   UpdateSellerDetailsInput,
   UpdateUserAsSellerInput,
   UpdateUserInput,
@@ -210,7 +212,7 @@ export const updateAsSeller: RequestHandler<
     .json(new ApiResponse<{ message: string }>(200, result.message, result));
 });
 
-// update seller details
+// update seller details (seller info only — no address management)
 export const updateSellerDetails: RequestHandler<
   {},
   ApiResponse<{ message: string }>,
@@ -223,6 +225,56 @@ export const updateSellerDetails: RequestHandler<
     .status(200)
     .json(
       new ApiResponse<{ message: string }>(200, result.message, result)
+    );
+});
+
+// ── Seller Address CRUD controllers ───────────────────────────────────────
+
+// get all seller addresses
+export const getSellerAddresses: RequestHandler<
+  {},
+  ApiResponse<unknown>
+> = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const addresses = await userService.getSellerAddresses(userId);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse<unknown>(200, "Addresses fetched successfully", addresses)
+    );
+});
+
+// create a new seller address
+export const createSellerAddress: RequestHandler<
+  {},
+  ApiResponse<unknown>,
+  CreateSellerAddressInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const address = await userService.createSellerAddress(userId, req.body);
+
+  return res
+    .status(201)
+    .json(
+      new ApiResponse<unknown>(201, "Address created successfully", address)
+    );
+});
+
+// update an existing seller address
+export const updateSellerAddress: RequestHandler<
+  { addressId: string },
+  ApiResponse<unknown>,
+  UpdateSellerAddressInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user!.id;
+  const addressId = req.params.addressId as string;
+  const address = await userService.updateSellerAddress(userId, addressId, req.body);
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse<unknown>(200, "Address updated successfully", address)
     );
 });
 
