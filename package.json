@@ -13,6 +13,7 @@
     "seed": "tsx src/seeders/super-admin.seeder.ts",
     "seed:listings": "tsx src/seeders/listing.seeder.ts",
 "seed:plans": "tsx src/seeders/plans.seeder.ts",
+    "fix:features": "tsx scripts/fix-missing-features.ts",
     "postinstall": "prisma generate",
     "test": "vitest run",
     "test:watch": "vitest",
