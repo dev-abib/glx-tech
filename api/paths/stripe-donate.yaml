@@ -175,7 +175,13 @@ get-my-subscription:
                           type: string
                           nullable: true
                           enum: [monthly, annual]
+                        cancelAtPeriodEnd:
+                          type: boolean
+                          nullable: true
+                          description: Whether the subscription is set to cancel at the end of the current billing period (true = manually cancelled, false/ null = active or expired)
                         isActive:
+                          type: boolean
+                        isCancelled:
                           type: boolean
                         hasStripeSubscription:
                           type: boolean

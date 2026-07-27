@@ -300,8 +300,9 @@ export class StripeService {
       throw new ApiError(404, "User not found");
     }
 
-    // Determine billing cycle from Stripe subscription if available
+    // Determine billing cycle and cancel_at_period_end from Stripe subscription if available
     let billingCycle: "monthly" | "annual" | null = null;
+    let cancelAtPeriodEnd: boolean | null = null;
     if (user.stripeSubscriptionId) {
       try {
         const stripeSubscription = await stripe.subscriptions.retrieve(
@@ -313,14 +314,18 @@ export class StripeService {
         } else if (price?.recurring?.interval === "year") {
           billingCycle = "annual";
         }
+        cancelAtPeriodEnd = stripeSubscription.cancel_at_period_end ?? null;
       } catch {
-        // If Stripe fetch fails, just leave billingCycle as null
+        // If Stripe fetch fails, just leave billingCycle/cancelAtPeriodEnd as null
       }
     }
 
     const isActive =
       user.subscriptionStatus === "active" ||
       user.subscriptionStatus === "trialing";
+    const isCancelled =
+      user.subscriptionStatus === "canceled" ||
+      user.subscriptionStatus === "incomplete_expired";
 
     return {
       plan: user.subscriptionPlan
@@ -344,7 +349,9 @@ export class StripeService {
       subscriptionStatus: user.subscriptionStatus,
       currentPeriodEnd: user.currentPeriodEnd,
       billingCycle,
+      cancelAtPeriodEnd,
       isActive,
+      isCancelled,
       hasStripeSubscription: !!user.stripeSubscriptionId,
       hasStripeCustomer: !!user.stripeCustomerId,
     };
@@ -451,9 +458,9 @@ export class StripeService {
       );
     }
 
-    const baseUrl = this.getFrontendUrl();
-    const successUrl = `${baseUrl}/donate/success`;
-    const cancelUrl = `${baseUrl}/donate/cancel`;
+    const baseUrl = `https://glxtech-seller.vercel.app`;
+    const successUrl = `${baseUrl}/payment/success`;
+    const cancelUrl = `${baseUrl}/payment/cancel`;
 
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
