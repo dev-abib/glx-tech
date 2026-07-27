@@ -18,6 +18,25 @@ create-appointment:
               mapping:
                 SERVICE: "#/components/schemas/CreateServiceAppointmentInput"
                 RENT: "#/components/schemas/CreateRentAppointmentInput"
+          examples:
+            service-booking:
+              summary: Service Booking (date-based)
+              description: For SERVICE appointments — send only date + fixed price. No duration fields needed.
+              value:
+                listingId: clz6xq8k80001hxq8f1j2m3n5
+                bookingDate: "2026-07-15"
+                appointmentType: SERVICE
+                price: 150.00
+            rent-booking:
+              summary: Rent Booking (duration-based)
+              description: For RENT appointments — send date + duration + hourly/daily price. No price field needed.
+              value:
+                listingId: clz6xq8k80001hxq8f1j2m3n5
+                bookingDate: "2026-07-15"
+                appointmentType: RENT
+                hourlyPrice: 25.00
+                duration: 3
+                durationUnit: hours
     responses:
       "201":
         description: Appointment created successfully
