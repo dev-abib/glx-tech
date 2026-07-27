@@ -204,6 +204,8 @@ export class ListingService {
       serviceName,
       address,
       radius,
+      minPrice,
+      maxPrice,
       minRating,
       isAvailable,
       isFeatured,
@@ -274,7 +276,10 @@ export class ListingService {
 
     // Determine if we need to do any post-fetch (in-memory) filtering
     const needsInMemoryFiltering =
-      originCoords !== null || minRating !== undefined;
+      originCoords !== null ||
+      minRating !== undefined ||
+      minPrice !== undefined ||
+      maxPrice !== undefined;
 
     // ── Common Prisma include (always includes ratings for avgRating) ──
     const includeWithRatings = {
@@ -284,6 +289,9 @@ export class ListingService {
           name: true,
           email: true,
           avatar: true,
+          sellerInfo: {
+            select: { socialLInk: true },
+          },
         },
       },
       address: {
@@ -354,6 +362,18 @@ export class ListingService {
           const avg =
             reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
           return avg >= minRating!;
+        });
+      }
+
+      // Filter by price range (basePrice is stored as a string, e.g. "500")
+      if (minPrice !== undefined || maxPrice !== undefined) {
+        allListings = allListings.filter((listing) => {
+          if (!listing.basePrice) return false;
+          const price = parseFloat(listing.basePrice);
+          if (isNaN(price)) return false;
+          if (minPrice !== undefined && price < minPrice) return false;
+          if (maxPrice !== undefined && price > maxPrice) return false;
+          return true;
         });
       }
 
@@ -455,6 +475,9 @@ export class ListingService {
               name: true,
               email: true,
               avatar: true,
+              sellerInfo: {
+                select: { socialLInk: true },
+              },
             },
           },
           address: {
@@ -526,6 +549,9 @@ export class ListingService {
             email: true,
             avatar: true,
             phone: true,
+            sellerInfo: {
+              select: { socialLInk: true },
+            },
           },
         },
         address: {

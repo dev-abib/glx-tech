@@ -27,6 +27,19 @@ export type SellerInfoWithAddress = Prisma.SellerInfoGetPayload<{
 export interface GetMeResponse {
   sellerInfo: SellerInfoWithAddress | null;
   safeUser: SafeUser;
+  plan?: {
+    planId: string | null;
+    planName: string | null;
+    isFree: boolean;
+    maxActiveListings: number;
+    maxFeaturedListings: number;
+    platformFeePercent: number;
+  };
+  listingUsage?: {
+    totalListings: number;
+    featuredListings: number;
+    activeListings: number;
+  };
 }
 
 // Login response data shape

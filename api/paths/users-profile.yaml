@@ -20,7 +20,7 @@ get-me:
   get:
     tags: ["03 — Users — Profile"]
     summary: Get current user profile
-    description: Returns the profile of the currently authenticated user.
+    description: Returns the profile of the currently authenticated user. For sellers, also includes subscription plan details and listing usage statistics.
     security:
       - bearerAuth: []
     responses:
@@ -33,7 +33,7 @@ get-me:
                 - $ref: "#/components/schemas/ApiResponse"
                 - properties:
                     data:
-                      $ref: "#/components/schemas/SafeUser"
+                      $ref: "#/components/schemas/GetMeResponse"
       "401":
         description: Unauthorized
 update-me:

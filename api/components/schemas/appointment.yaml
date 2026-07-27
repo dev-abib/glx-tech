@@ -33,7 +33,7 @@ Appointment:
       nullable: true
       example: "09:00"
       pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
-      description: The selected time slot (HH:MM, 24-hour format). Nullable for rent-type appointments.
+      description: The selected time slot (HH:MM, 24-hour format). Nullable — not required for service appointments (whole-day booking).
     status:
       type: string
       enum: [pending, confirmed, cancelled, completed]
@@ -114,7 +114,6 @@ CreateServiceAppointmentInput:
   required:
     - listingId
     - bookingDate
-    - bookingTime
     - appointmentType
     - price
   properties:
@@ -132,9 +131,10 @@ CreateServiceAppointmentInput:
     bookingTime:
       type: string
       format: time
+      nullable: true
       example: "10:00"
       pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
-      description: The desired time slot in HH:MM (24-hour) format. Must be one of the listing's available timeSlots.
+      description: Optional time slot in HH:MM (24-hour) format. Not required for service appointments.
     appointmentType:
       type: string
       enum: [SERVICE]
@@ -148,7 +148,6 @@ CreateServiceAppointmentInput:
   example:
     listingId: clz6xq8k80001hxq8f1j2m3n5
     bookingDate: "2026-07-15"
-    bookingTime: "10:00"
     appointmentType: SERVICE
     price: 150.00
 

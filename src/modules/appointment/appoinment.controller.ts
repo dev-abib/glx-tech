@@ -71,6 +71,69 @@ export const getMySellerAppointments: RequestHandler = asyncHandler(
   }
 );
 
+// Get completed appointments for seller (recently completed listings)
+export const getMyCompletedAppointments: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const sellerId = req.user?.id as string;
+
+    const result = await appointmentService.getMyCompletedAppointments(sellerId, {
+      page: Number(req.query.page) || 1,
+      limit: Number(req.query.limit) || 10,
+    });
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          "Completed appointments fetched successfully",
+          result
+        )
+      );
+  }
+);
+
+// Get upcoming appointments for seller (pending/confirmed)
+export const getMyUpcomingAppointments: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const sellerId = req.user?.id as string;
+
+    const result = await appointmentService.getMyUpcomingAppointments(sellerId, {
+      page: Number(req.query.page) || 1,
+      limit: Number(req.query.limit) || 10,
+    });
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          "Upcoming appointments fetched successfully",
+          result
+        )
+      );
+  }
+);
+
+// Get seller dashboard stats (avg rating, response rate, weekly completed)
+export const getSellerDashboardStats: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const sellerId = req.user?.id as string;
+
+    const stats = await appointmentService.getSellerDashboardStats(sellerId);
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          "Dashboard stats fetched successfully",
+          stats
+        )
+      );
+  }
+);
+
 // Get booked times for a listing
 export const getBookedTimes: RequestHandler<{ listingId: string }> =
   asyncHandler(async (req: Request, res: Response) => {
@@ -89,6 +152,29 @@ export const getBookedTimes: RequestHandler<{ listingId: string }> =
         )
       );
   });
+
+// Cancel my own booking (buyer only)
+export const cancelMyBooking: RequestHandler<{ appointmentId: string }> = asyncHandler(
+  async (req: Request, res: Response) => {
+    const buyerId = req.user?.id as string;
+    const appointmentId = req.params.appointmentId as string;
+
+    const appointment = await appointmentService.cancelMyBooking(
+      appointmentId,
+      buyerId
+    );
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          "Booking cancelled successfully",
+          appointment
+        )
+      );
+  }
+);
 
 // Update appointment status (confirm/cancel/complete)
 export const updateAppointmentStatus: RequestHandler<

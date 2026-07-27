@@ -6,9 +6,13 @@ import {
   UpdateAppointmentStatusSchema,
 } from "./appoinment.validation.js";
 import {
+  cancelMyBooking,
   createAppointment,
   getMyBuyerAppointments,
   getMySellerAppointments,
+  getMyCompletedAppointments,
+  getMyUpcomingAppointments,
+  getSellerDashboardStats,
   getBookedTimes,
   updateAppointmentStatus,
 } from "./appoinment.controller.js";
@@ -34,16 +38,34 @@ router
   .route("/seller/my-appointments")
   .get(authenticate({ type: "seller" }), getMySellerAppointments);
 
+// Get my completed appointments as seller (recently completed listings)
+router
+  .route("/seller/completed")
+  .get(authenticate({ type: "seller" }), getMyCompletedAppointments);
+
+// Get upcoming appointments for seller (pending/confirmed)
+router
+  .route("/seller/upcoming")
+  .get(authenticate({ type: "seller" }), getMyUpcomingAppointments);
+
+// Get seller dashboard stats (avg rating, response rate, weekly completed)
+router
+  .route("/seller/dashboard-stats")
+  .get(authenticate({ type: "seller" }), getSellerDashboardStats);
+
 // Get booked times for a listing (public - no auth needed)
-router.route("/booked-times/:listingId").get(getBookedTimes);
+router.route("/booked-times/:listingId").get(getBookedTimes);// Cancel my own booking (buyer only)
+router
+  .route("/my-bookings/:appointmentId/cancel")
+  .patch(authenticate({ type: "user" }), cancelMyBooking);
 
 // Update appointment status (confirm/cancel/complete)
-router
-  .route("/update-status/:appointmentId")
-  .patch(
-    authenticate({ type: "user" }),
-    validate(UpdateAppointmentStatusSchema),
-    updateAppointmentStatus
-  );
+  router
+    .route("/update-status/:appointmentId")
+    .patch(
+      authenticate({ type: "user" }),
+      validate(UpdateAppointmentStatusSchema),
+      updateAppointmentStatus
+    );
 
 export default router;

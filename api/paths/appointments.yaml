@@ -151,6 +151,162 @@ get-booked-times:
       "404":
         description: Listing not found
 
+seller-get-completed-appointments:
+  get:
+    tags: ["19 — Appointments"]
+    summary: Get completed appointments (Seller)
+    description: Returns all completed appointments for the authenticated seller's listings. Useful for viewing recently completed jobs.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+    responses:
+      "200":
+        description: Completed appointments fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        appointments:
+                          type: array
+                          items:
+                            $ref: "#/components/schemas/Appointment"
+                        pagination:
+                          $ref: "#/components/schemas/Pagination"
+      "401":
+        description: Unauthorized
+
+seller-get-upcoming-appointments:
+  get:
+    tags: ["19 — Appointments"]
+    summary: Get upcoming appointments (Seller)
+    description: Returns upcoming appointments (pending/confirmed status) for the authenticated seller, ordered by date ascending.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+    responses:
+      "200":
+        description: Upcoming appointments fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        appointments:
+                          type: array
+                          items:
+                            $ref: "#/components/schemas/Appointment"
+                        pagination:
+                          $ref: "#/components/schemas/Pagination"
+      "401":
+        description: Unauthorized
+
+seller-get-dashboard-stats:
+  get:
+    tags: ["19 — Appointments"]
+    summary: Get seller dashboard stats
+    description: Returns seller dashboard statistics — average rating from listing reviews, response rate (confirmed/total), and current week completed jobs.
+    security:
+      - bearerAuth: []
+    responses:
+      "200":
+        description: Dashboard stats fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        averageRating:
+                          type: number
+                          example: 4.5
+                          description: Average rating from all listing reviews
+                        responseRate:
+                          type: number
+                          example: 85.0
+                          description: Response rate percentage (confirmed / total non-cancelled)
+                        currentWeekCompleted:
+                          type: integer
+                          example: 5
+                          description: Total completed jobs
+                        totalListings:
+                          type: integer
+                          example: 3
+                          description: Total number of listings
+                        totalAppointments:
+                          type: integer
+                          example: 12
+                          description: Total non-cancelled appointments
+      "401":
+        description: Unauthorized
+
+cancel-my-booking:
+  patch:
+    tags: ["19 — Appointments"]
+    summary: Cancel my booking (Buyer)
+    description: Cancel one of the authenticated buyer's own bookings. Only works for pending or confirmed appointments — cannot cancel already completed or already cancelled ones.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: appointmentId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Appointment ID to cancel
+    responses:
+      "200":
+        description: Booking cancelled successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "#/components/schemas/Appointment"
+      "400":
+        description: Cannot cancel — already completed or already cancelled
+      "401":
+        description: Unauthorized
+      "403":
+        description: Forbidden — Not your booking to cancel
+      "404":
+        description: Appointment not found
+
 update-appointment-status:
   patch:
     tags: ["19 — Appointments"]

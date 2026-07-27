@@ -5,14 +5,70 @@ import type {
   GetAppointmentsQueryInput,
   UpdateAppointmentStatusInput,
 } from "./appoinment.validation.js";
+import type { STATUS } from "@prisma/client";
 
 const prisma = getPrismaClient();
+
+// Reusable include to enrich appointment responses with buyer + listing details
+const appointmentInclude = {
+  listing: {
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      media: true,
+    },
+  },
+  buyer: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+      phone: true,
+    },
+  },
+} as const;
+
+// Helper to compute revenue from an appointment
+function computeRevenue(appointment: {
+  appointmentType: string;
+  price: number | null;
+  hourlyPrice: number | null;
+  dailyPrice: number | null;
+  duration: number | null;
+  durationUnit: string | null;
+}): number | null {
+  if (appointment.appointmentType === "SERVICE") {
+    return appointment.price ?? null;
+  }
+  // RENT type
+  if (
+    appointment.hourlyPrice !== null &&
+    appointment.hourlyPrice !== undefined &&
+    appointment.duration !== null &&
+    appointment.duration !== undefined &&
+    appointment.durationUnit === "hours"
+  ) {
+    return appointment.hourlyPrice * appointment.duration;
+  }
+  if (
+    appointment.dailyPrice !== null &&
+    appointment.dailyPrice !== undefined &&
+    appointment.duration !== null &&
+    appointment.duration !== undefined &&
+    appointment.durationUnit === "days"
+  ) {
+    return appointment.dailyPrice * appointment.duration;
+  }
+  return null;
+}
 
 export class AppointmentService {
   /**
    * Create a new appointment.
    * Supports SERVICE and RENT appointment types.
-   * For SERVICE: requires price, bookingDate, bookingTime.
+   * For SERVICE: requires price and bookingDate (no time slot needed).
    * For RENT: requires hourlyPrice/dailyPrice, duration, durationUnit, bookingDate.
    */
   async createAppointment(data: CreateAppointmentInput, buyerId: string) {
@@ -39,12 +95,11 @@ export class AppointmentService {
     }
 
     if (data.appointmentType === "SERVICE") {
-      // Lock: check if this time slot on this date is already booked for this listing
+      // Lock: check if this listing already has a non-cancelled SERVICE booking on this date
       const existingAppointment = await prisma.appointment.findFirst({
         where: {
           listingId: data.listingId,
           bookingDate: data.bookingDate,
-          bookingTime: data.bookingTime,
           status: { not: "cancelled" },
           appointmentType: "SERVICE",
         },
@@ -53,7 +108,7 @@ export class AppointmentService {
       if (existingAppointment) {
         throw new ApiError(
           409,
-          `The time slot "${data.bookingTime}" on ${data.bookingDate} is already booked for this listing`
+          `This listing already has a service booking on ${data.bookingDate}`
         );
       }
 
@@ -63,7 +118,7 @@ export class AppointmentService {
           buyerId,
           sellerId: listing.userId,
           bookingDate: data.bookingDate,
-          bookingTime: data.bookingTime,
+          bookingTime: data.bookingTime ?? null,
           appointmentType: "SERVICE",
           price: data.price,
           status: "pending",
@@ -129,39 +184,37 @@ export class AppointmentService {
   }
 
   /**
-   * Get appointments for the current user as a buyer.
+   * Helper: enrich appointments with computed revenue and buyer info,
+   * then return paginated result.
    */
-  async getMyBuyerAppointments(
-    buyerId: string,
-    query: GetAppointmentsQueryInput
+  private async enrichAndPaginate(
+    where: Record<string, unknown>,
+    query: GetAppointmentsQueryInput,
+    orderBy?: Record<string, string> | Record<string, string>[]
   ) {
     const { page, limit } = query;
     const skip = (page - 1) * limit;
 
-    const where = { buyerId };
+    const defaultOrderBy: Record<string, string> = { id: "desc" };
 
     const [appointments, total] = await Promise.all([
       prisma.appointment.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { id: "desc" },
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            media: true,
-          },
-        },
-      },
+        orderBy: orderBy ?? defaultOrderBy,
+        include: appointmentInclude,
       }),
       prisma.appointment.count({ where }),
     ]);
 
+    const enriched = appointments.map((appt) => ({
+      ...appt,
+      revenue: computeRevenue(appt),
+    }));
+
     return {
-      appointments,
+      appointments: enriched,
       pagination: {
         page,
         limit,
@@ -172,45 +225,157 @@ export class AppointmentService {
   }
 
   /**
+   * Get appointments for the current user as a buyer.
+   */
+  async getMyBuyerAppointments(
+    buyerId: string,
+    query: GetAppointmentsQueryInput
+  ) {
+    return this.enrichAndPaginate({ buyerId }, query);
+  }
+
+  /**
    * Get appointments for the current user as a seller (listing owner).
    */
   async getMySellerAppointments(
     sellerId: string,
     query: GetAppointmentsQueryInput
   ) {
-    const { page, limit } = query;
-    const skip = (page - 1) * limit;
+    return this.enrichAndPaginate({ sellerId }, query);
+  }
 
-    const where = { sellerId };
+  /**
+   * Get recently completed appointments for the current user as a seller (listing owner).
+   * Only returns appointments with status "completed".
+   */
+  async getMyCompletedAppointments(
+    sellerId: string,
+    query: GetAppointmentsQueryInput
+  ) {
+    return this.enrichAndPaginate({ sellerId, status: "completed" as const }, query);
+  }
 
-    const [appointments, total] = await Promise.all([
-      prisma.appointment.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { id: "desc" },
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            media: true,
-          },
-        },
+  /**
+   * Get upcoming appointments for the seller (status: pending or confirmed).
+   * Ordered by bookingDate ascending (nearest first).
+   */
+  async getMyUpcomingAppointments(
+    sellerId: string,
+    query: GetAppointmentsQueryInput
+  ) {
+    const upcomingStatuses: STATUS[] = ["pending", "confirmed"];
+    const orderBy: Record<string, string>[] = [
+      { bookingDate: "asc" },
+      { bookingTime: "asc" },
+    ];
+    return this.enrichAndPaginate(
+      { sellerId, status: { in: upcomingStatuses } },
+      query,
+      orderBy
+    );
+  }
+
+  /**
+   * Get seller dashboard statistics:
+   * - averageRating from listing reviews
+   * - responseRate (confirmed / total non-cancelled)
+   * - currentWeekCompleted (jobs completed this week)
+   */
+  async getSellerDashboardStats(sellerId: string) {
+    // 1. Average rating from all the seller's listing reviews
+    const listingIds = await prisma.listing.findMany({
+      where: { userId: sellerId },
+      select: { id: true },
+    });
+
+    let averageRating = 0;
+    if (listingIds.length > 0) {
+      const reviewAgg = await prisma.userReview.aggregate({
+        where: { listingId: { in: listingIds.map((l) => l.id) } },
+        _avg: { rating: true },
+      });
+      averageRating = reviewAgg._avg.rating
+        ? parseFloat(reviewAgg._avg.rating.toFixed(1))
+        : 0;
+    }
+
+    // 2. Response rate = confirmed / (total non-cancelled)
+    const totalNonCancelled = await prisma.appointment.count({
+      where: { sellerId, status: { not: "cancelled" } },
+    });
+    const confirmedCount = await prisma.appointment.count({
+      where: { sellerId, status: "confirmed" },
+    });
+    const responseRate = totalNonCancelled > 0
+      ? parseFloat(((confirmedCount / totalNonCancelled) * 100).toFixed(1))
+      : 0;
+
+    // 3. Current week completed jobs — filter by bookingDate within this week
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1)); // Monday
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6); // Sunday
+
+    const startStr = startOfWeek.toISOString().slice(0, 10); // YYYY-MM-DD
+    const endStr = endOfWeek.toISOString().slice(0, 10);
+
+    const currentWeekCompleted = await prisma.appointment.count({
+      where: {
+        sellerId,
+        status: "completed",
+        bookingDate: { gte: startStr, lte: endStr },
       },
-      }),
-      prisma.appointment.count({ where }),
-    ]);
+    });
 
     return {
-      appointments,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-      },
+      averageRating,
+      responseRate,
+      currentWeekCompleted,
+      totalListings: listingIds.length,
+      totalAppointments: totalNonCancelled,
+    };
+  }
+
+  /**
+   * Cancel a buyer's own booking.
+   * Only the buyer (who created the appointment) can cancel their own booking.
+   */
+  async cancelMyBooking(appointmentId: string, buyerId: string) {
+    const appointment = await prisma.appointment.findUnique({
+      where: { id: appointmentId },
+    });
+
+    if (!appointment) {
+      throw new ApiError(404, "Appointment not found");
+    }
+
+    // Only the buyer who owns this booking can cancel
+    if (appointment.buyerId !== buyerId) {
+      throw new ApiError(
+        403,
+        "You are not authorized to cancel this booking"
+      );
+    }
+
+    // Cannot cancel already completed or already cancelled appointments
+    if (appointment.status === "completed") {
+      throw new ApiError(400, "Cannot cancel a completed appointment");
+    }
+    if (appointment.status === "cancelled") {
+      throw new ApiError(400, "This appointment is already cancelled");
+    }
+
+    const updated = await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: { status: "cancelled" },
+      include: appointmentInclude,
+    });
+
+    return {
+      ...updated,
+      revenue: computeRevenue(updated),
     };
   }
 
@@ -291,17 +456,12 @@ export class AppointmentService {
     const updated = await prisma.appointment.update({
       where: { id: appointmentId },
       data: { status: data.status },
-      include: {
-        listing: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-          },
-        },
-      },
+      include: appointmentInclude,
     });
 
-    return updated;
+    return {
+      ...updated,
+      revenue: computeRevenue(updated),
+    };
   }
 }

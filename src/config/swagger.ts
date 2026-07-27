@@ -40,7 +40,7 @@ const S = (f: string, n: string): void => { schemas[n] = loadSchemaFragment(f, n
 S("common.yaml", "SystemReport"); S("common.yaml", "ApiResponse"); S("common.yaml", "ApiError"); S("common.yaml", "Pagination");
 S("auth.yaml", "CreateUserInput"); S("auth.yaml", "VerifyUserInput"); S("auth.yaml", "LoginUserInput"); S("auth.yaml", "LoginResponse");
 S("auth.yaml", "RefreshTokenInput"); S("auth.yaml", "ForgotPasswordInput"); S("auth.yaml", "ResendOtpInput"); S("auth.yaml", "ResetPasswordInput");
-S("user.yaml", "SafeUser"); S("user.yaml", "UpdateUserInput"); S("user.yaml", "ChangePasswordInput");
+S("user.yaml", "SafeUser"); S("user.yaml", "GetMeResponse"); S("user.yaml", "UpdateUserInput"); S("user.yaml", "ChangePasswordInput");
 S("admin.yaml", "AdminLoginInput"); S("admin.yaml", "AdminLoginResponse"); S("admin.yaml", "CreateAdminInput"); S("admin.yaml", "AdminProfile");
 S("admin.yaml", "AdminUpdateSelfInput"); S("admin.yaml", "AdminUpdateUserInput"); S("admin.yaml", "AdminChangePasswordInput");
 S("cms-hero.yaml", "Hero"); S("cms-hero.yaml", "CreateHeroInput"); S("cms-hero.yaml", "UpdateHeroInput");
@@ -187,7 +187,11 @@ P("admin-campaigns.yaml", "/admin/campaigns/subscriber-count", "get-subscriber-c
 // ── Appointments ──────────────────────────────────────────────────────
 P("appointments.yaml", "/appointments/create-appointment", "create-appointment");
 P("appointments.yaml", "/appointments/my-bookings", "get-my-bookings");
+P("appointments.yaml", "/appointments/my-bookings/{appointmentId}/cancel", "cancel-my-booking");
 P("appointments.yaml", "/appointments/seller/my-appointments", "seller-get-my-appointments");
+P("appointments.yaml", "/appointments/seller/completed", "seller-get-completed-appointments");
+P("appointments.yaml", "/appointments/seller/upcoming", "seller-get-upcoming-appointments");
+P("appointments.yaml", "/appointments/seller/dashboard-stats", "seller-get-dashboard-stats");
 P("appointments.yaml", "/appointments/booked-times/{listingId}", "get-booked-times");
 P("appointments.yaml", "/appointments/update-status/{appointmentId}", "update-appointment-status");
 

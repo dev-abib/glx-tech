@@ -3,7 +3,7 @@ import { z } from "zod";
 export const CreateServiceAppointmentSchema = z.object({
   listingId: z.string().min(1, "Listing ID is required"),
   bookingDate: z.string().min(1, "Booking date is required"),
-  bookingTime: z.string().min(1, "Booking time is required"),
+  bookingTime: z.string().optional(),
   appointmentType: z.literal("SERVICE"),
   price: z.number().positive("Service price must be positive"),
 });

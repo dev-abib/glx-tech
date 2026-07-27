@@ -92,6 +92,65 @@ UpdateUserInput:
       maxLength: 500
       example: 123 Main St, San Francisco, CA
       description: Updated physical address
+GetMeResponse:
+  type: object
+  properties:
+    sellerInfo:
+      type: object
+      nullable: true
+      description: Seller profile info (null if user is not a seller)
+    safeUser:
+      $ref: "#/components/schemas/SafeUser"
+    plan:
+      type: object
+      nullable: true
+      description: Current subscription plan details (only for sellers)
+      properties:
+        planId:
+          type: string
+          nullable: true
+          example: clz6xq8k80000hxq8f1j2m3n4
+          description: Subscription plan ID (null for free users)
+        planName:
+          type: string
+          nullable: true
+          example: Premium Plan
+          description: Name of the subscription plan
+        isFree:
+          type: boolean
+          example: true
+          description: Whether the seller is on the free plan
+        maxActiveListings:
+          type: integer
+          example: 5
+          description: Maximum number of active listings allowed by the plan
+        maxFeaturedListings:
+          type: integer
+          example: 2
+          description: Maximum number of featured listings allowed by the plan
+        platformFeePercent:
+          type: number
+          format: float
+          example: 2.5
+          description: Platform fee percentage charged per transaction
+    listingUsage:
+      type: object
+      nullable: true
+      description: Current listing usage statistics (only for sellers)
+      properties:
+        totalListings:
+          type: integer
+          example: 3
+          description: Total number of listings created by the seller
+        featuredListings:
+          type: integer
+          example: 1
+          description: Number of currently featured listings
+        activeListings:
+          type: integer
+          example: 2
+          description: Number of currently active (available) listings
+
 ChangePasswordInput:
   type: object
   required: [oldPassword, password, confirmPassword]

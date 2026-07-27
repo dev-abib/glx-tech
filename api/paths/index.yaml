@@ -218,8 +218,16 @@
   $ref: "./appointments.yaml#/create-appointment"
 /appointments/my-bookings:
   $ref: "./appointments.yaml#/get-my-bookings"
+/appointments/my-bookings/{appointmentId}/cancel:
+  $ref: "./appointments.yaml#/cancel-my-booking"
 /appointments/seller/my-appointments:
   $ref: "./appointments.yaml#/seller-get-my-appointments"
+/appointments/seller/completed:
+  $ref: "./appointments.yaml#/seller-get-completed-appointments"
+/appointments/seller/upcoming:
+  $ref: "./appointments.yaml#/seller-get-upcoming-appointments"
+/appointments/seller/dashboard-stats:
+  $ref: "./appointments.yaml#/seller-get-dashboard-stats"
 /appointments/booked-times/{listingId}:
   $ref: "./appointments.yaml#/get-booked-times"
 /appointments/update-status/{appointmentId}:

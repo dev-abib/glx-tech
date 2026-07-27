@@ -1,5 +1,8 @@
 import { JwtPayload } from "jsonwebtoken";
 import { UserRepository } from "./user.repository.js";
+import { getPrismaClient } from "../../config/database.js";
+
+const prisma = getPrismaClient();
 import {
   ChangePasswordInput,
   CreateSellerAddressInput,
@@ -93,7 +96,55 @@ export class UserService {
 
   // get current user profile
   async getMe(userId: string): Promise<GetMeResponse> {
-    return userRepo.getMe(userId);
+    const result = await userRepo.getMe(userId);
+
+    // Check if user is a seller and fetch plan/listing usage info
+    // We can use result.safeUser.role since it's already part of SafeUser
+    if (result.safeUser.role === "seller") {
+      const userPlan = await subscriptionService.getPlanForUser(userId);
+
+      const [totalListings, featuredListings, activeListings] =
+        await Promise.all([
+          prisma.listing.count({ where: { userId } }),
+          prisma.listing.count({ where: { userId, isFeatured: true } }),
+          prisma.listing.count({ where: { userId, isAvailable: true } }),
+        ]);
+
+      const maxActiveListings = userPlan.plan?.maxActiveListings ?? 1;
+      const maxFeaturedListings = userPlan.plan?.maxFeaturedListings ?? 0;
+      const platformFeePercent = userPlan.plan
+        ? Number(userPlan.plan.platformFeePercent)
+        : 5;
+
+      // Fetch plan name from DB
+      let planName: string | null = null;
+      if (userPlan.planId) {
+        const plan = await prisma.subscriptionPlan.findUnique({
+          where: { id: userPlan.planId },
+          select: { name: true },
+        });
+        planName = plan?.name ?? null;
+      }
+
+      return {
+        ...result,
+        plan: {
+          planId: userPlan.planId,
+          planName,
+          isFree: userPlan.isFree,
+          maxActiveListings,
+          maxFeaturedListings,
+          platformFeePercent,
+        },
+        listingUsage: {
+          totalListings,
+          featuredListings,
+          activeListings,
+        },
+      };
+    }
+
+    return result;
   }
 
   // get all users (admin)

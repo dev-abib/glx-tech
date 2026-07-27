@@ -136,6 +136,15 @@ Listing:
           nullable: true
           example: https://res.cloudinary.com/demo/image/upload/v1/avatars/abc123.jpg
           description: Seller avatar URL (null if not set)
+        sellerInfo:
+          type: object
+          properties:
+            socialLInk:
+              type: string
+              nullable: true
+              example: https://facebook.com/sellerpage
+              description: Seller's social media profile link
+          description: Seller's business profile info
       description: Seller (user) who owns this listing
     service:
       type: object

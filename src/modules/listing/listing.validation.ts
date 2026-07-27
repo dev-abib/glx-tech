@@ -86,6 +86,8 @@ export const GetListingsQuerySchema = z
     serviceName: z.string().optional(),
     address: z.string().optional(),
     radius: z.coerce.number().positive().max(30).optional(),
+    minPrice: z.coerce.number().min(0).optional(),
+    maxPrice: z.coerce.number().min(0).optional(),
     minRating: z.coerce.number().min(1).max(5).optional(),
     isAvailable: z
       .preprocess((val) => {
