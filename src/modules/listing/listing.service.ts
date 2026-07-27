@@ -83,7 +83,7 @@ export class ListingService {
         slug: data.slug,
         serviceId: data.serviceId,
         addressId: data.addressId,
-        basePrice: data.basePrice,
+        basePrice: data.basePrice ?? null,
         hourlyPrice: data.hourlyPrice ?? null,
         dailyPrice: data.dailyPrice ?? null,
         isAvailable: data.isAvailable,

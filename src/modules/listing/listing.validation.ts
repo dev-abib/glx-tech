@@ -29,7 +29,7 @@ const GenericDataSchema = z.preprocess(
     .record(z.string(), z.unknown())
     .optional()
     .describe(
-      "Optional arbitrary data as a JSON object. Send as a JSON string via form-data (e.g. '{\"key\": \"value\"}') or omit/leave empty."
+      'Optional arbitrary data as a JSON object. Send as a JSON string via form-data (e.g. \'{"key": "value"}\') or omit/leave empty.'
     )
 );
 
@@ -54,7 +54,7 @@ export const CreateListingSchema = z.looseObject({
   serviceId: z.string(),
   description: z.string(),
   addressId: z.string(),
-  basePrice: z.string(),
+  basePrice: z.string().optional(),
   hourlyPrice: z.string().optional(),
   dailyPrice: z.string().optional(),
   genericData: GenericDataSchema,
@@ -106,16 +106,19 @@ export const GetListingsQuerySchema = z
     sortBy: z.string().default("createdAt"),
     sortOrder: z.enum(["asc", "desc"]).default("desc"),
   })
-  .refine((data) => {
-    if (data.radius !== undefined && !data.address) {
-      return false;
+  .refine(
+    (data) => {
+      if (data.radius !== undefined && !data.address) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message:
+        "Radius requires an address. Please provide the 'address' query parameter when using 'radius'.",
+      path: ["radius"],
     }
-    return true;
-  }, {
-    message:
-      "Radius requires an address. Please provide the 'address' query parameter when using 'radius'.",
-    path: ["radius"],
-  });
+  );
 
 export type GetListingsQueryInput = z.infer<typeof GetListingsQuerySchema>;
 

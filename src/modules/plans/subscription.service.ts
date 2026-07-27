@@ -72,7 +72,10 @@ export class SubscriptionService {
       plan: (user?.subscriptionPlan ?? null) as UserPlanResult["plan"],
     };
 
-    setCache(cacheKey, result);
+    // Don't cache planless users — they may subscribe later
+    if (result.planId) {
+      setCache(cacheKey, result);
+    }
     return result;
   }
 
@@ -89,8 +92,8 @@ export class SubscriptionService {
       select: { subscriptionPlanId: true },
     });
 
+    // Don't cache users without a plan — they may subscribe later
     if (!user?.subscriptionPlanId) {
-      setCache(cacheKey, false);
       return false;
     }
 
@@ -102,6 +105,8 @@ export class SubscriptionService {
     });
 
     const enabled = feature?.enabled ?? false;
+    // Cache for users WITH a plan — the plan doesn't change often and
+    // we invalidate cache via Stripe webhook handlers when it does
     setCache(cacheKey, enabled);
     return enabled;
   }

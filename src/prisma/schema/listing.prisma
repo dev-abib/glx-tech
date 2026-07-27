@@ -23,7 +23,7 @@ model Listing {
   address     Selleraddress @relation(fields: [addressId], references: [id])
   media       Json
 
-  basePrice   String
+  basePrice   String?
   hourlyPrice String?
   dailyPrice  String?
   createdAt   DateTime      @default(now()) @map("created_at")

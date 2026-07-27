@@ -2,12 +2,15 @@ import { stripe } from "../../config/stripe.config.js";
 import { getPrismaClient } from "../../config/database.js";
 import { env } from "../../config/env.js";
 import { ApiError } from "../../utils/api-error.js";
+import { SubscriptionService } from "../plans/subscription.service.js";
 import type {
   CreateDonationInput,
   DonationQueryInput,
   CreateSubscriptionCheckoutInput,
 } from "./stripe.validation.js";
 import type { Prisma } from "@prisma/client";
+
+const subscriptionService = new SubscriptionService();
 
 const prisma = getPrismaClient();
 
@@ -607,6 +610,9 @@ export class StripeService {
       data: updateData,
     });
 
+    // Invalidate subscription service cache so plan check is fresh
+    subscriptionService.invalidateUserCache(userId);
+
     console.log(
       `[StripeService] Subscription activated for user ${userId} — plan: ${planId}`
     );
@@ -663,6 +669,9 @@ export class StripeService {
       where: { id: userId },
       data: updateData,
     });
+
+    // Invalidate cache so plan checks reflect the new status
+    subscriptionService.invalidateUserCache(userId);
 
     console.log(
       `[StripeService] Subscription updated for user ${userId} — status: ${status}`
@@ -776,6 +785,7 @@ export class StripeService {
           currentPeriodEnd: null,
         },
       });
+      subscriptionService.invalidateUserCache(userId);
       console.log(`[StripeService] Subscription deleted for user ${userId}`);
       return;
     }
@@ -795,6 +805,7 @@ export class StripeService {
             currentPeriodEnd: null,
           },
         });
+        subscriptionService.invalidateUserCache(user.id);
         console.log(
           `[StripeService] Subscription deleted for user ${user.id} (via customer lookup)`
         );
