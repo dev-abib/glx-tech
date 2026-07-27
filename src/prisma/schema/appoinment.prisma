@@ -5,18 +5,30 @@ enum STATUS {
   completed
 }
 
-model Appointment {
-  id          String  @id @default(cuid())
-  listingId   String
-  listing     Listing @relation(fields: [listingId], references: [id])
-  buyerId     String
-  sellerId    String
-  bookingDate String
-  bookingTime String
-  status      STATUS  @default(pending)
+enum APPOINTMENT_TYPE {
+  SERVICE
+  RENT
+}
 
-  // Prevent exact duplicate appointments for the same listing + date + time + status combo.
-  // The primary guard against double-booking is the service-level check
-  // (no two non-cancelled appointments for the same listing+date+time).
+model Appointment {
+  id              String           @id @default(cuid())
+  listingId       String
+  listing         Listing          @relation(fields: [listingId], references: [id])
+  buyerId         String
+  sellerId        String
+  bookingDate     String
+  bookingTime     String?
+  status          STATUS           @default(pending)
+  appointmentType APPOINTMENT_TYPE @default(SERVICE)
+
+  // Service-type fields
+  price       Float? 
+
+  // Rent-type fields
+  hourlyPrice  Float?  
+  dailyPrice   Float?  
+  duration     Float?  
+  durationUnit String?
+
   @@unique([listingId, bookingDate, bookingTime, status])
 }

@@ -11,8 +11,9 @@ const prisma = getPrismaClient();
 export class AppointmentService {
   /**
    * Create a new appointment.
-   * Checks that the requested bookingTime is one of the listing's timeSlots
-   * and that no other non-cancelled appointment exists for the same date + time.
+   * Supports SERVICE and RENT appointment types.
+   * For SERVICE: requires price, bookingDate, bookingTime.
+   * For RENT: requires hourlyPrice/dailyPrice, duration, durationUnit, bookingDate.
    */
   async createAppointment(data: CreateAppointmentInput, buyerId: string) {
     const listing = await prisma.listing.findUnique({
@@ -37,21 +38,65 @@ export class AppointmentService {
       throw new ApiError(400, "You cannot book your own listing");
     }
 
-    // Lock: check if this time slot on this date is already booked for this listing
-    // by any appointment that is NOT cancelled
-    const existingAppointment = await prisma.appointment.findFirst({
+    if (data.appointmentType === "SERVICE") {
+      // Lock: check if this time slot on this date is already booked for this listing
+      const existingAppointment = await prisma.appointment.findFirst({
+        where: {
+          listingId: data.listingId,
+          bookingDate: data.bookingDate,
+          bookingTime: data.bookingTime,
+          status: { not: "cancelled" },
+          appointmentType: "SERVICE",
+        },
+      });
+
+      if (existingAppointment) {
+        throw new ApiError(
+          409,
+          `The time slot "${data.bookingTime}" on ${data.bookingDate} is already booked for this listing`
+        );
+      }
+
+      const appointment = await prisma.appointment.create({
+        data: {
+          listingId: data.listingId,
+          buyerId,
+          sellerId: listing.userId,
+          bookingDate: data.bookingDate,
+          bookingTime: data.bookingTime,
+          appointmentType: "SERVICE",
+          price: data.price,
+          status: "pending",
+        },
+        include: {
+          listing: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+            },
+          },
+        },
+      });
+
+      return appointment;
+    }
+
+    // RENT type
+    // Check for overlapping rent bookings on the same date
+    const existingRent = await prisma.appointment.findFirst({
       where: {
         listingId: data.listingId,
         bookingDate: data.bookingDate,
-        bookingTime: data.bookingTime,
         status: { not: "cancelled" },
+        appointmentType: "RENT",
       },
     });
 
-    if (existingAppointment) {
+    if (existingRent) {
       throw new ApiError(
         409,
-        `The time slot "${data.bookingTime}" on ${data.bookingDate} is already booked for this listing`
+        `The date ${data.bookingDate} is already booked for rent on this listing`
       );
     }
 
@@ -61,7 +106,12 @@ export class AppointmentService {
         buyerId,
         sellerId: listing.userId,
         bookingDate: data.bookingDate,
-        bookingTime: data.bookingTime,
+        bookingTime: data.bookingTime ?? null,
+        appointmentType: "RENT",
+        hourlyPrice: data.hourlyPrice ?? null,
+        dailyPrice: data.dailyPrice ?? null,
+        duration: data.duration,
+        durationUnit: data.durationUnit,
         status: "pending",
       },
       include: {
@@ -70,7 +120,6 @@ export class AppointmentService {
             id: true,
             title: true,
             slug: true,
-            timeSlot: true,
           },
         },
       },

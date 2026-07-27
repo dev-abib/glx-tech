@@ -30,14 +30,49 @@ Appointment:
     bookingTime:
       type: string
       format: time
+      nullable: true
       example: "09:00"
       pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
-      description: The selected time slot (HH:MM, 24-hour format)
+      description: The selected time slot (HH:MM, 24-hour format). Nullable for rent-type appointments.
     status:
       type: string
       enum: [pending, confirmed, cancelled, completed]
       example: pending
       description: Current appointment status
+    appointmentType:
+      type: string
+      enum: [SERVICE, RENT]
+      example: SERVICE
+      description: Type of appointment - SERVICE (fixed price + time slot) or RENT (hourly/daily pricing + duration)
+    price:
+      type: number
+      format: float
+      nullable: true
+      example: 150.00
+      description: Fixed price for SERVICE appointments
+    hourlyPrice:
+      type: number
+      format: float
+      nullable: true
+      example: 25.00
+      description: Hourly rate for RENT appointments
+    dailyPrice:
+      type: number
+      format: float
+      nullable: true
+      example: 150.00
+      description: Daily rate for RENT appointments
+    duration:
+      type: number
+      format: float
+      nullable: true
+      example: 3
+      description: Duration for RENT appointments (in hours or days)
+    durationUnit:
+      type: string
+      nullable: true
+      example: hours
+      description: Unit of duration - "hours" or "days" for RENT appointments
     listing:
       type: object
       description: Brief listing details included in the response
@@ -52,9 +87,6 @@ Appointment:
         slug:
           type: string
           example: professional-web-development
-        address:
-          type: string
-          example: 123 Tech Street
         timeSlot:
           type: array
           description: Available time slots for the listing
@@ -77,12 +109,14 @@ Appointment:
                 type: string
                 example: listings/abc123
 
-CreateAppointmentInput:
+CreateServiceAppointmentInput:
   type: object
   required:
     - listingId
     - bookingDate
     - bookingTime
+    - appointmentType
+    - price
   properties:
     listingId:
       type: string
@@ -98,13 +132,95 @@ CreateAppointmentInput:
     bookingTime:
       type: string
       format: time
-      example: "09:00"
+      example: "10:00"
       pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
       description: The desired time slot in HH:MM (24-hour) format. Must be one of the listing's available timeSlots.
+    appointmentType:
+      type: string
+      enum: [SERVICE]
+      example: SERVICE
+      description: Must be "SERVICE" for service-type appointments
+    price:
+      type: number
+      format: float
+      example: 150.00
+      description: Fixed price for the service
   example:
     listingId: clz6xq8k80001hxq8f1j2m3n5
     bookingDate: "2026-07-15"
     bookingTime: "10:00"
+    appointmentType: SERVICE
+    price: 150.00
+
+CreateRentAppointmentInput:
+  type: object
+  required:
+    - listingId
+    - bookingDate
+    - appointmentType
+    - duration
+    - durationUnit
+  properties:
+    listingId:
+      type: string
+      format: cuid
+      example: clz6xq8k80001hxq8f1j2m3n5
+      description: ID of the listing to book
+    bookingDate:
+      type: string
+      format: date
+      example: "2026-07-15"
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      description: The desired booking date in YYYY-MM-DD format
+    bookingTime:
+      type: string
+      format: time
+      example: "10:00"
+      pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+      description: The desired time slot in HH:MM (24-hour) format (optional for rent)
+    appointmentType:
+      type: string
+      enum: [RENT]
+      example: RENT
+      description: Must be "RENT" for rent-type appointments
+    hourlyPrice:
+      type: number
+      format: float
+      example: 25.00
+      description: Hourly rate (optional if dailyPrice is provided)
+    dailyPrice:
+      type: number
+      format: float
+      example: 150.00
+      description: Daily rate (optional if hourlyPrice is provided)
+    duration:
+      type: number
+      format: float
+      example: 3
+      description: Duration value (e.g. 3 for 3 hours/days)
+    durationUnit:
+      type: string
+      enum: [hours, days]
+      example: hours
+      description: Unit of duration - "hours" or "days"
+  example:
+    listingId: clz6xq8k80001hxq8f1j2m3n5
+    bookingDate: "2026-07-15"
+    appointmentType: RENT
+    hourlyPrice: 25.00
+    dailyPrice: 150.00
+    duration: 3
+    durationUnit: hours
+
+CreateAppointmentInput:
+  oneOf:
+    - $ref: "#/components/schemas/CreateServiceAppointmentInput"
+    - $ref: "#/components/schemas/CreateRentAppointmentInput"
+  discriminator:
+    propertyName: appointmentType
+    mapping:
+      SERVICE: "#/components/schemas/CreateServiceAppointmentInput"
+      RENT: "#/components/schemas/CreateRentAppointmentInput"
 
 UpdateAppointmentStatusInput:
   type: object

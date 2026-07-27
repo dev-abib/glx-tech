@@ -55,7 +55,7 @@ S("listing.yaml", "Listing"); S("listing.yaml", "CreateListingInput"); S("listin
 S("listing.yaml", "UserReview"); S("listing.yaml", "CreateUserReviewInput"); S("listing.yaml", "UpdateUserReviewInput");
 S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "SellerAddressInput"); S("seller.yaml", "UpdateUserAsSellerInput"); S("seller.yaml", "UpdateSellerDetailsInput"); S("seller.yaml", "CreateSellerAddressInput"); S("seller.yaml", "UpdateSellerAddressInput");
 S("admin-campaigns.yaml", "Campaign"); S("admin-campaigns.yaml", "CreateCampaignInput");
-S("appointment.yaml", "Appointment"); S("appointment.yaml", "CreateAppointmentInput"); S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes"); S("appointment.yaml", "BookedSlot");
+S("appointment.yaml", "Appointment"); S("appointment.yaml", "CreateAppointmentInput"); S("appointment.yaml", "CreateServiceAppointmentInput"); S("appointment.yaml", "CreateRentAppointmentInput"); S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes"); S("appointment.yaml", "BookedSlot");
 S("stripe-donate.yaml", "CreateDonationInput"); S("stripe-donate.yaml", "DonationPaymentLinkResponse");
 S("stripe-donate.yaml", "Donation"); S("stripe-donate.yaml", "DonationListResponse"); S("stripe-donate.yaml", "DonationCheckoutResponse"); S("stripe-donate.yaml", "DonationStatsResponse");
 S("subscription-plans.yaml", "SubscriptionPlan"); S("subscription-plans.yaml", "PlanFeature"); S("subscription-plans.yaml", "FeatureDefinition");
