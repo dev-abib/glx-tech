@@ -74,6 +74,8 @@ model User {
   currentPeriodEnd     DateTime?         @map("current_period_end")
   listings             Listing[]
   userReview           UserReview[]
+  buyerAppointments    Appointment[]     @relation("BuyerAppointments")
+  sellerAppointments   Appointment[]     @relation("SellerAppointments")
   isSeller             Boolean           @default(false) @map("is_seller")
   sellerInfo           SellerInfo?
 

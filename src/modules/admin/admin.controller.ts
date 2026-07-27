@@ -2,8 +2,10 @@ import { Request, RequestHandler, Response } from "express";
 import { asyncHandler } from "../../utils/async-handler.js";
 import { ApiResponse } from "../../utils/api-response.js";
 import { AdminService } from "./admin.service.js";
+import { AppointmentService } from "../appointment/appoinment.service.js";
 import { ListingService } from "../listing/listing.service.js";
 
+const appointmentService = new AppointmentService();
 const listingService = new ListingService();
 import type {
   AdminLoginInput,
@@ -342,5 +344,23 @@ export const adminGetAllReviews: RequestHandler = asyncHandler(
     return res
       .status(200)
       .json(new ApiResponse(200, "Reviews fetched successfully", result));
+  }
+);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ADMIN APPOINTMENT VIEWS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Get all appointments across the platform (admin only)
+export const adminGetAllAppointments: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await appointmentService.getAllAppointments({
+      page: Number(req.query.page) || 1,
+      limit: Number(req.query.limit) || 10,
+    });
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, "Appointments fetched successfully", result));
   }
 );

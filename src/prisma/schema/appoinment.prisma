@@ -15,7 +15,9 @@ model Appointment {
   listingId       String
   listing         Listing          @relation(fields: [listingId], references: [id])
   buyerId         String
+  buyer           User             @relation("BuyerAppointments", fields: [buyerId], references: [id])
   sellerId        String
+  seller          User             @relation("SellerAppointments", fields: [sellerId], references: [id])
   bookingDate     String
   bookingTime     String?
   status          STATUS           @default(pending)

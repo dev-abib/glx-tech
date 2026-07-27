@@ -20,6 +20,7 @@ import {
   adminGetListingReviews,
   adminGetAllReviews,
   adminGetDashboardTrends,
+  adminGetAllAppointments,
 } from "./admin.controller.js";
 import {
   adminLoginSchema,
@@ -120,5 +121,13 @@ router
 router
   .route("/dashboard-trends")
   .get(authenticate({ type: "admin" }), adminGetDashboardTrends);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// APPOINTMENT VIEWS (admin read-only)
+// ═══════════════════════════════════════════════════════════════════════════
+
+router
+  .route("/appointments")
+  .get(authenticate({ type: "admin" }), adminGetAllAppointments);
 
 export default router;

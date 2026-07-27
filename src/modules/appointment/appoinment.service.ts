@@ -380,6 +380,50 @@ export class AppointmentService {
   }
 
   /**
+   * Get all appointments across the platform (admin only).
+   * Includes buyer, seller, and listing details.
+   */
+  async getAllAppointments(query: GetAppointmentsQueryInput) {
+    const { page, limit } = query;
+    const skip = (page - 1) * limit;
+
+    const [appointments, total] = await Promise.all([
+      prisma.appointment.findMany({
+        skip,
+        take: limit,
+        orderBy: { id: "desc" },
+        include: {
+          ...appointmentInclude,
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            },
+          },
+        },
+      }),
+      prisma.appointment.count(),
+    ]);
+
+    const enriched = appointments.map((appt) => ({
+      ...appt,
+      revenue: computeRevenue(appt),
+    }));
+
+    return {
+      appointments: enriched,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
    * Get all booked (non-cancelled) times for a listing on a specific date.
    * Useful for the frontend to show which time slots are already taken.
    * If no date is provided, returns all booked slots grouped by date.
