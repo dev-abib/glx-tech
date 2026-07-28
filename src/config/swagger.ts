@@ -189,7 +189,7 @@ P("appointments.yaml", "/appointments/create-appointment", "create-appointment")
 P("appointments.yaml", "/appointments/my-bookings", "get-my-bookings");
 P("appointments.yaml", "/appointments/my-bookings/{appointmentId}/cancel", "cancel-my-booking");
 P("appointments.yaml", "/appointments/seller/my-appointments", "seller-get-my-appointments");
-P("appointments.yaml", "/appointments/seller/completed", "seller-get-completed-appointments");
+P("appointments.yaml", "/appointments/seller/recent", "seller-get-recent-appointments");
 P("appointments.yaml", "/appointments/seller/upcoming", "seller-get-upcoming-appointments");
 P("appointments.yaml", "/appointments/seller/dashboard-stats", "seller-get-dashboard-stats");
 P("appointments.yaml", "/appointments/booked-times/{listingId}", "get-booked-times");

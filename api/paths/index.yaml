@@ -222,8 +222,8 @@
   $ref: "./appointments.yaml#/cancel-my-booking"
 /appointments/seller/my-appointments:
   $ref: "./appointments.yaml#/seller-get-my-appointments"
-/appointments/seller/completed:
-  $ref: "./appointments.yaml#/seller-get-completed-appointments"
+/appointments/seller/recent:
+  $ref: "./appointments.yaml#/seller-get-recent-appointments"
 /appointments/seller/upcoming:
   $ref: "./appointments.yaml#/seller-get-upcoming-appointments"
 /appointments/seller/dashboard-stats:

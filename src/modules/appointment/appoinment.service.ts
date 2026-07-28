@@ -64,6 +64,14 @@ function computeRevenue(appointment: {
   return null;
 }
 
+// Valid status transitions map
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  pending: ["confirmed", "cancelled"],
+  confirmed: ["completed", "cancelled"],
+  completed: [],       // Terminal state — no further transitions
+  cancelled: [],       // Terminal state — no further transitions
+};
+
 export class AppointmentService {
   /**
    * Create a new appointment.
@@ -245,14 +253,14 @@ export class AppointmentService {
   }
 
   /**
-   * Get recently completed appointments for the current user as a seller (listing owner).
-   * Only returns appointments with status "completed".
+   * Get recent appointments for the current user as a seller (listing owner).
+   * Returns ALL appointments regardless of status (pending, confirmed, completed, cancelled).
    */
-  async getMyCompletedAppointments(
+  async getMyRecentAppointments(
     sellerId: string,
     query: GetAppointmentsQueryInput
   ) {
-    return this.enrichAndPaginate({ sellerId, status: "completed" as const }, query);
+    return this.enrichAndPaginate({ sellerId }, query);
   }
 
   /**
@@ -462,6 +470,11 @@ export class AppointmentService {
   /**
    * Update appointment status (confirm, cancel, complete).
    * Only the seller can confirm/complete; either party can cancel.
+   * Enforces valid status transitions:
+   *   pending → confirmed | cancelled
+   *   confirmed → completed | cancelled
+   *   completed → (none)
+   *   cancelled → (none)
    */
   async updateAppointmentStatus(
     appointmentId: string,
@@ -476,7 +489,7 @@ export class AppointmentService {
       throw new ApiError(404, "Appointment not found");
     }
 
-    // Validate permissions
+    // ── Validate permissions ────────────────────────────────────────
     if (data.status === "confirmed") {
       // Only the seller can confirm
       if (appointment.sellerId !== userId) {
@@ -495,6 +508,19 @@ export class AppointmentService {
           "You are not authorized to cancel this appointment"
         );
       }
+    } else if (data.status === "pending") {
+      // No one should be able to set back to pending
+      throw new ApiError(400, "Cannot revert appointment back to pending");
+    }
+
+    // ── Validate status transition ──────────────────────────────────
+    const allowedNextStates = VALID_TRANSITIONS[appointment.status];
+    if (!allowedNextStates || !allowedNextStates.includes(data.status)) {
+      throw new ApiError(
+        400,
+        `Invalid status transition: cannot change from "${appointment.status}" to "${data.status}". ` +
+        `Allowed transitions from "${appointment.status}": ${(allowedNextStates ?? []).join(", ") || "none"}.`
+      );
     }
 
     const updated = await prisma.appointment.update({

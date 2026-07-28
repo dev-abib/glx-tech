@@ -71,12 +71,12 @@ export const getMySellerAppointments: RequestHandler = asyncHandler(
   }
 );
 
-// Get completed appointments for seller (recently completed listings)
-export const getMyCompletedAppointments: RequestHandler = asyncHandler(
+// Get recent appointments for seller (all statuses: pending, confirmed, completed, cancelled)
+export const getMyRecentAppointments: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const sellerId = req.user?.id as string;
 
-    const result = await appointmentService.getMyCompletedAppointments(sellerId, {
+    const result = await appointmentService.getMyRecentAppointments(sellerId, {
       page: Number(req.query.page) || 1,
       limit: Number(req.query.limit) || 10,
     });
@@ -86,7 +86,7 @@ export const getMyCompletedAppointments: RequestHandler = asyncHandler(
       .json(
         new ApiResponse(
           200,
-          "Completed appointments fetched successfully",
+          "Recent appointments fetched successfully",
           result
         )
       );

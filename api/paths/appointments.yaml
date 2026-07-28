@@ -170,11 +170,11 @@ get-booked-times:
       "404":
         description: Listing not found
 
-seller-get-completed-appointments:
+seller-get-recent-appointments:
   get:
     tags: ["19 — Appointments"]
-    summary: Get completed appointments (Seller)
-    description: Returns all completed appointments for the authenticated seller's listings. Useful for viewing recently completed jobs.
+    summary: Get recent appointments (Seller)
+    description: Returns all recent appointments for the authenticated seller's listings regardless of status (pending, confirmed, completed, cancelled).
     security:
       - bearerAuth: []
     parameters:
@@ -191,7 +191,7 @@ seller-get-completed-appointments:
           maximum: 50
     responses:
       "200":
-        description: Completed appointments fetched successfully
+        description: Recent appointments fetched successfully
         content:
           application/json:
             schema:

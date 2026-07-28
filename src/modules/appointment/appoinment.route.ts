@@ -10,7 +10,7 @@ import {
   createAppointment,
   getMyBuyerAppointments,
   getMySellerAppointments,
-  getMyCompletedAppointments,
+  getMyRecentAppointments,
   getMyUpcomingAppointments,
   getSellerDashboardStats,
   getBookedTimes,
@@ -38,10 +38,10 @@ router
   .route("/seller/my-appointments")
   .get(authenticate({ type: "seller" }), getMySellerAppointments);
 
-// Get my completed appointments as seller (recently completed listings)
+// Get recent appointments for seller (all statuses: pending, confirmed, completed, cancelled)
 router
-  .route("/seller/completed")
-  .get(authenticate({ type: "seller" }), getMyCompletedAppointments);
+  .route("/seller/recent")
+  .get(authenticate({ type: "seller" }), getMyRecentAppointments);
 
 // Get upcoming appointments for seller (pending/confirmed)
 router
