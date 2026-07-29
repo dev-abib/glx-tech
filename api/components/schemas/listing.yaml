@@ -94,14 +94,6 @@ Listing:
       pattern: "^\\d+(\\.\\d{1,2})?$"
       example: "200"
       description: Daily rate as a numeric string
-    latitude:
-      type: number
-      example: 40.7128
-      description: Geocoded latitude coordinate
-    longitude:
-      type: number
-      example: -74.006
-      description: Geocoded longitude coordinate
     isAvailable:
       type: boolean
       example: true
@@ -215,7 +207,7 @@ CreateListingInput:
       type: string
       format: uuid
       example: 550e8400-e29b-41d4-a716-446655440005
-      description: ID of the seller's stored address (will be geocoded for lat/lng)
+      description: ID of the seller's stored address
     basePrice:
       type: string
       pattern: "^\\d+(\\.\\d{1,2})?$"

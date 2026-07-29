@@ -125,8 +125,42 @@ export class PlansService {
       prisma.subscriptionPlan.count(),
     ]);
 
+    // Enrich each plan with aggregate listing counts across its users
+    const enrichedPlans = await Promise.all(
+      plans.map(async (plan) => {
+        const userIds = (
+          await prisma.user.findMany({
+            where: { subscriptionPlanId: plan.id },
+            select: { id: true },
+          })
+        ).map((u) => u.id);
+
+        const [totalListings, featuredListings, activeListings] =
+          userIds.length > 0
+            ? await Promise.all([
+                prisma.listing.count({ where: { userId: { in: userIds } } }),
+                prisma.listing.count({
+                  where: { userId: { in: userIds }, isFeatured: true },
+                }),
+                prisma.listing.count({
+                  where: { userId: { in: userIds }, isAvailable: true },
+                }),
+              ])
+            : [0, 0, 0];
+
+        return {
+          ...plan,
+          listingCounts: {
+            total: totalListings,
+            featured: featuredListings,
+            active: activeListings,
+          },
+        };
+      })
+    );
+
     return {
-      plans,
+      plans: enrichedPlans,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     };
   }
@@ -146,7 +180,35 @@ export class PlansService {
       throw new ApiError(404, "Plan not found");
     }
 
-    return plan;
+    // Enrich with aggregate listing counts
+    const userIds = (
+      await prisma.user.findMany({
+        where: { subscriptionPlanId: plan.id },
+        select: { id: true },
+      })
+    ).map((u) => u.id);
+
+    const [totalListings, featuredListings, activeListings] =
+      userIds.length > 0
+        ? await Promise.all([
+            prisma.listing.count({ where: { userId: { in: userIds } } }),
+            prisma.listing.count({
+              where: { userId: { in: userIds }, isFeatured: true },
+            }),
+            prisma.listing.count({
+              where: { userId: { in: userIds }, isAvailable: true },
+            }),
+          ])
+        : [0, 0, 0];
+
+    return {
+      ...plan,
+      listingCounts: {
+        total: totalListings,
+        featured: featuredListings,
+        active: activeListings,
+      },
+    };
   }
 
   // ── Admin: Update Plan ─────────────────────────────────────────────────

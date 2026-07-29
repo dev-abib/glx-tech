@@ -642,6 +642,10 @@ export class UserRepository {
       throw new ApiError(400, "At least one address is required to create a seller profile");
     }
 
+    if (data.addresses.length > 1) {
+      throw new ApiError(400, "You can only add one address during registration. You can add more later from your account settings.");
+    }
+
     await prisma.$transaction([
       prisma.sellerInfo.create({
         data: {

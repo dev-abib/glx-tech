@@ -205,7 +205,8 @@ export const updateUserAsSellerSchema = z.preprocess(
           zipCode: z.string(),
         })
       )
-      .min(1, "At least one address is required"),
+      .min(1, "At least one address is required")
+      .max(1, "You can only add one address during registration. You can add more later from your account settings."),
   })
 );
 

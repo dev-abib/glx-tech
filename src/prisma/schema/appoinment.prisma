@@ -24,12 +24,12 @@ model Appointment {
   appointmentType APPOINTMENT_TYPE @default(SERVICE)
 
   // Service-type fields
-  price       Float? 
+  price Float?
 
   // Rent-type fields
-  hourlyPrice  Float?  
-  dailyPrice   Float?  
-  duration     Float?  
+  hourlyPrice  Float?
+  dailyPrice   Float?
+  duration     Float?
   durationUnit String?
 
   @@unique([listingId, bookingDate, bookingTime, status])

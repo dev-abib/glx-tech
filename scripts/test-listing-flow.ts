@@ -7,7 +7,7 @@
  *  3. Login to get tokens
  *  4. Update user as seller (creates SellerInfo + Selleraddress)
  *  5. Create a listing using the addressId from step 4
- *  6. Fetch the listing to verify lat/lng are present
+ *  6. Fetch the listing to verify it was created
  *
  * Run: npx tsx scripts/test-listing-flow.ts
  */
@@ -215,8 +215,6 @@ async function main() {
       id: true,
       title: true,
       addressId: true,
-      latitude: true,
-      longitude: true,
       isAvailable: true,
     },
   });
@@ -226,10 +224,7 @@ async function main() {
     console.log(`  ✅ Listing verified:`);
     console.log(`     Title: ${listing.title}`);
     console.log(`     Address ID: ${listing.addressId}`);
-    console.log(`     Latitude: ${listing.latitude}`);
-    console.log(`     Longitude: ${listing.longitude}`);
     console.log(`     Available: ${listing.isAvailable}`);
-    console.log(`     Lat/Lng geocoded: ${listing.latitude}, ${listing.longitude}`);
   }
 
   await prisma.$disconnect();

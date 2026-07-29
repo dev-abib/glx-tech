@@ -10,8 +10,6 @@ import type {
   CreateUserReviewInput,
   UpdateUserReviewInput,
 } from "./listing.validation.js";
-import { env } from "../../config/env.js";
-import axios from "axios";
 
 const cloudinary = new CloudinaryService();
 const prisma = getPrismaClient();
@@ -61,10 +59,6 @@ export class ListingService {
       throw new ApiError(404, "Seller address not found");
     }
 
-    // Geocode the full street address from Selleraddress
-    const fullAddress = `${sellerAddress.streetAddress}, ${sellerAddress.city}, ${sellerAddress.state} ${sellerAddress.zipCode}`;
-    const { lat, lng } = await this.geocodeAddress(fullAddress);
-
     const uploadedImages = [] as Array<{ url: string; publicId: string }>;
 
     for (const imageBuffer of imageBuffers) {
@@ -87,8 +81,6 @@ export class ListingService {
         hourlyPrice: data.hourlyPrice ?? null,
         dailyPrice: data.dailyPrice ?? null,
         isAvailable: data.isAvailable,
-        latitude: lat,
-        longitude: lng,
         media: uploadedImages.map((image) => ({
           url: image.url,
           publicId: image.publicId,
@@ -114,85 +106,7 @@ export class ListingService {
     };
   }
 
-  /**
-   * Calculate the great-circle distance between two points
-   * on the Earth using the Haversine formula.
-   * @returns distance in miles
-   */
-  private calculateDistanceInMiles(
-    lat1: number,
-    lng1: number,
-    lat2: number,
-    lng2: number
-  ): number {
-    const R = 3959; // Earth's radius in miles
-    const toRad = (deg: number) => (deg * Math.PI) / 180;
 
-    const dLat = toRad(lat2 - lat1);
-    const dLng = toRad(lng2 - lng1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) *
-        Math.cos(toRad(lat2)) *
-        Math.sin(dLng / 2) *
-        Math.sin(dLng / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  /**
-   * Geocode an address string to { lat, lng } using LocationIQ.
-   */
-  private async geocodeAddress(
-    address: string
-  ): Promise<{ lat: number; lng: number }> {
-    const key = env.LOCATIONIQ_KEY;
-    const url = "https://us1.locationiq.com/v1/search";
-
-    const response = await axios
-      .get(url, {
-        params: {
-          key,
-          q: address,
-          format: "json",
-          limit: 1,
-          addressdetails: 1,
-          normalizecity: 1,
-        },
-        timeout: 10000,
-      })
-      .catch((error) => {
-        if (error.response) {
-          throw new ApiError(
-            error.response.status,
-            `${error.response.data.error} address`
-          );
-        } else if (error.request) {
-          throw new ApiError(
-            500,
-            "Network error or no response from the geocoding service."
-          );
-        } else {
-          throw new ApiError(
-            500,
-            error.message || "An unknown error occurred during geocoding."
-          );
-        }
-      });
-
-    if (!response?.data || response.data.length === 0) {
-      throw new ApiError(400, "Unable to geocode the provided address");
-    }
-
-    const lat = Number(response.data[0].lat);
-    const lng = Number(response.data[0].lon);
-
-    if (!lat || !lng) {
-      throw new ApiError(400, "Unable to geocode the provided address");
-    }
-
-    return { lat, lng };
-  }
 
   // get all listings (public)
   async getAllListings(query: GetListingsQueryInput) {
@@ -202,8 +116,6 @@ export class ListingService {
       search,
       serviceId,
       serviceName,
-      address,
-      radius,
       minPrice,
       maxPrice,
       minRating,
@@ -269,16 +181,9 @@ export class ListingService {
       where.isFeatured = isFeatured;
     }
 
-    // ── Geocode address only when both address AND radius are provided ──
-    let originCoords: { lat: number; lng: number } | null = null;
-    if (address && radius !== undefined) {
-      originCoords = await this.geocodeAddress(address);
-    }
-
     // Determine if we need to do any post-fetch (in-memory) filtering
     // Random ordering also requires in-memory shuffling
     const needsInMemoryFiltering =
-      originCoords !== null ||
       minRating !== undefined ||
       minPrice !== undefined ||
       maxPrice !== undefined ||
@@ -355,19 +260,6 @@ export class ListingService {
         ],
         include: includeWithRatings,
       });
-
-      // Filter by radius (Haversine)
-      if (originCoords !== null) {
-        allListings = allListings.filter((listing) => {
-          const distance = this.calculateDistanceInMiles(
-            originCoords!.lat,
-            originCoords!.lng,
-            listing.latitude,
-            listing.longitude
-          );
-          return distance <= radius!;
-        });
-      }
 
       // Filter by minimum average rating
       if (minRating) {

@@ -264,16 +264,6 @@ const envVars: EnvVarEntry[] = [
     description: "Site owner email for admin notifications",
   },
 
-  // ── LocationIQ ───────────────────────────────────────────────────────────
-  {
-    key: "LOCATIONIQ_KEY",
-    default: "",
-    example: "your-locationiq-api-key",
-    group: "LocationIQ — Geocoding",
-    description: "LocationIQ API key for geocoding addresses (required)",
-    critical: true,
-  },
-
   // ── Stripe ─────────────────────────────────────────────────────────────
   {
     key: "STRIPE_SECRET_KEY",

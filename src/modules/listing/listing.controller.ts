@@ -43,8 +43,6 @@ export const getAllListings: RequestHandler = asyncHandler(
       search: req.query.search as string | undefined,
       serviceId: req.query.serviceId as string | undefined,
       serviceName: req.query.serviceName as string | undefined,
-      address: req.query.address as string | undefined,
-      radius: req.query.radius ? Number(req.query.radius) : undefined,
       minPrice: req.query.minPrice
         ? Number(req.query.minPrice)
         : undefined,

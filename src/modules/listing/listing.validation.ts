@@ -84,8 +84,6 @@ export const GetListingsQuerySchema = z
     search: z.string().optional(),
     serviceId: z.string().optional(),
     serviceName: z.string().optional(),
-    address: z.string().optional(),
-    radius: z.coerce.number().positive().max(30).optional(),
     minPrice: z.coerce.number().min(0).optional(),
     maxPrice: z.coerce.number().min(0).optional(),
     minRating: z.coerce.number().min(1).max(5).optional(),
@@ -119,20 +117,7 @@ export const GetListingsQuerySchema = z
         return undefined;
       }, z.boolean())
       .optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.radius !== undefined && !data.address) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message:
-        "Radius requires an address. Please provide the 'address' query parameter when using 'radius'.",
-      path: ["radius"],
-    }
-  );
+  });
 
 export type GetListingsQueryInput = z.infer<typeof GetListingsQuerySchema>;
 

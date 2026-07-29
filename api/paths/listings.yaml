@@ -39,7 +39,7 @@ create-listing:
               addressId:
                 type: string
                 format: uuid
-                description: ID of the seller's stored address (will be geocoded for lat/lng)
+                description: ID of the seller's stored address
               basePrice:
                 type: string
                 description: Base price as a numeric string
@@ -108,11 +108,6 @@ get-all-listings:
         schema:
           type: string
         description: Filter by service name
-      - name: address
-        in: query
-        schema:
-          type: string
-        description: Filter by address
       - name: minPrice
         in: query
         schema:
@@ -123,22 +118,6 @@ get-all-listings:
         schema:
           type: number
         description: Maximum price filter
-      - name: lat
-        in: query
-        schema:
-          type: number
-        description: Latitude for location-based search
-      - name: lng
-        in: query
-        schema:
-          type: number
-        description: Longitude for location-based search
-      - name: radius
-        in: query
-        schema:
-          type: number
-          default: 10
-        description: Search radius in km
       - name: minRating
         in: query
         schema:

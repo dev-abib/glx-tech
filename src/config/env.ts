@@ -35,7 +35,6 @@ export interface EnvConfig {
   readonly SITE_URL: string;
   readonly APP_URL: string;
   readonly FRONTEND_URL: string;
-  readonly LOCATIONIQ_KEY: string;
   readonly STRIPE_WEBHOOK_SECRET: string;
   readonly STRIPE_SECRET_KEY: string;
 }
@@ -91,13 +90,6 @@ const criticalEnvVars: Array<{
     key: "MAIL_FROM_ADDRESS",
     label: "MAIL_FROM_ADDRESS",
     group: "Mail",
-  },
-
-  // location iq key
-  {
-    key: "LOCATIONIQ_KEY",
-    label: "LOCATIONIQ_KEY",
-    group: "location",
   },
 
   // Stripe
@@ -189,7 +181,6 @@ export const env = {
   SITE_URL: process.env.SITE_URL || "#",
   APP_URL: process.env.APP_URL || "http://localhost:5173",
   FRONTEND_URL: process.env.FRONTEND_URL || process.env.APP_URL || "http://localhost:5173",
-  LOCATIONIQ_KEY: process.env.LOCATIONIQ_KEY || "",
 
   // Stripe
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",
