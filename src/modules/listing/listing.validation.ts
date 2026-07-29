@@ -107,6 +107,18 @@ export const GetListingsQuerySchema = z
       .optional(),
     sortBy: z.string().default("createdAt"),
     sortOrder: z.enum(["asc", "desc"]).default("desc"),
+    /**
+     * If true, results are shuffled randomly using Math.random() before pagination.
+     * This overrides any sortBy/sortOrder.
+     */
+    random: z
+      .preprocess((val) => {
+        if (typeof val === "boolean") return val;
+        if (val === "true") return true;
+        if (val === "false") return false;
+        return undefined;
+      }, z.boolean())
+      .optional(),
   })
   .refine(
     (data) => {

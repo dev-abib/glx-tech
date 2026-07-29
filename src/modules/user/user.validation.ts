@@ -148,8 +148,48 @@ export const switchRoleSchema = z.object({}).strict().default({});
 
 export type SwitchRoleInput = z.infer<typeof switchRoleSchema>;
 
-export const updateUserAsSellerSchema = z
-  .object({
+/**
+ * Preprocessor that accepts flat address fields (streetAddress, city, state, zipCode)
+ * at the top level and converts them into the `addresses` array format for backward
+ * compatibility with frontends that send flat fields instead of the nested array.
+ */
+const normalizeAddresses = (input: unknown): unknown => {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+
+  const data = input as Record<string, unknown>;
+
+  // If `addresses` is already an array and has items, return as-is
+  if (Array.isArray(data.addresses) && data.addresses.length > 0) return input;
+
+  // If flat address fields exist at the top level, convert to addresses array
+  const street = data.streetAddress;
+  const city = data.city;
+  const state = data.state;
+  const zip = data.zipCode;
+
+  if (
+    typeof street === "string" &&
+    typeof city === "string" &&
+    typeof state === "string" &&
+    typeof zip === "string"
+  ) {
+    return {
+      storeName: data.storeName,
+      servicesId: data.servicesId,
+      insuranceStatus: data.insuranceStatus,
+      socialLInk: data.socialLInk,
+      businessNumber: data.businessNumber,
+      businessEmail: data.businessEmail,
+      addresses: [{ streetAddress: street, city, state, zipCode: zip }],
+    };
+  }
+
+  return input;
+};
+
+export const updateUserAsSellerSchema = z.preprocess(
+  normalizeAddresses,
+  z.object({
     storeName: z.string(),
     servicesId: z.array(z.string()),
     insuranceStatus: z.enum(["yes", "no", "not_applicable"]),
@@ -158,19 +198,16 @@ export const updateUserAsSellerSchema = z
     businessEmail: z.string(),
     addresses: z
       .array(
-        z
-          .object({
-            streetAddress: z.string(),
-            city: z.string(),
-            state: z.string(),
-            zipCode: z.string(),
-          })
-          .strict()
+        z.object({
+          streetAddress: z.string(),
+          city: z.string(),
+          state: z.string(),
+          zipCode: z.string(),
+        })
       )
       .min(1, "At least one address is required"),
   })
-
-  .strict();
+);
 
 export type UpdateUserAsSellerInput = z.infer<typeof updateUserAsSellerSchema>;
 

@@ -211,6 +211,7 @@ export class ListingService {
       isFeatured,
       sortBy,
       sortOrder,
+      random,
     } = query;
     const skip = (page - 1) * limit;
 
@@ -275,11 +276,25 @@ export class ListingService {
     }
 
     // Determine if we need to do any post-fetch (in-memory) filtering
+    // Random ordering also requires in-memory shuffling
     const needsInMemoryFiltering =
       originCoords !== null ||
       minRating !== undefined ||
       minPrice !== undefined ||
-      maxPrice !== undefined;
+      maxPrice !== undefined ||
+      random === true;
+
+    /**
+     * Fisher-Yates shuffle using Math.random for true random ordering.
+     */
+    const shuffleArray = <T>(arr: T[]): T[] => {
+      const shuffled = [...arr];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    };
 
     // ── Common Prisma include (always includes ratings for avgRating) ──
     const includeWithRatings = {
@@ -375,6 +390,11 @@ export class ListingService {
           if (maxPrice !== undefined && price > maxPrice) return false;
           return true;
         });
+      }
+
+      // Shuffle randomly using Math.random (Fisher-Yates) if requested
+      if (random === true) {
+        allListings = shuffleArray(allListings);
       }
 
       const total = allListings.length;

@@ -126,6 +126,11 @@ export class UserService {
         planName = plan?.name ?? null;
       }
 
+      // currentPeriodEnd is already available in safeUser (not omitted)
+      const currentPeriodEnd = result.safeUser.currentPeriodEnd
+        ? result.safeUser.currentPeriodEnd.toISOString()
+        : null;
+
       return {
         ...result,
         plan: {
@@ -135,12 +140,16 @@ export class UserService {
           maxActiveListings,
           maxFeaturedListings,
           platformFeePercent,
+          totalListings,
+          featuredListings,
+          activeListings,
         },
         listingUsage: {
           totalListings,
           featuredListings,
           activeListings,
         },
+        currentPeriodEnd,
       };
     }
 

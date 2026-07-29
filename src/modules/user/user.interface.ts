@@ -34,12 +34,20 @@ export interface GetMeResponse {
     maxActiveListings: number;
     maxFeaturedListings: number;
     platformFeePercent: number;
+    /** How many listings the seller has added so far */
+    totalListings: number;
+    /** How many of those are featured */
+    featuredListings: number;
+    /** How many are currently active/available */
+    activeListings: number;
   };
   listingUsage?: {
     totalListings: number;
     featuredListings: number;
     activeListings: number;
   };
+  /** The subscription period end date (expiration). Null if no active subscription. */
+  currentPeriodEnd?: string | null;
 }
 
 // Login response data shape
