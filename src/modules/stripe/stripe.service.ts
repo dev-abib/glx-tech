@@ -320,6 +320,14 @@ export class StripeService {
       }
     }
 
+    // Fetch listing usage counts for this user
+    const [totalListings, featuredListings, activeListings] =
+      await Promise.all([
+        prisma.listing.count({ where: { userId } }),
+        prisma.listing.count({ where: { userId, isFeatured: true } }),
+        prisma.listing.count({ where: { userId, isAvailable: true } }),
+      ]);
+
     const isActive =
       user.subscriptionStatus === "active" ||
       user.subscriptionStatus === "trialing";
@@ -330,22 +338,37 @@ export class StripeService {
     return {
       plan: user.subscriptionPlan
         ? {
+            // getMe-compatible fields
+            planId: user.subscriptionPlan.id,
+            planName: user.subscriptionPlan.name,
+            isFree: !user.subscriptionPlanId,
+            maxActiveListings: user.subscriptionPlan.maxActiveListings,
+            maxFeaturedListings: user.subscriptionPlan.maxFeaturedListings,
+            platformFeePercent: Number(
+              user.subscriptionPlan.platformFeePercent
+            ),
+            totalListings,
+            featuredListings,
+            activeListings,
+            // Additional fields for other consumers
             id: user.subscriptionPlan.id,
             name: user.subscriptionPlan.name,
             slug: user.subscriptionPlan.slug,
             description: user.subscriptionPlan.description,
             priceMonthly: user.subscriptionPlan.priceMonthly,
             priceAnnual: user.subscriptionPlan.priceAnnual,
-            maxActiveListings: user.subscriptionPlan.maxActiveListings,
-            maxFeaturedListings: user.subscriptionPlan.maxFeaturedListings,
-            platformFeePercent: Number(
-              user.subscriptionPlan.platformFeePercent
-            ),
             enabledFeatures: user.subscriptionPlan.features.map(
               (f) => f.key
             ),
           }
         : null,
+      // Also include isFree at top level for convenience
+      isFree: !user.subscriptionPlanId,
+      listingUsage: {
+        totalListings,
+        featuredListings,
+        activeListings,
+      },
       subscriptionStatus: user.subscriptionStatus,
       currentPeriodEnd: user.currentPeriodEnd,
       billingCycle,
@@ -601,10 +624,12 @@ export class StripeService {
       updateData.stripeSubscriptionId = subscriptionId;
     }
 
-    // Set current period end from the session (line items have period info)
-    // For simplicity, we set it to 30 days from now; webhook will correct it
+    // Set current period end based on the billing cycle
+    // For simplicity, we estimate it here; the Stripe webhook will correct it precisely
+    const billingCycle = metadata?.billingCycle || "monthly";
+    const periodDays = billingCycle === "annual" ? 365 : 30;
     updateData.currentPeriodEnd = new Date(
-      Date.now() + 30 * 24 * 60 * 60 * 1000
+      Date.now() + periodDays * 24 * 60 * 60 * 1000
     );
 
     // Update the user's plan

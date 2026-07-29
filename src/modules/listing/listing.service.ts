@@ -284,10 +284,8 @@ export class ListingService {
         });
       }
 
-      // Shuffle randomly using Math.random (Fisher-Yates) if requested
-      if (random === true) {
-        allListings = shuffleArray(allListings);
-      }
+      // Shuffle randomly using Math.random (Fisher-Yates) — always
+      allListings = shuffleArray(allListings);
 
       const total = allListings.length;
       const paginatedListings = allListings.slice(skip, skip + limit);

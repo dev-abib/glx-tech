@@ -64,11 +64,7 @@ export const getAllListings: RequestHandler = asyncHandler(
           : undefined,
       sortBy: (req.query.sortBy as string) || "createdAt",
       sortOrder: (req.query.sortOrder as "asc" | "desc") || "desc",
-      random: req.query.random === "true"
-        ? true
-        : req.query.random === "false"
-          ? false
-          : undefined,
+      random: true,
     });
 
     return res
