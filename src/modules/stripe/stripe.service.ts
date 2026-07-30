@@ -201,8 +201,8 @@ export class StripeService {
         data: { stripeCustomerId: customerId },
       });
     }
-    const successUrl = "https://glxtech-seller.vercel.app/donate/success";
-    const cancelUrl = "https://glxtech-seller.vercel.app/donate/cancel";
+    const successUrl = "https://glxtech-seller.vercel.app/payment/success";
+    const cancelUrl = "https://glxtech-seller.vercel.app/payment/cancel";
 
     // Create the checkout session
     const session = await stripe.checkout.sessions.create({
