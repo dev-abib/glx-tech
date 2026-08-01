@@ -66,6 +66,7 @@ const allowedOrigins = [
   env.APP_URL,
   "https://glxtech-seller.vercel.app",
   "https://glx-tech-pink.vercel.app",
+  "https://glx-tech-admin-dashboard.vercel.app",
 ].filter((origin): origin is string => Boolean(origin));
 
 app.use(
