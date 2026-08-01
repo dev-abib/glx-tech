@@ -20,11 +20,12 @@ create-appointment:
                 RENT: "#/components/schemas/CreateRentAppointmentInput"
           examples:
             service-booking:
-              summary: Service Booking (date-based)
-              description: For SERVICE appointments — send only date + fixed price. No duration fields needed.
+              summary: Service Booking (date + time slot)
+              description: For SERVICE appointments — send date + a required bookingTime slot + fixed price. No duration fields needed.
               value:
                 listingId: clz6xq8k80001hxq8f1j2m3n5
                 bookingDate: "2026-07-15"
+                bookingTime: "10:00"
                 appointmentType: SERVICE
                 price: 150.00
             rent-booking:
@@ -491,3 +492,91 @@ update-appointment-status:
         description: Forbidden — Not authorized to update this appointment
       "404":
         description: Appointment not found
+
+admin-get-all-appointments:
+  get:
+    tags: ["23 — Admin — Appointments"]
+    summary: Get all appointments across the platform (Admin only)
+    description: >
+      Returns a paginated list of every appointment on the platform, enriched
+      with buyer, seller and listing details. Admin only.
+
+      `search` is a free-text keyword (case-insensitive) that matches **by
+      record ID** as well as by name/email/title:
+
+      - appointment ID (`id`)
+      - listing ID (`listingId` / `listing.id`)
+      - buyer user ID (`buyerId` / `buyer.id`) and buyer name/email
+      - seller user ID (`sellerId` / `seller.id`) and seller name/email
+      - listing title and slug
+
+      Combined with `status`, this lets admins find a specific booking by its
+      ID or by any related entity ID straight from the admin panel.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+          example: 1
+        description: Page number
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+          example: 10
+        description: Items per page
+      - name: search
+        in: query
+        schema:
+          type: string
+          example: clz6xq8k80000hxq8f1j2m3n4
+        description: |
+          Search keyword (case-insensitive). Matches appointment ID, listing
+          ID, buyer/seller user ID, buyer/seller name or email, and listing
+          title or slug.
+
+          ### Example IDs
+
+          Paste any of these into `search` to find a booking by record ID:
+
+          | Entity | Example ID |
+          |--------|-----------|
+          | Appointment | `clz6xq8k80000hxq8f1j2m3n4` |
+          | Listing | `clz6xq8k80001hxq8f1j2m3n5` |
+          | Buyer | `clz6xq8k80002hxq8f1j2m3n6` |
+          | Seller | `clz6xq8k80003hxq8f1j2m3n7` |
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [pending, confirmed, completed, cancelled]
+          example: pending
+        description: Filter appointments by status
+    responses:
+      "200":
+        description: Appointments fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        appointments:
+                          type: array
+                          items:
+                            $ref: "#/components/schemas/Appointment"
+                        pagination:
+                          $ref: "#/components/schemas/Pagination"
+      "401":
+        description: Unauthorized
+      "403":
+        description: Forbidden — Admin access required

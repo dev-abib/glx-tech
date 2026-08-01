@@ -55,7 +55,6 @@ const appointmentInclude = {
       name: true,
       email: true,
       avatar: true,
-      phone: true,
     },
   },
 } as const;
@@ -106,7 +105,7 @@ export class AppointmentService {
   /**
    * Create a new appointment.
    * Supports SERVICE and RENT appointment types.
-   * For SERVICE: requires price and bookingDate (no time slot needed).
+   * For SERVICE: requires price, bookingDate AND a booking time slot.
    * For RENT: requires hourlyPrice/dailyPrice, duration, durationUnit, bookingDate.
    */
   async createAppointment(data: CreateAppointmentInput, buyerId: string) {
@@ -452,6 +451,9 @@ export class AppointmentService {
     if (search) {
       where.OR = [
         { id: { contains: search, mode: "insensitive" } },
+        { listingId: { contains: search, mode: "insensitive" } },
+        { buyerId: { contains: search, mode: "insensitive" } },
+        { sellerId: { contains: search, mode: "insensitive" } },
         {
           buyer: {
             OR: [

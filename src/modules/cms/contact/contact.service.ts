@@ -60,6 +60,7 @@ export class ContactService {
     const where: Record<string, unknown> = {};
     if (search) {
       where.OR = [
+        { id: { contains: search, mode: "insensitive" } },
         { name: { contains: search, mode: "insensitive" } },
         { email: { contains: search, mode: "insensitive" } },
         { subject: { contains: search, mode: "insensitive" } },

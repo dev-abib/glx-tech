@@ -85,6 +85,11 @@ export const GetListingsQuerySchema = z
     page: z.coerce.number().int().positive().default(1),
     limit: z.coerce.number().int().positive().max(50).default(10),
     search: z.string().optional(),
+    /**
+     * Location filter — matches the listing's address (street, city, state
+     * or zip) case-insensitively.
+     */
+    location: z.string().optional(),
     serviceId: z.string().optional(),
     serviceName: z.string().optional(),
     minPrice: z.coerce.number().min(0).optional(),

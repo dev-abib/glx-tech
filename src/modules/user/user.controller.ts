@@ -154,7 +154,6 @@ export const getAllUsers: RequestHandler<
       | "email"
       | "role"
       | "avatar"
-      | "phone"
       | "isEmailVerified"
       | "isActive"
       | "isPaid"
@@ -174,7 +173,8 @@ export const getAllUsers: RequestHandler<
     50,
     Math.max(1, parseInt(req.query.limit as string) || 10)
   );
-  const result = await userService.getAllUsers(page, limit);
+  const search = (req.query.search as string | undefined)?.trim() || undefined;
+  const result = await userService.getAllUsers(page, limit, search);
 
   return res
     .status(200)

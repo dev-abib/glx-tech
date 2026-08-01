@@ -4,6 +4,7 @@ import { env } from "../../config/env.js";
 import { ApiError } from "../../utils/api-error.js";
 import { sendEmail } from "../../emails/email.services.js";
 import { subscriptionConfirmationTemplate } from "../../emails/templates/syestem/subscription-confirmation.template.js";
+import { invoiceReceiptTemplate } from "../../emails/templates/syestem/invoice-receipt.template.js";
 import { SubscriptionService } from "../plans/subscription.service.js";
 import type {
   CreateDonationInput,
@@ -829,6 +830,13 @@ export class StripeService {
           currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : undefined,
         },
       });
+
+      await this.sendInvoiceReceiptEmail(
+        userByCustomer.id,
+        amountPaid,
+        periodEnd,
+        invoice
+      );
       return;
     }
 
@@ -843,9 +851,83 @@ export class StripeService {
     // Renewal paid — bring lapse-hidden listings back online.
     await subscriptionService.restoreLapsedListings(user.id);
 
+    await this.sendInvoiceReceiptEmail(user.id, amountPaid, periodEnd, invoice);
+
     console.log(
       `[StripeService] Invoice paid for user ${user.id} — amount: ${amountPaid ? amountPaid / 100 : "?"}`
     );
+  }
+
+  /**
+   * Send a receipt / invoice email for a successful payment.
+   * Fire-and-forget — never fail the webhook if the mail send fails.
+   */
+  private async sendInvoiceReceiptEmail(
+    userId: string,
+    amountPaid: number | undefined,
+    periodEnd: number | undefined,
+    invoice: Record<string, unknown>
+  ): Promise<void> {
+    try {
+      const lines = (invoice.lines as Record<string, unknown> | undefined)
+        ?.data;
+      const firstLine = Array.isArray(lines)
+        ? (lines[0] as Record<string, unknown> | undefined)
+        : undefined;
+      const linePrice = firstLine?.price as
+        | Record<string, unknown>
+        | undefined;
+      const priceId =
+        typeof linePrice?.id === "string" ? linePrice.id : undefined;
+
+      const invoiceUser = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          email: true,
+          name: true,
+          subscriptionPlan: {
+            select: {
+              name: true,
+              stripePriceIdMonthly: true,
+              stripePriceIdAnnual: true,
+            },
+          },
+        },
+      });
+
+      const planData = invoiceUser?.subscriptionPlan;
+      if (invoiceUser?.email && planData) {
+        // Default to monthly when the line-item price can't be resolved —
+        // monthly is the common case and a wrong default is cosmetic.
+        const billingCycle: "monthly" | "annual" =
+          priceId && priceId === planData.stripePriceIdAnnual
+            ? "annual"
+            : "monthly";
+        const amount = amountPaid ? amountPaid / 100 : 0;
+
+        await sendEmail({
+          to: invoiceUser.email,
+          subject: `Payment Receipt — ${planData.name}`,
+          html: invoiceReceiptTemplate({
+            name: invoiceUser.name ?? "there",
+            planName: planData.name,
+            amount,
+            billingCycle,
+            periodEnd: periodEnd
+              ? new Date(periodEnd * 1000).toISOString()
+              : undefined,
+          }),
+        });
+        console.log(
+          `[StripeService] Invoice email sent to ${invoiceUser.email} for plan ${planData.name}`
+        );
+      }
+    } catch (emailErr) {
+      console.error(
+        "[StripeService] Failed to send invoice email:",
+        emailErr instanceof Error ? emailErr.message : emailErr
+      );
+    }
   }
 
   /**

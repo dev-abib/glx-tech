@@ -1,5 +1,4 @@
 import z from "zod";
-import { updatePhoneSchema } from "../../utils/phone.utils.js";
 
 /**
  * Login schema for admin / super_admin users.
@@ -33,10 +32,6 @@ export const createAdminSchema = z
       ),
     confirmPassword: z.string(),
     role: z.enum(["admin", "super_admin"], "Role must be 'admin' or 'super_admin'"),
-    phone: z
-      .string()
-      .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")
-      .optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -72,8 +67,6 @@ export const adminUpdateSelfSchema = z
   .object({
     name: z.string().trim().min(3).max(100).optional(),
     email: z.string().trim().email("Invalid email format").optional(),
-    // Accepts masked placeholders too (see updatePhoneSchema).
-    phone: updatePhoneSchema.or(z.literal("")),
   })
   .strict();
 
@@ -86,8 +79,6 @@ export const adminUpdateUserSchema = z
   .object({
     name: z.string().trim().min(3).max(100).optional(),
     email: z.string().trim().email("Invalid email format").optional(),
-    // Accepts masked placeholders too (see updatePhoneSchema).
-    phone: updatePhoneSchema,
     isActive: z.boolean().optional(),
     role: z.enum(["user", "admin", "super_admin"], "Invalid role").optional(),
   })
@@ -107,3 +98,14 @@ export const adminSetSellerVerificationSchema = z
 export type AdminSetSellerVerificationInput = z.infer<
   typeof adminSetSellerVerificationSchema
 >;
+
+/**
+ * Schema for admin approving/rejecting a seller's external link.
+ */
+export const adminSetLinkStatusSchema = z
+  .object({
+    status: z.enum(["approved", "rejected"]),
+  })
+  .strict();
+
+export type AdminSetLinkStatusInput = z.infer<typeof adminSetLinkStatusSchema>;

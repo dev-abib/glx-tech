@@ -94,6 +94,10 @@ tags:
     description: "Subscription plans pricing page, Stripe checkout, and billing portal"
   - name: "22 — Admin — Plans"
     description: "Admin CRUD for subscription plans, feature definitions, and feature toggles"
+  - name: "23 — Admin — Appointments"
+    description: "Admin read-only views for appointments — paginated list with free-text search by appointment/listing/user ID"
+  - name: "24 — Admin — Seller Links"
+    description: "Admin moderation of seller external/social links — list pending links and approve/reject them"
 
 paths:
   $ref: "./paths/index.yaml"

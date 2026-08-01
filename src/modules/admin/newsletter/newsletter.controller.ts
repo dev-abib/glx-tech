@@ -113,8 +113,9 @@ export const createCampaign: RequestHandler<
 export const listCampaigns: RequestHandler = asyncHandler(async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 20));
+  const search = (req.query.search as string | undefined)?.trim() || undefined;
 
-  const result = await newsLetterService.listCampaigns(page, limit);
+  const result = await newsLetterService.listCampaigns(page, limit, search);
 
   return res
     .status(200)

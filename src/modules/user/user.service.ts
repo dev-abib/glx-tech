@@ -110,8 +110,9 @@ export class UserService {
           prisma.listing.count({ where: { userId, isAvailable: true } }),
         ]);
 
-      // Default matches the free tier (legacy sellers without a plan).
-      const maxActiveListings = userPlan.plan?.maxActiveListings ?? 5;
+      // Without a plan a seller has no listing allowance (membership is
+      // strictly required to create listings).
+      const maxActiveListings = userPlan.plan?.maxActiveListings ?? 0;
       const maxFeaturedListings = userPlan.plan?.maxFeaturedListings ?? 0;
       const platformFeePercent = userPlan.plan
         ? Number(userPlan.plan.platformFeePercent)
@@ -158,8 +159,8 @@ export class UserService {
   }
 
   // get all users (admin)
-  async getAllUsers(page: number, limit: number) {
-    return userRepo.getAllUsers(page, limit);
+  async getAllUsers(page: number, limit: number, search?: string) {
+    return userRepo.getAllUsers(page, limit, search);
   }
 
   // update user with optional avatar

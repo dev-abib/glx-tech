@@ -225,60 +225,42 @@ describe("SubscriptionService — canCreateListing", () => {
     expect(result.reason).toBe("limit_reached");
   });
 
-  it("❌ should REJECT listing creation for users with NO membership (not a seller)", async () => {
-    (mockPrisma.user.findUnique as Mock)
-      .mockResolvedValueOnce({
-        subscriptionPlanId: null,
-        subscriptionPlan: null,
-      })
-      .mockResolvedValueOnce({ isSeller: false, subscriptionStatus: null });
+  it("❌ should REJECT listing creation for users with NO membership (no plan at all)", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      subscriptionPlanId: null,
+      subscriptionPlan: null,
+    });
 
     const result = await subscriptionService.canCreateListing("user-free");
 
     expect(result.allowed).toBe(false);
     expect(result.maxAllowed).toBe(0);
     expect(result.reason).toBe("membership_required");
+    // Strict enforcement — no second user lookup for a legacy fallback.
+    expect(mockPrisma.user.findUnique).toHaveBeenCalledTimes(1);
   });
 
-  it("✅ should allow listings for legacy sellers without a plan (free-tier limit = 5)", async () => {
-    (mockPrisma.user.findUnique as Mock)
-      .mockResolvedValueOnce({
-        subscriptionPlanId: null,
-        subscriptionPlan: null,
-      })
-      .mockResolvedValueOnce({ isSeller: true, subscriptionStatus: null });
+  it("❌ should REJECT listing creation for legacy sellers without a plan (membership strictly required)", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      subscriptionPlanId: null,
+      subscriptionPlan: null,
+    });
     (mockPrisma.listing.count as Mock).mockResolvedValue(0);
 
-    const result = await subscriptionService.canCreateListing("user-free");
-
-    expect(result.allowed).toBe(true);
-    expect(result.maxAllowed).toBe(5); // Free-tier limit
-  });
-
-  it("❌ should reject a 6th listing for legacy free-tier sellers (limit = 5)", async () => {
-    (mockPrisma.user.findUnique as Mock)
-      .mockResolvedValueOnce({
-        subscriptionPlanId: null,
-        subscriptionPlan: null,
-      })
-      .mockResolvedValueOnce({ isSeller: true, subscriptionStatus: null });
-    (mockPrisma.listing.count as Mock).mockResolvedValue(5);
-
-    const result = await subscriptionService.canCreateListing("user-free");
+    const result = await subscriptionService.canCreateListing("user-legacy");
 
     expect(result.allowed).toBe(false);
-    expect(result.maxAllowed).toBe(5);
-    expect(result.currentCount).toBe(5);
-    expect(result.reason).toBe("limit_reached");
+    expect(result.maxAllowed).toBe(0);
+    expect(result.reason).toBe("membership_required");
+    // Listing count must NOT be queried — the request is rejected up front.
+    expect(mockPrisma.listing.count).not.toHaveBeenCalled();
   });
 
   it("❌ should REJECT listing creation for CANCELED users without a plan (must reactivate membership)", async () => {
-    (mockPrisma.user.findUnique as Mock)
-      .mockResolvedValueOnce({
-        subscriptionPlanId: null,
-        subscriptionPlan: null,
-      })
-      .mockResolvedValueOnce({ isSeller: true, subscriptionStatus: "canceled" });
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      subscriptionPlanId: null,
+      subscriptionPlan: null,
+    });
 
     const result = await subscriptionService.canCreateListing("user-canceled");
 

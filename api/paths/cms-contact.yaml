@@ -66,7 +66,9 @@ gt-all-inquiries:
         in: query
         schema:
           type: string
-        description: Search keyword for name, email, subject, or message
+        description: >
+          Search keyword (case-insensitive). Matches inquiry ID, name, email,
+          subject, or message.
       - name: status
         in: query
         schema:

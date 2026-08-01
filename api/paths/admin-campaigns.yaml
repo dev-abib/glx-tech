@@ -46,6 +46,13 @@ campaigns:
           default: 20
           maximum: 50
         description: Items per page
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: >
+          Search keyword (case-insensitive). Matches campaign ID, subject, or
+          heading.
     responses:
       "200":
         description: Campaigns fetched successfully

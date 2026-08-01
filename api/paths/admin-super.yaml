@@ -70,6 +70,12 @@ gt-all-users:
           type: integer
           default: 10
           maximum: 50
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: >
+          Search keyword (case-insensitive). Matches user ID, name, or email.
     responses:
       "200":
         description: Users fetched successfully
@@ -109,6 +115,12 @@ gt-all-admins:
           type: integer
           default: 10
           maximum: 50
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: >
+          Search keyword (case-insensitive). Matches admin ID, name, or email.
     responses:
       "200":
         description: Admins fetched successfully

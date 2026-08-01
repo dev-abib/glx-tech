@@ -41,6 +41,7 @@ export const getAllListings: RequestHandler = asyncHandler(
       page: Number(req.query.page) || 1,
       limit: Number(req.query.limit) || 10,
       search: req.query.search as string | undefined,
+      location: req.query.location as string | undefined,
       serviceId: req.query.serviceId as string | undefined,
       serviceName: req.query.serviceName as string | undefined,
       minPrice: req.query.minPrice
@@ -64,7 +65,7 @@ export const getAllListings: RequestHandler = asyncHandler(
           : undefined,
       sortBy: (req.query.sortBy as string) || "createdAt",
       sortOrder: (req.query.sortOrder as "asc" | "desc") || "desc",
-      random: true,
+      random: req.query.random === "true" ? true : undefined,
     });
 
     return res

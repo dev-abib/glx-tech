@@ -188,6 +188,10 @@
   $ref: "./listings.yaml#/toggle-listing-featured"
 
 # ── Admin — Listings, Reviews & Dashboard ───────────────────────────
+/admin/seller-links:
+  $ref: "./admin-seller-links.yaml#/get-seller-links"
+/admin/seller-links/{userId}:
+  $ref: "./admin-seller-links.yaml#/set-seller-link-status"
 /admin/listings:
   $ref: "./admin-listings.yaml#/get-all-listings"
 /admin/listings/listing/{slug}:
@@ -214,6 +218,8 @@
   $ref: "./admin-campaigns.yaml#/get-subscriber-count"
 
 # ── Appointments ─────────────────────────────────────────────────────
+/admin/appointments:
+  $ref: "./appointments.yaml#/admin-get-all-appointments"
 /appointments/create-appointment:
   $ref: "./appointments.yaml#/create-appointment"
 /appointments/my-bookings:

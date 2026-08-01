@@ -42,10 +42,6 @@ interface UserPlanResult {
   plan: { id: string; slug: string; maxActiveListings: number; maxFeaturedListings: number; platformFeePercent: number } | null;
 }
 
-// Listing limit granted to legacy sellers who predate membership enforcement
-// but have no plan assigned yet (they behave like free-tier sellers).
-const LEGACY_SELLER_DEFAULT_LISTINGS = 5;
-
 export class SubscriptionService {
   /**
    * Get the subscription plan for a user.
@@ -122,28 +118,21 @@ export class SubscriptionService {
    * Whether a user currently holds an active membership.
    *
    * Any assigned plan (including the Free tier, which IS a real membership)
-   * counts as active. TRUE legacy sellers — accounts created before
-   * membership enforcement with no subscription status recorded at all — are
-   * treated as free-tier members. Users who are recorded as canceled /
-   * past_due / unpaid (status set, no plan) do NOT have an active membership.
+   * counts as active. Users without any plan — including sellers who never
+   * activated a membership — do NOT have an active membership and therefore
+   * cannot create or manage listings.
    */
   async hasActiveMembership(userId: string): Promise<boolean> {
     const userPlan = await this.getPlanForUser(userId);
-    if (userPlan.plan) return true;
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { isSeller: true, subscriptionStatus: true },
-    });
-    return !!user?.isSeller && !user.subscriptionStatus;
+    return !!userPlan.plan;
   }
 
   /**
    * Check if a user can create a new listing based on their plan's maxActiveListings.
    *
-   * Membership is enforced here: users without any plan (no free tier, no paid
-   * subscription) cannot create listings unless they are legacy sellers created
-   * before membership enforcement, who keep the free-tier limit.
+   * Membership is strictly enforced: users without any plan (no free tier, no
+   * paid subscription) cannot create listings at all. Activating a seller
+   * account assigns the Free tier, so every active seller has a plan.
    */
   async canCreateListing(userId: string): Promise<{
     allowed: boolean;
@@ -166,26 +155,15 @@ export class SubscriptionService {
     if (userPlan.plan) {
       maxAllowed = userPlan.plan.maxActiveListings;
     } else {
-      // No plan. Only TRUE legacy sellers — accounts created before
-      // membership enforcement, i.e. with no subscription status recorded at
-      // all — keep the free-tier limit. Canceled/past_due users (who have a
-      // status but no plan) must reactivate a membership before listing.
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { isSeller: true, subscriptionStatus: true },
-      });
-      if (user?.isSeller && !user.subscriptionStatus) {
-        maxAllowed = LEGACY_SELLER_DEFAULT_LISTINGS;
-      } else {
-        const result = {
-          allowed: false,
-          currentCount: 0,
-          maxAllowed: 0,
-          reason: "membership_required" as const,
-        };
-        setCache(cacheKey, result);
-        return result;
-      }
+      // No plan at all — no membership, no listings.
+      const result = {
+        allowed: false,
+        currentCount: 0,
+        maxAllowed: 0,
+        reason: "membership_required" as const,
+      };
+      setCache(cacheKey, result);
+      return result;
     }
 
     const currentCount = await prisma.listing.count({

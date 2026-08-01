@@ -1,0 +1,131 @@
+get-seller-links:
+  get:
+    tags: ["24 — Admin — Seller Links"]
+    summary: List seller external links (Admin only)
+    description: Returns a paginated list of sellers who submitted an external link, optionally filtered by moderation status (pending, approved, rejected). Only approved links are shown on public listings.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: page
+        in: query
+        schema:
+          type: integer
+          default: 1
+      - name: limit
+        in: query
+        schema:
+          type: integer
+          default: 10
+          maximum: 50
+      - name: status
+        in: query
+        required: false
+        schema:
+          type: string
+          enum: [pending, approved, rejected]
+        description: Filter links by moderation status
+    responses:
+      "200":
+        description: Seller links fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        links:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                description: SellerInfo record ID
+                              userId:
+                                type: string
+                                description: Seller user ID
+                              storeName:
+                                type: string
+                                description: Seller store name
+                              socialLInk:
+                                type: string
+                                description: The submitted external link
+                              linkStatus:
+                                type: string
+                                enum: [pending, approved, rejected]
+                                description: Moderation state of the link
+                              user:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                  name:
+                                    type: string
+                                    nullable: true
+                                  email:
+                                    type: string
+                                    nullable: true
+                                  avatar:
+                                    type: string
+                                    nullable: true
+                              updatedAt:
+                                type: string
+                                format: date-time
+                        pagination:
+                          $ref: "#/components/schemas/Pagination"
+      "401":
+        description: Must be logged in
+      "403":
+        description: Forbidden — Admin access required
+set-seller-link-status:
+  patch:
+    tags: ["24 — Admin — Seller Links"]
+    summary: Approve or reject a seller's external link (Admin only)
+    description: Sets the moderation status of a seller's external link. Approved links become visible on the seller's public listings; rejected links stay hidden.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Seller user ID whose link is being moderated
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status]
+            properties:
+              status:
+                type: string
+                enum: [approved, rejected]
+                description: New moderation status
+    responses:
+      "200":
+        description: Seller link status updated
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: object
+                      properties:
+                        linkStatus:
+                          type: string
+                          enum: [approved, rejected]
+      "400":
+        description: Seller has not submitted a link
+      "404":
+        description: Seller profile not found
+      "401":
+        description: Must be logged in
+      "403":
+        description: Forbidden — Admin access required

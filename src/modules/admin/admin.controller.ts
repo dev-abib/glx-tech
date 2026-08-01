@@ -13,6 +13,7 @@ import type {
   AdminChangePasswordInput,
   AdminUpdateUserInput,
   AdminSetSellerVerificationInput,
+  AdminSetLinkStatusInput,
 } from "./admin.validation.js";
 
 const adminService = new AdminService();
@@ -63,7 +64,6 @@ export const getAdminMe: RequestHandler<
     email: string | null;
     role: string;
     avatar: string | null;
-    phone: string | null;
     isEmailVerified: boolean;
     isActive: boolean;
     isPaid: boolean;
@@ -89,7 +89,6 @@ export const getAllAdmins: RequestHandler<
       email: string | null;
       role: string;
       avatar: string | null;
-      phone: string | null;
       isEmailVerified: boolean;
       isActive: boolean;
       createdAt: Date;
@@ -100,7 +99,8 @@ export const getAllAdmins: RequestHandler<
 > = asyncHandler(async (req: Request, res: Response) => {
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
-  const result = await adminService.getAllAdmins(page, limit);
+  const search = (req.query.search as string | undefined)?.trim() || undefined;
+  const result = await adminService.getAllAdmins(page, limit, search);
 
   return res
     .status(200)
@@ -153,6 +153,46 @@ export const adminSetSellerVerification: RequestHandler<
     .json(new ApiResponse(200, result.message, { isVerifiedSeller: result.isVerifiedSeller }));
 });
 
+// ── Seller external link moderation ───────────────────────────────────────
+
+export const adminGetSellerLinks: RequestHandler<
+  {},
+  ApiResponse<{
+    links: Array<{
+      id: string;
+      userId: string;
+      storeName: string;
+      socialLInk: string;
+      linkStatus: string;
+      user: { id: string; name: string | null; email: string | null; avatar: string | null };
+      updatedAt: Date;
+    }>;
+    pagination: { page: number; limit: number; total: number; totalPages: number };
+  }>
+> = asyncHandler(async (req: Request, res: Response) => {
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
+  const status = (req.query.status as string) || undefined;
+  const result = await adminService.getSellerLinks(page, limit, status);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Seller links fetched successfully", result));
+});
+
+export const adminSetSellerLinkStatus: RequestHandler<
+  { userId: string },
+  ApiResponse<{ linkStatus: string }>,
+  AdminSetLinkStatusInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.params.userId as string;
+  const result = await adminService.setSellerLinkStatus(userId, req.body.status);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result.message, { linkStatus: result.linkStatus }));
+});
+
 // ── Super admin gets all users ────────────────────────────────────────────
 
 export const adminGetAllUsers: RequestHandler<
@@ -164,7 +204,6 @@ export const adminGetAllUsers: RequestHandler<
       email: string | null;
       role: string;
       avatar: string | null;
-      phone: string | null;
       isEmailVerified: boolean;
       isActive: boolean;
       isPaid: boolean;
@@ -176,7 +215,8 @@ export const adminGetAllUsers: RequestHandler<
 > = asyncHandler(async (req: Request, res: Response) => {
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
-  const result = await adminService.getAllUsers(page, limit);
+  const search = (req.query.search as string | undefined)?.trim() || undefined;
+  const result = await adminService.getAllUsers(page, limit, search);
 
   return res
     .status(200)
@@ -193,7 +233,6 @@ export const adminUpdateSelf: RequestHandler<
     email: string | null;
     role: string;
     avatar: string | null;
-    phone: string | null;
     isEmailVerified: boolean;
     isActive: boolean;
     createdAt: Date;
@@ -249,7 +288,6 @@ export const adminGetUserById: RequestHandler<
     email: string | null;
     role: string;
     avatar: string | null;
-    phone: string | null;
     isEmailVerified: boolean;
     isActive: boolean;
     isPaid: boolean;
@@ -275,7 +313,6 @@ export const adminUpdateAdmin: RequestHandler<
     email: string | null;
     role: string;
     avatar: string | null;
-    phone: string | null;
     isEmailVerified: boolean;
     isActive: boolean;
     createdAt: Date;
@@ -302,6 +339,7 @@ export const adminGetAllListings: RequestHandler = asyncHandler(
       page: Number(req.query.page) || 1,
       limit: Number(req.query.limit) || 10,
       search: req.query.search as string | undefined,
+      location: req.query.location as string | undefined,
       serviceId: req.query.serviceId as string | undefined,
       sortBy: (req.query.sortBy as string) || "createdAt",
       sortOrder: (req.query.sortOrder as "asc" | "desc") || "desc",

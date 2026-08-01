@@ -24,6 +24,8 @@ import {
   adminGetDashboardTrends,
   adminGetAllAppointments,
   adminSetSellerVerification,
+  adminGetSellerLinks,
+  adminSetSellerLinkStatus,
 } from "./admin.controller.js";
 import {
   adminLoginSchema,
@@ -32,6 +34,7 @@ import {
   adminUpdateSelfSchema,
   adminUpdateUserSchema,
   adminSetSellerVerificationSchema,
+  adminSetLinkStatusSchema,
 } from "./admin.validation.js";
 
 const router = Router();
@@ -108,6 +111,20 @@ router
     authenticate({ type: "admin" }),
     validate(adminSetSellerVerificationSchema),
     adminSetSellerVerification
+  );
+
+// Seller external link moderation — list links (filter by status) and
+// approve/reject them. Once approved, the link shows on the seller's listings.
+router
+  .route("/seller-links")
+  .get(authenticate({ type: "admin" }), adminGetSellerLinks);
+
+router
+  .route("/seller-links/:userId")
+  .patch(
+    authenticate({ type: "admin" }),
+    validate(adminSetLinkStatusSchema),
+    adminSetSellerLinkStatus
   );
 
 // ═══════════════════════════════════════════════════════════════════════════

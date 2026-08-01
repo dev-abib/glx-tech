@@ -48,7 +48,7 @@ export const authenticate = (options: AuthOptions = {}) => {
       const token = extractToken(req);
 
       if (!token) {
-        throw new ApiError(401, "Missing access token");
+        throw new ApiError(401, "Must be logged in to continue");
       }
 
       const authType = options.type ?? "user";

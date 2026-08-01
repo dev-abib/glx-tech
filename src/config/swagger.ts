@@ -169,6 +169,9 @@ P("listings.yaml", "/listings/update-review/{reviewId}", "update-review");
 P("listings.yaml", "/listings/delete-review/{reviewId}", "delete-review");
 P("listings.yaml", "/listings/toggle-status/{id}", "toggle-listing-status");
 P("listings.yaml", "/listings/toggle-featured/{id}", "toggle-listing-featured");
+// ── Admin — Seller link moderation ──────────────────────────────────
+P("admin-seller-links.yaml", "/admin/seller-links", "get-seller-links");
+P("admin-seller-links.yaml", "/admin/seller-links/{userId}", "set-seller-link-status");
 // ── Admin — Listings, Reviews & Dashboard ───────────────────────────
 P("admin-listings.yaml", "/admin/listings", "get-all-listings");
 P("admin-listings.yaml", "/admin/listings/listing/{slug}", "get-listing-by-slug");
@@ -186,6 +189,7 @@ P("admin-campaigns.yaml", "/admin/campaigns/{id}/send", "send-campaign");
 P("admin-campaigns.yaml", "/admin/campaigns/subscriber-count", "get-subscriber-count");
 
 // ── Appointments ──────────────────────────────────────────────────────
+P("appointments.yaml", "/admin/appointments", "admin-get-all-appointments");
 P("appointments.yaml", "/appointments/create-appointment", "create-appointment");
 P("appointments.yaml", "/appointments/my-bookings", "get-my-bookings");
 P("appointments.yaml", "/appointments/my-bookings/{appointmentId}/cancel", "cancel-my-booking");

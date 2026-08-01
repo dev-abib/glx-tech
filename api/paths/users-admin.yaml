@@ -19,6 +19,14 @@ gt-all-users:
           default: 10
           maximum: 50
         description: Items per page
+      - name: search
+        in: query
+        schema:
+          type: string
+        description: >
+          Search keyword (case-insensitive). Matches user ID, name, or email.
+          Lets admins find a specific user straight from the panel by their
+          record ID.
     responses:
       "200":
         description: Users fetched successfully

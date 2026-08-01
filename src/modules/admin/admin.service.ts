@@ -8,7 +8,6 @@ import { sendEmail } from "../../emails/email.services.js";
 import { env } from "../../config/env.js";
 import { CloudinaryService } from "../../helpers/cloudinary.service.js";
 import { deleteAccountConfirmationTemplate } from "../../emails/templates/auth/delete-account-confirmation.template.js";
-import { isMaskedPhone, maskPhone } from "../../utils/phone.utils.js";
 import type {
   AdminLoginInput,
   CreateAdminInput,
@@ -123,7 +122,6 @@ export class AdminService {
         data: {
           role: data.role as Role,
           password: hashedPassword,
-          phone: data.phone ?? existing.phone,
           isEmailVerified: true, // Admins are auto-verified
           isActive: true,
         },
@@ -146,7 +144,6 @@ export class AdminService {
         email: data.email,
         password: hashedPassword,
         role: data.role as Role,
-        phone: data.phone ?? null,
         isEmailVerified: true, // Admins are auto-verified
         isActive: true,
       },
@@ -178,7 +175,6 @@ export class AdminService {
       email: user.email,
       role: user.role,
       avatar: user.avatar,
-      phone: user.phone,
       isEmailVerified: user.isEmailVerified,
       isVerifiedSeller: user.isVerifiedSeller,
       isActive: user.isActive,
@@ -190,14 +186,24 @@ export class AdminService {
 
   // ── Get All Admins (Super Admin only) ───────────────────────────────────
 
-  async getAllAdmins(page: number = 1, limit: number = 10) {
+  async getAllAdmins(page: number = 1, limit: number = 10, search?: string) {
     const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {
+      role: { in: ["admin", "super_admin"] },
+    };
+    if (search) {
+      // Free-text search — matches admin ID, name or email (case-insensitive).
+      where.OR = [
+        { id: { contains: search, mode: "insensitive" } },
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
     const [admins, total] = await Promise.all([
       prisma.user.findMany({
-        where: {
-          role: { in: ["admin", "super_admin"] },
-        },
+        where: where as any,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
@@ -207,26 +213,17 @@ export class AdminService {
           email: true,
           role: true,
           avatar: true,
-          phone: true,
           isEmailVerified: true,
           isActive: true,
           createdAt: true,
           updatedAt: true,
         },
       }),
-      prisma.user.count({
-        where: {
-          role: { in: ["admin", "super_admin"] },
-        },
-      }),
+      prisma.user.count({ where: where as any }),
     ]);
 
     return {
-      // Never expose full phone numbers — only the last 4 digits.
-      admins: admins.map((admin) => ({
-        ...admin,
-        phone: maskPhone(admin.phone),
-      })),
+      admins,
       pagination: {
         page,
         limit,
@@ -333,10 +330,102 @@ export class AdminService {
     };
   }
 
+  // ── Seller external link moderation ─────────────────────────────────────
+
+  /**
+   * List sellers with an external link (any status), optionally filtered by
+   * status, so admins can review pending links in the dashboard.
+   */
+  async getSellerLinks(
+    page: number = 1,
+    limit: number = 10,
+    status?: string
+  ) {
+    const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {
+      // Only sellers that actually submitted a link.
+      socialLInk: { not: "" },
+    };
+    if (status) {
+      where.linkStatus = status;
+    }
+
+    const [links, total] = await Promise.all([
+      prisma.sellerInfo.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { updatedAt: "desc" },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatar: true,
+            },
+          },
+        },
+      }),
+      prisma.sellerInfo.count({ where }),
+    ]);
+
+    return {
+      links: links.map((sellerInfo) => ({
+        id: sellerInfo.id,
+        userId: sellerInfo.userId,
+        storeName: sellerInfo.storeName,
+        socialLInk: sellerInfo.socialLInk,
+        linkStatus: sellerInfo.linkStatus,
+        user: sellerInfo.user,
+        updatedAt: sellerInfo.updatedAt,
+      })),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
+   * Approve or reject a seller's external link. Once approved, the link
+   * becomes visible on the seller's public listings.
+   */
+  async setSellerLinkStatus(
+    sellerUserId: string,
+    status: "approved" | "rejected"
+  ) {
+    const sellerInfo = await prisma.sellerInfo.findUnique({
+      where: { userId: sellerUserId },
+    });
+    if (!sellerInfo) {
+      throw new ApiError(404, "Seller profile not found");
+    }
+    if (!sellerInfo.socialLInk || sellerInfo.socialLInk.trim() === "") {
+      throw new ApiError(400, "This seller has not submitted an external link");
+    }
+
+    await prisma.sellerInfo.update({
+      where: { id: sellerInfo.id },
+      data: { linkStatus: status },
+    });
+
+    return {
+      message:
+        status === "approved"
+          ? "Seller link approved and now visible on their listings"
+          : "Seller link rejected and hidden from their listings",
+      linkStatus: status,
+    };
+  }
+
   // ── Super admin gets all users (all roles) ──────────────────────────────
 
-  async getAllUsers(page: number = 1, limit: number = 10) {
-    return userRepo.getAllUsers(page, limit);
+  async getAllUsers(page: number = 1, limit: number = 10, search?: string) {
+    return userRepo.getAllUsers(page, limit, search);
   }
 
   // ── Admin updates own profile ───────────────────────────────────────────
@@ -351,10 +440,6 @@ export class AdminService {
     const updateData: Record<string, unknown> = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    // Never persist an already-masked phone echoed back by a client.
-    if (data.phone !== undefined && !isMaskedPhone(data.phone)) {
-      updateData.phone = data.phone;
-    }
 
     if (data.email !== undefined) {
       if (data.email !== user.email) {
@@ -389,7 +474,6 @@ export class AdminService {
       email: updated.email,
       role: updated.role,
       avatar: updated.avatar,
-      phone: updated.phone,
       isEmailVerified: updated.isEmailVerified,
       isActive: updated.isActive,
       createdAt: updated.createdAt,
@@ -490,7 +574,6 @@ export class AdminService {
       email: user.email,
       role: user.role,
       avatar: user.avatar,
-      phone: maskPhone(user.phone),
       isEmailVerified: user.isEmailVerified,
       isVerifiedSeller: user.isVerifiedSeller,
       isActive: user.isActive,
@@ -508,10 +591,6 @@ export class AdminService {
     const updateData: Record<string, unknown> = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    // Never persist an already-masked phone echoed back by a client.
-    if (data.phone !== undefined && !isMaskedPhone(data.phone)) {
-      updateData.phone = data.phone;
-    }
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
     if (data.email !== undefined) {
@@ -545,7 +624,6 @@ export class AdminService {
       email: updated.email,
       role: updated.role,
       avatar: updated.avatar,
-      phone: maskPhone(updated.phone),
       isEmailVerified: updated.isEmailVerified,
       isActive: updated.isActive,
       createdAt: updated.createdAt,

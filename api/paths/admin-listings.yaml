@@ -21,7 +21,15 @@ get-all-listings:
         in: query
         schema:
           type: string
-        description: Search keyword for title or description
+        description: >
+          Search keyword (case-insensitive). Matches the listing ID, seller
+          user ID, title, slug, description, prices, seller name/email, full
+          address and service name.
+      - name: location
+        in: query
+        schema:
+          type: string
+        description: Location filter — matches the listing's street, city, state or zip code
       - name: serviceId
         in: query
         schema:
@@ -165,7 +173,9 @@ get-all-reviews:
         in: query
         schema:
           type: string
-        description: Search keyword
+        description: >
+          Search keyword (case-insensitive). Matches review ID, listing ID,
+          reviewer user ID, review text, or reviewer name.
     responses:
       "200":
         description: Reviews fetched successfully

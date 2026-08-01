@@ -35,6 +35,10 @@ model SellerInfo {
   servicesId      String[]
   insuranceStatus Insurance
   socialLInk      String
+  // Moderation state for the seller's external link. "pending" links are
+  // hidden from public listings until an admin approves them ("approved").
+  // "rejected" links are hidden indefinitely.
+  linkStatus      String          @default("pending") @map("link_status")
   businessNumber  String
   businessEmail   String
   sellerAddress   Selleraddress[]
@@ -50,7 +54,6 @@ model User {
   role                 Role              @default(user)
   avatar               String?
   avatarPublicId       String?           @map("avatar_public_id")
-  phone                String?
   isEmailVerified      Boolean           @default(false) @map("is_email_verified")
   isVerifiedSeller     Boolean           @default(false) @map("is_verified_seller")
   otp                  String?

@@ -24,7 +24,15 @@ const bookingDateField = z.preprocess(
   normalizeDate,
   z.string().regex(dateRegex, "Booking date must be YYYY-MM-DD")
 );
+// Required HH:MM time slot — SERVICE bookings must pick a slot before booking.
 const bookingTimeField = z.preprocess(
+  normalizeTime,
+  z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Booking time must be HH:MM (24-hour)")
+);
+// Optional time — RENT bookings can span a full day without a specific slot.
+const optionalBookingTimeField = z.preprocess(
   normalizeTime,
   z
     .string()
@@ -57,7 +65,7 @@ export type CreateServiceAppointmentInput = z.infer<typeof CreateServiceAppointm
 export const CreateRentAppointmentSchema = z.object({
   listingId: z.string().min(1, "Listing ID is required"),
   bookingDate: bookingDateField,
-  bookingTime: bookingTimeField,
+  bookingTime: optionalBookingTimeField,
   appointmentType: z.literal("RENT"),
   // Prices may be 0 — free rentals are supported.
   hourlyPrice: z.number().min(0, "Hourly price cannot be negative").optional(),

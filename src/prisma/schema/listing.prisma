@@ -16,6 +16,8 @@ model Listing {
   user        User          @relation(fields: [userId], references: [id])
   title       String
   slug        String        @unique()
+
+  @@unique([userId, title])
   serviceId   String
   service     Service       @relation(fields: [serviceId], references: [id])
   description String

@@ -2,7 +2,6 @@ import { getPrismaClient } from "../../config/database.js";
 import { CloudinaryService } from "../../helpers/cloudinary.service.js";
 import { UserRepository } from "../user/user.repository.js";
 import { ApiError } from "../../utils/api-error.js";
-import { maskPhone } from "../../utils/phone.utils.js";
 import {
   generateUniqueListingSlug,
   slugifyTitle,
@@ -20,6 +19,39 @@ const cloudinary = new CloudinaryService();
 const prisma = getPrismaClient();
 const userRepo = new UserRepository();
 const subscriptionService = new SubscriptionService();
+
+/**
+ * Only surface a seller's external link on a listing once an admin has
+ * approved it. Empty links and links awaiting approval / rejected links
+ * are returned as null so public frontends never render a link icon for
+ * them.
+ */
+const withApprovedSellerLink = <
+  T extends {
+    sellerInfo?: {
+      socialLInk?: string | null;
+      linkStatus?: string | null;
+    } | null;
+  } | null
+>(
+  user: T
+): T => {
+  if (!user?.sellerInfo) return user;
+  const { socialLInk, linkStatus, ...publicInfo } = user.sellerInfo;
+  const approved =
+    linkStatus === "approved" &&
+    typeof socialLInk === "string" &&
+    socialLInk.trim().length > 0;
+  // Expose the link only when approved, and never leak the moderation state
+  // (linkStatus) to public listing payloads.
+  return {
+    ...user,
+    sellerInfo: {
+      ...publicInfo,
+      socialLInk: approved ? socialLInk : null,
+    },
+  };
+};
 
 export class ListingService {
   // create listing service
@@ -44,6 +76,22 @@ export class ListingService {
         403,
         `Listing limit reached. Your plan allows a maximum of ${planCheck.maxAllowed} active listing(s). ` +
         `You currently have ${planCheck.currentCount}. Upgrade your plan to create more listings.`
+      );
+    }
+
+    // One seller can only have one listing with a given title — keeps URLs
+    // unique per shop and prevents duplicate-named listings ("Oil Change").
+    // Matched case-insensitively so "Oil Change" and "oil change" count as
+    // the same name. Checked BEFORE any Cloudinary uploads so a rejected
+    // request never orphans images.
+    const duplicateTitle = await prisma.listing.findFirst({
+      where: { userId, title: { equals: data.title, mode: "insensitive" } },
+      select: { id: true },
+    });
+    if (duplicateTitle) {
+      throw new ApiError(
+        409,
+        `You already have a listing named "${data.title}". Each listing must have a unique name.`
       );
     }
 
@@ -130,6 +178,7 @@ export class ListingService {
       page,
       limit,
       search,
+      location,
       serviceId,
       serviceName,
       minPrice,
@@ -153,10 +202,27 @@ export class ListingService {
       user: { isActive: true },
     };
 
+    // Location search — matches the listing's address (street, city, state
+    // or zip) so the frontend can filter by area.
+    if (location) {
+      where.AND = [
+        {
+          OR: [
+            { address: { streetAddress: { contains: location, mode: "insensitive" } } },
+            { address: { city: { contains: location, mode: "insensitive" } } },
+            { address: { state: { contains: location, mode: "insensitive" } } },
+            { address: { zipCode: { contains: location, mode: "insensitive" } } },
+          ],
+        },
+      ];
+    }
+
     // Text search — matches across all listing fields (title, slug,
     // description, seller name/email, service name, full address, price).
     if (search) {
       where.OR = [
+        { id: { contains: search, mode: "insensitive" } },
+        { userId: { contains: search, mode: "insensitive" } },
         { title: { contains: search, mode: "insensitive" } },
         { slug: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
@@ -269,7 +335,7 @@ export class ListingService {
           avatar: true,
           isVerifiedSeller: true,
           sellerInfo: {
-            select: { socialLInk: true },
+            select: { socialLInk: true, linkStatus: true },
           },
         },
       },
@@ -352,6 +418,7 @@ export class ListingService {
       const listings = paginatedListings.map(
         ({ userReview, ...rest }) => ({
           ...rest,
+          user: withApprovedSellerLink(rest.user),
           avgRating: computeAvgRating(userReview),
         })
       );
@@ -386,6 +453,7 @@ export class ListingService {
     const enrichedListings = listings.map(
       ({ userReview, ...rest }) => ({
         ...rest,
+        user: withApprovedSellerLink(rest.user),
         avgRating: computeAvgRating(userReview),
       })
     );
@@ -447,7 +515,7 @@ export class ListingService {
               avatar: true,
               isVerifiedSeller: true,
               sellerInfo: {
-                select: { socialLInk: true },
+                select: { socialLInk: true, linkStatus: true },
               },
             },
           },
@@ -481,6 +549,7 @@ export class ListingService {
     const enrichedListings = relatedListings.map(
       ({ userReview, ...rest }) => ({
         ...rest,
+        user: withApprovedSellerLink(rest.user),
         avgRating:
           userReview.length > 0
             ? parseFloat(
@@ -519,10 +588,9 @@ export class ListingService {
             name: true,
             email: true,
             avatar: true,
-            phone: true,
             isVerifiedSeller: true,
             sellerInfo: {
-              select: { socialLInk: true },
+              select: { socialLInk: true, linkStatus: true },
             },
           },
         },
@@ -560,10 +628,9 @@ export class ListingService {
       throw new ApiError(404, "Listing not found");
     }
 
-    // Never expose the seller's full phone number publicly — only last 4 digits.
     return {
       ...listing,
-      user: { ...listing.user, phone: maskPhone(listing.user.phone) },
+      user: withApprovedSellerLink(listing.user),
     };
   }
 
@@ -667,6 +734,22 @@ export class ListingService {
     const updateData: Record<string, unknown> = {};
 
     if (data.title !== undefined) {
+      // One seller can only have one listing with a given title.
+      const duplicateTitle = await prisma.listing.findFirst({
+        where: {
+          userId,
+          title: { equals: data.title, mode: "insensitive" },
+          id: { not: id },
+        },
+        select: { id: true },
+      });
+      if (duplicateTitle) {
+        throw new ApiError(
+          409,
+          `You already have a listing named "${data.title}". Each listing must have a unique name.`
+        );
+      }
+
       updateData.title = data.title;
       // Regenerate the slug from the new title and keep it unique.
       updateData.slug = await generateUniqueListingSlug(data.title, id);
@@ -1024,7 +1107,12 @@ export class ListingService {
 
     const where: Record<string, unknown> = {};
     if (search) {
+      // Free-text search (admin) — matches review ID, listing ID, reviewer
+      // user ID, review text or reviewer name (case-insensitive).
       where.OR = [
+        { id: { contains: search, mode: "insensitive" } },
+        { listingId: { contains: search, mode: "insensitive" } },
+        { userId: { contains: search, mode: "insensitive" } },
         { review: { contains: search, mode: "insensitive" } },
         { user: { name: { contains: search, mode: "insensitive" } } },
       ];

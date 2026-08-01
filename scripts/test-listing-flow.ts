@@ -19,7 +19,6 @@ const TEST_USER = {
   email: `test-seller-${Date.now()}@example.com`,
   password: "Test@1234",
   confirmPassword: "Test@1234",
-  phone: "+1234567890",
 };
 
 const SELLER_DATA = {

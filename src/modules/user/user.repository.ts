@@ -21,7 +21,6 @@ import { JwtPayload } from "jsonwebtoken";
 import { sendEmail } from "../../emails/email.services.js";
 import { accountVerificationTemplate } from "../../emails/templates/syestem/account.verification.template.js";
 import { createOTP, verifyOTP } from "../../helpers/otp/otp.js";
-import { isMaskedPhone, maskPhone } from "../../utils/phone.utils.js";
 import { getPrismaClient } from "../../config/database.js";
 import { stripe } from "../../config/stripe.config.js";
 import { accountVerificationConfirmationTemplate } from "../../emails/templates/syestem/account-verfication.confirmation.template.js";
@@ -76,7 +75,6 @@ export class UserRepository {
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        phone: data.phone,
         otp: hashedOtp,
         otpExpiresAt: expiresAt,
         otpAttempts: 0,
@@ -530,11 +528,22 @@ export class UserRepository {
   }
 
   // get all users (admin only)
-  async getAllUsers(page: number = 1, limit: number = 10) {
+  async getAllUsers(page: number = 1, limit: number = 10, search?: string) {
     const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {};
+    if (search) {
+      // Free-text search — matches user ID, name or email (case-insensitive).
+      where.OR = [
+        { id: { contains: search, mode: "insensitive" } },
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({
+        where: where as any,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
@@ -544,7 +553,6 @@ export class UserRepository {
           email: true,
           role: true,
           avatar: true,
-          phone: true,
           isEmailVerified: true,
           isVerifiedSeller: true,
           isActive: true,
@@ -553,12 +561,11 @@ export class UserRepository {
           updatedAt: true,
         },
       }),
-      prisma.user.count(),
+      prisma.user.count({ where: where as any }),
     ]);
 
     return {
-      // Never expose full phone numbers — only the last 4 digits.
-      users: users.map((user) => ({ ...user, phone: maskPhone(user.phone) })),
+      users,
       pagination: {
         page,
         limit,
@@ -568,7 +575,7 @@ export class UserRepository {
     };
   }
 
-  // update user (name, phone, address) with optional avatar upload
+  // update user (name, email, address) with optional avatar upload
   async updateUser(
     userId: string,
     data: UpdateUserInput,
@@ -579,10 +586,6 @@ export class UserRepository {
     const updateData: Record<string, unknown> = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    // Never persist an already-masked phone number echoed back by a client.
-    if (data.phone !== undefined && !isMaskedPhone(data.phone)) {
-      updateData.phone = data.phone;
-    }
 
     // Handle email change — check uniqueness first
     if (data.email !== undefined) {
@@ -692,6 +695,9 @@ export class UserRepository {
     });
 
     if (existingSellerInfo) {
+      // A changed link needs re-approval by an admin before it shows publicly.
+      const linkChanged =
+        existingSellerInfo.socialLInk !== data.socialLInk;
       await prisma.sellerInfo.update({
         where: { id: existingSellerInfo.id },
         data: {
@@ -699,6 +705,7 @@ export class UserRepository {
           servicesId: data.servicesId as string[],
           insuranceStatus: data.insuranceStatus,
           socialLInk: data.socialLInk,
+          ...(linkChanged ? { linkStatus: "pending" } : {}),
           businessNumber: data.businessNumber,
           businessEmail: data.businessEmail,
         },
@@ -736,6 +743,7 @@ export class UserRepository {
           servicesId: data.servicesId as string[],
           insuranceStatus: data.insuranceStatus,
           socialLInk: data.socialLInk,
+          linkStatus: "pending",
           businessNumber: data.businessNumber,
           businessEmail: data.businessEmail,
           sellerAddress: {
@@ -888,7 +896,6 @@ export class UserRepository {
         name: "Deleted User",
         email: `deleted-${userId}@deleted.invalid`,
         password: "!deleted!", // unrecoverable
-        phone: null,
         avatar: null,
         avatarPublicId: null,
         isEmailVerified: false,
@@ -975,7 +982,13 @@ export class UserRepository {
     if (data.servicesId !== undefined) updateData.servicesId = data.servicesId;
     if (data.insuranceStatus !== undefined)
       updateData.insuranceStatus = data.insuranceStatus;
-    if (data.socialLInk !== undefined) updateData.socialLInk = data.socialLInk;
+    if (data.socialLInk !== undefined) {
+      // Only flag for re-approval when the link value actually changed —
+      // saving unrelated seller details must not yank an approved link offline.
+      const linkChanged = data.socialLInk !== sellerInfo.socialLInk;
+      updateData.socialLInk = data.socialLInk;
+      if (linkChanged) updateData.linkStatus = "pending";
+    }
     if (data.businessNumber !== undefined)
       updateData.businessNumber = data.businessNumber;
     if (data.businessEmail !== undefined)

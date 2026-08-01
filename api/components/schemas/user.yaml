@@ -33,11 +33,6 @@ SafeUser:
       nullable: true
       example: avatars/abc123
       description: Cloudinary public ID for the avatar (used for updates/deletion)
-    phone:
-      type: string
-      nullable: true
-      example: "+1234567890"
-      description: Contact phone number
     isEmailVerified:
       type: boolean
       example: true
@@ -82,10 +77,6 @@ UpdateUserInput:
       format: email
       example: john.updated@example.com
       description: Updated email address
-    phone:
-      type: string
-      example: "+1987654321"
-      description: Updated phone number
     address:
       type: string
       minLength: 5

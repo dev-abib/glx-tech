@@ -69,16 +69,28 @@ export class NewsLetterService {
 
   // ── Admin: List Campaigns ───────────────────────────────────────────────
   //
-  async listCampaigns(page: number = 1, limit: number = 20) {
+  async listCampaigns(page: number = 1, limit: number = 20, search?: string) {
     const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {};
+    if (search) {
+      // Free-text search — matches campaign ID, subject or heading
+      // (case-insensitive).
+      where.OR = [
+        { id: { contains: search, mode: "insensitive" } },
+        { subject: { contains: search, mode: "insensitive" } },
+        { heading: { contains: search, mode: "insensitive" } },
+      ];
+    }
 
     const [campaigns, total] = await Promise.all([
       prisma.campaign.findMany({
+        where: where as any,
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
       }),
-      prisma.campaign.count(),
+      prisma.campaign.count({ where: where as any }),
     ]);
 
     // Enrich with subscriber count for "sent" campaigns

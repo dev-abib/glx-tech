@@ -66,7 +66,6 @@ async function main() {
         email: sellerEmail,
         password: "Test@1234",
         confirmPassword: "Test@1234",
-        phone: "+1234567890",
       }),
     });
     const regBody = await regRes.json();
@@ -199,7 +198,6 @@ async function main() {
         email: buyerEmail,
         password: "Test@1234",
         confirmPassword: "Test@1234",
-        phone: "+1234567891",
       }),
     });
     const buyerRegBody = await buyerRegRes.json();

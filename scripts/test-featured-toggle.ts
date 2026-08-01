@@ -34,7 +34,6 @@ async function main() {
       email: TEST_EMAIL,
       password: "Test@1234",
       confirmPassword: "Test@1234",
-      phone: "+1234567890",
     }),
   });
   const regBody = await regRes.json();
