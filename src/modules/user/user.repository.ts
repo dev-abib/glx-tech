@@ -633,17 +633,18 @@ export class UserRepository {
   // update user as seller repo
   //
   // Membership is enforced server-side: a user may only be labelled
-  // "seller" after an active membership exists. New sellers are activated
-  // on the Free tier here — the free plan is assigned as the membership and
-  // activates the account with the free plan's listing limits.
+  // "seller" after an active membership exists. Onboarding does NOT assign
+  // a plan automatically — the seller must subscribe to a plan before they
+  // can add listings (enforced by the listing service).
   async updateUserAsSeller(
     userId: string,
     data: UpdateUserAsSellerInput
   ): Promise<{
     message: string;
     data: { accessToken: string; refreshToken: string; role: string };
-  }> {
-    const user = await this.findUser("id", userId, true);
+  }  > {
+    // Verifies the user exists (throws 404 if not).
+    await this.findUser("id", userId, true);
 
     if (
       !Array.isArray(data.servicesId) ||
@@ -660,33 +661,10 @@ export class UserRepository {
       throw new ApiError(400, "You can only add one address during registration. You can add more later from your account settings.");
     }
 
-    // ── Membership check ─────────────────────────────────────────────────
-    // If the user has no plan at all, activate them on the Free tier (assigns
-    // the free plan → max listings from the plan). Users who already have a
-    // plan — even a past_due/canceled one — keep it and are never silently
-    // downgraded to the free tier.
-    const wasOnPaidPlan = Boolean(user.subscriptionPlanId);
-
-    if (!wasOnPaidPlan) {
-      const freePlan = await prisma.subscriptionPlan.findUnique({
-        where: { slug: "free" },
-        select: { id: true },
-      });
-      if (!freePlan) {
-        throw new ApiError(
-          500,
-          "The free tier is not configured. Please contact support."
-        );
-      }
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          subscriptionPlanId: freePlan.id,
-          subscriptionStatus: "active",
-          isPaid: false,
-        },
-      });
-    }
+    // ── Membership note ─────────────────────────────────────────────────
+    // No plan is auto-assigned during onboarding. The seller keeps whatever
+    // plan they already hold (if any) and must subscribe to a plan before
+    // they can add listings — enforced by the listing service.
 
     // ── Upsert seller profile (idempotent — safe to resubmit the form) ──
     const address = data.addresses[0];
@@ -784,9 +762,9 @@ export class UserRepository {
     });
 
     return {
-      message: wasOnPaidPlan
+      message: updated.subscriptionPlanId
         ? "Seller account activated successfully. You can now create listings."
-        : "Seller account activated successfully on the free tier. You can now create listings.",
+        : "Seller account activated successfully. To add listings, you must subscribe to a subscription plan.",
       data: { accessToken, refreshToken, role: updated.role },
     };
   }
@@ -1057,7 +1035,7 @@ export class UserRepository {
     if (!canAddMultipleAddresses && sellerInfo.sellerAddress.length >= 1) {
       throw new ApiError(
         403,
-        "Only premium users can add multiple addresses. Upgrade your plan to add more locations."
+        "To add a location, you must have a subscription plan that includes multiple locations. Please subscribe to a plan."
       );
     }
 

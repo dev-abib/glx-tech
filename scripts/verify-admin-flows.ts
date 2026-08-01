@@ -102,7 +102,7 @@ async function main() {
     }
     const token = loginBody.data.token.accessToken;
 
-    // ── 4. Activate seller (free plan) + create listings ──────────────────
+    // ── 4. Activate seller + create listings ─────────────────────────────
     console.log("4. Setting up seller profile...");
     const sellerRes = await fetch(`${BASE}/users/update-as-seller`, {
       method: "POST",
@@ -123,7 +123,26 @@ async function main() {
       fail(`  ❌ update-as-seller failed: ${JSON.stringify(sellerBody)}`);
       return;
     }
-    console.log("  ✅ Seller activated (free plan assigned)");
+    console.log("  ✅ Seller activated");
+
+    // Onboarding no longer auto-assigns the Free tier — assign a plan
+    // directly so the listing-creation steps below can proceed.
+    const premiumPlan = await prisma.subscriptionPlan.findUnique({
+      where: { slug: "premium" },
+    });
+    if (!premiumPlan) {
+      fail("  ❌ Premium plan not found — run the plans seeder first (npm run seed:plans)");
+      return;
+    }
+    await prisma.user.update({
+      where: { id: sellerId },
+      data: {
+        subscriptionPlanId: premiumPlan.id,
+        subscriptionStatus: "active",
+        isPaid: true,
+      },
+    });
+    console.log(`  ✅ Plan assigned to seller: ${premiumPlan.name}`);
 
     const sellerInfo = await prisma.sellerInfo.findUnique({
       where: { userId: sellerId },

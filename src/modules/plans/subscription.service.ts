@@ -69,9 +69,9 @@ export class SubscriptionService {
 
     const result: UserPlanResult = {
       planId: user?.subscriptionPlanId ?? null,
-      // The Free tier is still "free" even though it is a real membership.
-      isFree:
-        !user?.subscriptionPlanId || user?.subscriptionPlan?.slug === "free",
+    // Users without any assigned plan are treated as "free".
+    isFree:
+      !user?.subscriptionPlanId || user?.subscriptionPlan?.slug === "free",
       plan: (user?.subscriptionPlan ?? null) as UserPlanResult["plan"],
     };
 
@@ -117,10 +117,9 @@ export class SubscriptionService {
   /**
    * Whether a user currently holds an active membership.
    *
-   * Any assigned plan (including the Free tier, which IS a real membership)
-   * counts as active. Users without any plan — including sellers who never
-   * activated a membership — do NOT have an active membership and therefore
-   * cannot create or manage listings.
+   * Any assigned plan counts as active. Users without any plan — including
+   * sellers who never subscribed to a plan — do NOT have an active
+   * membership and therefore cannot create or manage listings.
    */
   async hasActiveMembership(userId: string): Promise<boolean> {
     const userPlan = await this.getPlanForUser(userId);
@@ -130,9 +129,9 @@ export class SubscriptionService {
   /**
    * Check if a user can create a new listing based on their plan's maxActiveListings.
    *
-   * Membership is strictly enforced: users without any plan (no free tier, no
-   * paid subscription) cannot create listings at all. Activating a seller
-   * account assigns the Free tier, so every active seller has a plan.
+   * Membership is strictly enforced: users without any plan cannot create
+   * listings at all. Sellers must subscribe to a plan to get a listing
+   * allowance — onboarding no longer assigns the Free tier automatically.
    */
   async canCreateListing(userId: string): Promise<{
     allowed: boolean;

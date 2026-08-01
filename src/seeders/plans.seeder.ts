@@ -104,7 +104,10 @@ const PLANS: PlanSeed[] = [
     maxActiveListings: 5,
     maxFeaturedListings: 0,
     platformFeePercent: 5,
-    isPublic: true,
+    // Not shown on the public pricing page — onboarding never assigns the
+    // free tier automatically, and it has no Stripe price so it cannot be
+    // purchased. Sellers must subscribe to a paid plan to add listings.
+    isPublic: false,
     displayOrder: 1,
     enabledFeatures: ["basic_analytics", "verified_badge"],
   },

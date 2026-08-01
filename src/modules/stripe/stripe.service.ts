@@ -344,7 +344,8 @@ export class StripeService {
       user.subscriptionStatus === "canceled" ||
       user.subscriptionStatus === "incomplete_expired";
 
-    // The Free tier is a real membership but is still "free".
+    // Sellers without an assigned plan (and any remaining Free-tier users)
+    // are treated as "free" for fee/limits purposes.
     const isFree =
       !user.subscriptionPlanId || user.subscriptionPlan?.slug === "free";
 

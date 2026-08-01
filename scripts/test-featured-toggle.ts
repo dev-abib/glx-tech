@@ -114,6 +114,27 @@ async function main() {
   }
   console.log(`  ✅ Seller activated (role: ${sellerBody.data?.data?.role})`);
 
+  // Onboarding no longer auto-assigns the Free tier — assign it directly
+  // so listing creation works while the featured toggle stays blocked for
+  // the free user (maxFeaturedListings = 0, no featured_listing feature).
+  const freePlan = await prisma.subscriptionPlan.findUnique({
+    where: { slug: "free" },
+  });
+  if (!freePlan) {
+    console.error("  ❌ Free plan not found — run the plans seeder first (npm run seed:plans)");
+    await prisma.$disconnect();
+    return;
+  }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      subscriptionPlanId: freePlan.id,
+      subscriptionStatus: "active",
+      isPaid: false,
+    },
+  });
+  console.log(`  ✅ Free plan assigned to seller: ${freePlan.name}`);
+
   // ── 6. Get address ID ────────────────────────────────────────────────
   console.log("6. Getting address ID...");
   const sellerInfo = await prisma.sellerInfo.findUnique({
@@ -186,10 +207,13 @@ async function main() {
   console.log("  ✅ Premium plan assigned");
 
   // Clear subscription service cache
+  // Note: this only clears the cache in THIS script's process — the API
+  // server keeps its own 30s in-memory cache, so if step 10 is flaky wait
+  // ~30s or restart the server before re-running.
   const { SubscriptionService } = await import("../src/modules/plans/subscription.service.js");
   const subService = new SubscriptionService();
   subService.invalidateUserCache(user.id);
-  console.log("  ✅ Cache invalidated");
+  console.log("  ✅ Cache invalidated (script process only)");
 
   // ── 10. Try toggle featured (should succeed) ────────────────────────
   console.log("\n10. Trying to toggle featured (with Premium plan)...");

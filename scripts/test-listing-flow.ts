@@ -143,6 +143,28 @@ async function main() {
   }
   console.log(`  ✅ Seller activated (role: ${sellerBody.data?.data?.role})`);
 
+  // Onboarding no longer auto-assigns the Free tier — assign a plan
+  // directly so the listing-creation steps below can proceed.
+  const premiumPlan = await prisma.subscriptionPlan.findUnique({
+    where: { slug: "premium" },
+  });
+  if (!premiumPlan) {
+    console.error(
+      "  ❌ Premium plan not found — run the plans seeder first (npm run seed:plans)"
+    );
+    await prisma.$disconnect();
+    return;
+  }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      subscriptionPlanId: premiumPlan.id,
+      subscriptionStatus: "active",
+      isPaid: true,
+    },
+  });
+  console.log(`  ✅ Plan assigned to seller: ${premiumPlan.name}`);
+
   // ── 6. Get the addressId ─────────────────────────────────────────────
   console.log("6. Fetching seller address ID...");
   const sellerInfo = await prisma.sellerInfo.findUnique({

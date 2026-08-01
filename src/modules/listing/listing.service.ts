@@ -69,7 +69,7 @@ export class ListingService {
       if (planCheck.reason === "membership_required") {
         throw new ApiError(
           403,
-          "A membership is required to create listings. Activate the free tier or subscribe to a plan first."
+          "To add a listing, you must have a subscription plan. Please subscribe to a plan first."
         );
       }
       throw new ApiError(
@@ -710,7 +710,7 @@ export class ListingService {
     if (!(await subscriptionService.hasActiveMembership(userId))) {
       throw new ApiError(
         403,
-        "Your membership is inactive. Reactivate the free tier or subscribe to a plan to manage your listings."
+        "Your subscription is inactive. Please subscribe to a plan to manage your listings."
       );
     }
 
@@ -828,7 +828,7 @@ export class ListingService {
     if (!(await subscriptionService.hasActiveMembership(userId))) {
       throw new ApiError(
         403,
-        "Your membership is inactive. Reactivate the free tier or subscribe to a plan to delete your listings."
+        "Your subscription is inactive. Please subscribe to a plan to delete your listings."
       );
     }
 
@@ -872,7 +872,7 @@ export class ListingService {
     if (!(await subscriptionService.hasActiveMembership(userId))) {
       throw new ApiError(
         403,
-        "Your membership is inactive. Reactivate the free tier or subscribe to a plan to change listing availability."
+        "Your subscription is inactive. Please subscribe to a plan to change listing availability."
       );
     }
 
@@ -902,7 +902,7 @@ export class ListingService {
     if (!(await subscriptionService.hasActiveMembership(userId))) {
       throw new ApiError(
         403,
-        "Your membership is inactive. Reactivate the free tier or subscribe to a plan to change featured status."
+        "Your subscription is inactive. Please subscribe to a plan to change featured status."
       );
     }
 

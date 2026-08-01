@@ -16,9 +16,10 @@
 #   Creates your seller business profile. You can add ONE OR MORE addresses
 #   right from the start using the `addresses[]` array.
 #
-#   🎟️ Also activates the seller role directly (assigns the Free plan if the
-#      user has no active membership) and returns fresh access/refresh tokens
-#      — a separate POST /users/switch-role call is NOT required anymore.
+#   🎟️ Also activates the seller role directly and returns fresh access/refresh
+#      tokens — a separate POST /users/switch-role call is NOT required
+#      anymore. No plan is auto-assigned during onboarding; the seller must
+#      subscribe to a plan to add listings.
 #
 #   🔵 All users can add at least 1 address.
 #   🔵 Premium users (Professional & Premium plans with the
@@ -77,10 +78,10 @@ update-as-seller:
         `POST /users/switch-role` call is required. The response contains
         **fresh access/refresh tokens** carrying `role: "seller"`; use them
         for all subsequent seller-only endpoints.
-      - If the user has **no active membership**, the **Free plan** is
-        assigned automatically (seller active, `maxActiveListings = 5`).
-      - Users who already hold a paid plan keep that plan — it is never
-        downgraded to free.
+      - **No plan is auto-assigned during onboarding.** To add listings, the
+        seller must subscribe to a subscription plan first.
+      - Users who already hold a plan keep that plan — it is never
+        downgraded.
 
 
       ### 📍 Address rules
@@ -374,8 +375,9 @@ create-seller-address:
       - **All sellers** can have at least 1 address.
       - **Premium users** (Professional & Premium plans with the
         `multiple_locations` feature) can have multiple addresses.
-      - If you already have 1 address and are not on a premium plan,
-        you will receive a **403 Forbidden** error telling you to upgrade.
+      - If you already have 1 address and your subscription does not include
+        the `multiple_locations` feature, you will receive a **403 Forbidden**
+        error asking you to subscribe to a plan that supports it.
 
 
       ### 📋 Request body
@@ -433,7 +435,9 @@ create-seller-address:
       "401":
         description: Unauthorized
       "403":
-        description: Only premium users can add multiple addresses
+        description: >
+          To add a location you must have a subscription plan that includes
+          the multiple locations feature
       "404":
         description: Seller profile not found
 
