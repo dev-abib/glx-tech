@@ -251,12 +251,100 @@ BookedSlot:
     bookingTime:
       type: string
       format: time
+      nullable: true
       example: "09:00"
       pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
-      description: The time of the booked slot (HH:MM, 24-hour format)
+      description: The time of the booked slot (HH:MM, 24-hour format). Null for whole-day bookings.
+
+UnavailableSlot:
+  type: object
+  properties:
+    id:
+      type: string
+      format: cuid
+      example: clz6xq8k80009hxq8f1j2m3n4
+      description: Unique blocked-slot identifier
+    sellerId:
+      type: string
+      format: cuid
+      example: clz6xq8k80010hxq8f1j2m3n5
+      description: ID of the seller who blocked the slot
+    date:
+      type: string
+      format: date
+      example: "2026-07-16"
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      description: Blocked date (YYYY-MM-DD)
+    startTime:
+      type: string
+      format: time
+      nullable: true
+      example: "09:00"
+      pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+      description: Blocked start time (HH:MM). Null together with endTime = whole day blocked.
+    endTime:
+      type: string
+      format: time
+      nullable: true
+      example: "11:00"
+      pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+      description: Blocked end time (HH:MM, exclusive)
+    reason:
+      type: string
+      nullable: true
+      example: Maintenance
+      description: Optional note explaining why the slot is blocked
+    createdAt:
+      type: string
+      format: date-time
+      example: "2026-07-01T10:00:00.000Z"
+      description: When the slot was blocked
+
+CreateUnavailableSlotInput:
+  type: object
+  required:
+    - date
+  properties:
+    date:
+      type: string
+      format: date
+      example: "2026-07-16"
+      pattern: "^\\d{4}-\\d{2}-\\d{2}$"
+      description: Date to block (YYYY-MM-DD)
+    startTime:
+      type: string
+      format: time
+      example: "09:00"
+      pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+      description: Blocked start time (HH:MM). Must be provided together with endTime.
+    endTime:
+      type: string
+      format: time
+      example: "11:00"
+      pattern: "^([01]\\d|2[0-3]):[0-5]\\d$"
+      description: Blocked end time (HH:MM, must be after startTime). Omit both to block the whole day.
+    reason:
+      type: string
+      maxLength: 300
+      example: Maintenance
+      description: Optional note explaining why the slot is blocked
+  example:
+    date: "2026-07-17"
+    startTime: "09:00"
+    endTime: "11:00"
+    reason: Maintenance
 
 BookedTimes:
-  type: array
-  items:
-    $ref: "#/components/schemas/BookedSlot"
+  type: object
+  properties:
+    booked:
+      type: array
+      description: Already-booked appointment slots
+      items:
+        $ref: "#/components/schemas/BookedSlot"
+    blocked:
+      type: array
+      description: Slots the listing owner has blocked out (no bookings accepted)
+      items:
+        $ref: "#/components/schemas/UnavailableSlot"
   description: List of already-booked slots for a listing (with date and time)

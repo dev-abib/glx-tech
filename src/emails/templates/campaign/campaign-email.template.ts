@@ -24,7 +24,7 @@ export const wrapInCampaignEmailShell = ({
   unsubscribeToken,
 }: CampaignEmailShellProps): string => {
   const year = new Date().getFullYear();
-  const siteName = env.SITE_NAME || "GLX Tech";
+  const siteName = env.SITE_NAME || "Verep";
   const frontendUrl = env.FRONTEND_URL && env.FRONTEND_URL !== "#" ? env.FRONTEND_URL : env.SITE_URL || "#";
   const unsubscribeUrl = `${frontendUrl}/unsubscribe?token=${unsubscribeToken}`;
 
@@ -89,7 +89,7 @@ export const wrapInCampaignEmailShell = ({
                       font-size:18px;
                       font-weight:700;
                       color:#ffffff;
-                    ">G</td>
+                    ">V</td>
                     <td style="
                       padding-left:12px;
                       font-size:16px;

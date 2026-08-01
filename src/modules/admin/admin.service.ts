@@ -8,6 +8,7 @@ import { sendEmail } from "../../emails/email.services.js";
 import { env } from "../../config/env.js";
 import { CloudinaryService } from "../../helpers/cloudinary.service.js";
 import { deleteAccountConfirmationTemplate } from "../../emails/templates/auth/delete-account-confirmation.template.js";
+import { isMaskedPhone, maskPhone } from "../../utils/phone.utils.js";
 import type {
   AdminLoginInput,
   CreateAdminInput,
@@ -99,10 +100,45 @@ export class AdminService {
   // ── Create Admin (Super Admin only) ─────────────────────────────────────
 
   async createAdmin(data: CreateAdminInput) {
-    // Check if email already exists
-    await userRepo.findUser("email", data.email, false);
-
     const hashedPassword = await hashPassword(data.password);
+
+    // If the email already belongs to a regular user, promote them to admin
+    // instead of failing. Previously this threw "already exists" even though
+    // the account only appeared in the Users list (not the Admins list), which
+    // made the create-admin flow appear broken.
+    const existing = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    if (existing) {
+      if (existing.role === "admin" || existing.role === "super_admin") {
+        throw new ApiError(
+          409,
+          "A user with this email is already an admin"
+        );
+      }
+
+      const updated = await prisma.user.update({
+        where: { id: existing.id },
+        data: {
+          role: data.role as Role,
+          password: hashedPassword,
+          phone: data.phone ?? existing.phone,
+          isEmailVerified: true, // Admins are auto-verified
+          isActive: true,
+        },
+      });
+
+      return {
+        id: updated.id,
+        name: updated.name,
+        email: updated.email,
+        role: updated.role,
+        isEmailVerified: updated.isEmailVerified,
+        isActive: updated.isActive,
+        createdAt: updated.createdAt,
+      };
+    }
 
     const user = await prisma.user.create({
       data: {
@@ -144,6 +180,7 @@ export class AdminService {
       avatar: user.avatar,
       phone: user.phone,
       isEmailVerified: user.isEmailVerified,
+      isVerifiedSeller: user.isVerifiedSeller,
       isActive: user.isActive,
       isPaid: user.isPaid,
       createdAt: user.createdAt,
@@ -185,7 +222,11 @@ export class AdminService {
     ]);
 
     return {
-      admins,
+      // Never expose full phone numbers — only the last 4 digits.
+      admins: admins.map((admin) => ({
+        ...admin,
+        phone: maskPhone(admin.phone),
+      })),
       pagination: {
         page,
         limit,
@@ -253,14 +294,43 @@ export class AdminService {
       }),
     });
 
-    // Clean up Cloudinary avatar
-    if (target.avatarPublicId) {
-      await cloudinary.deleteFile(target.avatarPublicId).catch(() => {});
-    }
-
-    await prisma.user.delete({ where: { id: targetUserId } });
+    // Soft delete — cancels Stripe, deletes unbooked listings/seller data,
+    // anonymizes the user row so appointment history is preserved.
+    await userRepo.softDeleteUserData(targetUserId);
 
     return { message: `User ${target.email} deleted successfully` };
+  }
+
+  // ── Admin approves/revokes a seller's verified badge ────────────────────
+
+  async setSellerVerification(
+    targetUserId: string,
+    isVerifiedSeller: boolean
+  ) {
+    const target = await userRepo.findUser("id", targetUserId, true);
+
+    if (target.role !== "seller") {
+      throw new ApiError(400, "Only sellers can be marked as verified");
+    }
+
+    if (isVerifiedSeller && !target.isEmailVerified) {
+      throw new ApiError(
+        400,
+        "Seller must have a verified email before being marked as verified"
+      );
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: targetUserId },
+      data: { isVerifiedSeller },
+    });
+
+    return {
+      message: isVerifiedSeller
+        ? "Seller marked as verified"
+        : "Seller verification removed",
+      isVerifiedSeller: updated.isVerifiedSeller,
+    };
   }
 
   // ── Super admin gets all users (all roles) ──────────────────────────────
@@ -281,7 +351,10 @@ export class AdminService {
     const updateData: Record<string, unknown> = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.phone !== undefined) updateData.phone = data.phone;
+    // Never persist an already-masked phone echoed back by a client.
+    if (data.phone !== undefined && !isMaskedPhone(data.phone)) {
+      updateData.phone = data.phone;
+    }
 
     if (data.email !== undefined) {
       if (data.email !== user.email) {
@@ -417,8 +490,9 @@ export class AdminService {
       email: user.email,
       role: user.role,
       avatar: user.avatar,
-      phone: user.phone,
+      phone: maskPhone(user.phone),
       isEmailVerified: user.isEmailVerified,
+      isVerifiedSeller: user.isVerifiedSeller,
       isActive: user.isActive,
       isPaid: user.isPaid,
       createdAt: user.createdAt,
@@ -434,7 +508,10 @@ export class AdminService {
     const updateData: Record<string, unknown> = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.phone !== undefined) updateData.phone = data.phone;
+    // Never persist an already-masked phone echoed back by a client.
+    if (data.phone !== undefined && !isMaskedPhone(data.phone)) {
+      updateData.phone = data.phone;
+    }
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
     if (data.email !== undefined) {
@@ -468,12 +545,68 @@ export class AdminService {
       email: updated.email,
       role: updated.role,
       avatar: updated.avatar,
-      phone: updated.phone,
+      phone: maskPhone(updated.phone),
       isEmailVerified: updated.isEmailVerified,
       isActive: updated.isActive,
       createdAt: updated.createdAt,
       updatedAt: updated.updatedAt,
     };
+  }
+
+  // ── Admin deletes a listing (with FK-safe booking guard) ────────────────
+
+  async deleteListing(listingId: string) {
+    const listing = await prisma.listing.findUnique({
+      where: { id: listingId },
+      include: { _count: { select: { bookings: true } } },
+    });
+    if (!listing) {
+      throw new ApiError(404, "Listing not found");
+    }
+
+    // Deleting a listing that still has bookings would orphan appointment
+    // history (and fail the FK constraint). Block it so admins instead hide
+    // the listing (set unavailable) to preserve booking records.
+    if (listing._count.bookings > 0) {
+      throw new ApiError(
+        409,
+        "This listing has bookings and cannot be deleted. Set it unavailable instead to preserve booking history."
+      );
+    }
+
+    // Remove cloudinary images
+    const existingMedia = listing.media as Array<{
+      url: string;
+      publicId: string;
+    }> | null;
+    if (existingMedia && Array.isArray(existingMedia)) {
+      for (const img of existingMedia) {
+        if (img.publicId) {
+          await cloudinary.deleteFile(img.publicId).catch(() => {});
+        }
+      }
+    }
+
+    // Delete related reviews first (FK), then the listing.
+    await prisma.userReview.deleteMany({ where: { listingId } });
+    await prisma.listing.delete({ where: { id: listingId } });
+
+    return { message: "Listing deleted successfully" };
+  }
+
+  // ── Admin deletes a user review ──────────────────────────────────────────
+
+  async deleteReview(reviewId: string) {
+    const review = await prisma.userReview.findUnique({
+      where: { id: reviewId },
+    });
+    if (!review) {
+      throw new ApiError(404, "Review not found");
+    }
+
+    await prisma.userReview.delete({ where: { id: reviewId } });
+
+    return { message: "Review deleted successfully" };
   }
 
   // ── Dashboard Trends (month-over-month growth) ────────────────────────

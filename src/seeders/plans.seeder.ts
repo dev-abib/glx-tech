@@ -98,10 +98,10 @@ const PLANS: PlanSeed[] = [
   {
     name: "Free",
     slug: "free",
-    description: "Perfect for getting started. List your first service and explore the marketplace.",
+    description: "Perfect for getting started. List up to 5 services and explore the marketplace.",
     priceMonthly: 0,
     priceAnnual: 0,
-    maxActiveListings: 1,
+    maxActiveListings: 5,
     maxFeaturedListings: 0,
     platformFeePercent: 5,
     isPublic: true,
@@ -115,13 +115,13 @@ const PLANS: PlanSeed[] = [
     priceMonthly: 2999, // $29.99
     priceAnnual: 29999, // $299.99
     maxActiveListings: 10,
-    maxFeaturedListings: 3,
+    // Featured listings are a Premium-only perk — Professional gets 0.
+    maxFeaturedListings: 0,
     platformFeePercent: 2,
     isPublic: true,
     displayOrder: 2,
     enabledFeatures: [
       "basic_analytics",
-      "featured_listing",
       "multiple_locations",
       "priority_support",
       "verified_badge",

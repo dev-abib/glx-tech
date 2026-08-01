@@ -179,8 +179,21 @@ export const env = {
   // Site
   SITE_NAME: process.env.SITE_NAME || "Verep",
   SITE_URL: process.env.SITE_URL || "#",
-  APP_URL: process.env.APP_URL || "http://localhost:5173",
-  FRONTEND_URL: process.env.FRONTEND_URL || process.env.APP_URL || "http://localhost:5173",
+  // The seller/marketplace app URL. Never default to localhost in
+  // production — Stripe redirects, emails, and CORS all depend on this.
+  // In dev we fall back to the local Vite server; in production we fall
+  // back to the deployed seller app so checkout never points at localhost.
+  APP_URL:
+    process.env.APP_URL ||
+    (process.env.NODE_ENV === "production"
+      ? "https://glxtech-seller.vercel.app"
+      : "http://localhost:5173"),
+  FRONTEND_URL:
+    process.env.FRONTEND_URL ||
+    process.env.APP_URL ||
+    (process.env.NODE_ENV === "production"
+      ? "https://glxtech-seller.vercel.app"
+      : "http://localhost:5173"),
 
   // Stripe
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || "",

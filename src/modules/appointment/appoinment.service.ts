@@ -2,10 +2,40 @@ import { getPrismaClient } from "../../config/database.js";
 import { ApiError } from "../../utils/api-error.js";
 import type {
   CreateAppointmentInput,
+  CreateUnavailableSlotInput,
   GetAppointmentsQueryInput,
+  GetUnavailableSlotsQueryInput,
   UpdateAppointmentStatusInput,
 } from "./appoinment.validation.js";
 import type { STATUS } from "@prisma/client";
+
+// Compare two HH:mm strings as times (works because zero-padded 24h format
+// sorts lexicographically the same as chronologically).
+function isTimeInRange(
+  time: string | null | undefined,
+  start: string | null | undefined,
+  end: string | null | undefined
+): boolean {
+  if (!time) return false;
+  if (!start || !end) return false;
+  return time >= start && time < end;
+}
+
+// Does the requested booking conflict with a seller's blocked slot?
+function isBlocked(
+  bookingDate: string,
+  bookingTime: string | null | undefined,
+  slot: { date: string; startTime: string | null; endTime: string | null }
+): boolean {
+  if (slot.date !== bookingDate) return false;
+  // Whole-day block (no time range) — any booking on that date is blocked.
+  if (!slot.startTime && !slot.endTime) return true;
+  // Time-range block — only conflicts when the buyer picked a time inside it.
+  if (bookingTime) return isTimeInRange(bookingTime, slot.startTime, slot.endTime);
+  // Buyer booked a date without a specific time against a time-range block —
+  // assume a full-day SERVICE booking conflicts with any time block.
+  return true;
+}
 
 const prisma = getPrismaClient();
 
@@ -100,6 +130,24 @@ export class AppointmentService {
     // Prevent self-booking (buyer cannot be the same as seller/owner)
     if (listing.userId === buyerId) {
       throw new ApiError(400, "You cannot book your own listing");
+    }
+
+    // ── Seller availability check ─────────────────────────────────────
+    // Reject the booking if the seller has blocked out this date/time.
+    const blockedSlots = await prisma.unavailableSlot.findMany({
+      where: { sellerId: listing.userId, date: data.bookingDate },
+    });
+    const conflicting = blockedSlots.find((slot) =>
+      isBlocked(data.bookingDate, data.bookingTime, slot)
+    );
+    if (conflicting) {
+      const when = conflicting.startTime
+        ? `${conflicting.startTime}–${conflicting.endTime}`
+        : "all day";
+      throw new ApiError(
+        409,
+        `The seller is unavailable on ${data.bookingDate}${when !== "all day" ? ` (${when})` : " (all day)"}. Please pick another slot.`
+      );
     }
 
     if (data.appointmentType === "SERVICE") {
@@ -390,13 +438,50 @@ export class AppointmentService {
   /**
    * Get all appointments across the platform (admin only).
    * Includes buyer, seller, and listing details.
+   * Supports optional ?search= (id, buyer/seller name/email, listing
+   * title/slug) and ?status= filters.
    */
   async getAllAppointments(query: GetAppointmentsQueryInput) {
-    const { page, limit } = query;
+    const { page, limit, search, status } = query;
     const skip = (page - 1) * limit;
+
+    const where: Record<string, unknown> = {};
+    if (status) {
+      where.status = status;
+    }
+    if (search) {
+      where.OR = [
+        { id: { contains: search, mode: "insensitive" } },
+        {
+          buyer: {
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { email: { contains: search, mode: "insensitive" } },
+            ],
+          },
+        },
+        {
+          seller: {
+            OR: [
+              { name: { contains: search, mode: "insensitive" } },
+              { email: { contains: search, mode: "insensitive" } },
+            ],
+          },
+        },
+        {
+          listing: {
+            OR: [
+              { title: { contains: search, mode: "insensitive" } },
+              { slug: { contains: search, mode: "insensitive" } },
+            ],
+          },
+        },
+      ];
+    }
 
     const [appointments, total] = await Promise.all([
       prisma.appointment.findMany({
+        where,
         skip,
         take: limit,
         orderBy: { id: "desc" },
@@ -412,7 +497,7 @@ export class AppointmentService {
           },
         },
       }),
-      prisma.appointment.count(),
+      prisma.appointment.count({ where }),
     ]);
 
     const enriched = appointments.map((appt) => ({
@@ -439,7 +524,7 @@ export class AppointmentService {
   async getBookedTimes(listingId: string, date?: string) {
     const listing = await prisma.listing.findUnique({
       where: { id: listingId },
-      select: { id: true },
+      select: { id: true, userId: true },
     });
 
     if (!listing) {
@@ -464,7 +549,87 @@ export class AppointmentService {
       orderBy: [{ bookingDate: "asc" }, { bookingTime: "asc" }],
     });
 
-    return bookedAppointments;
+    // Also surface the listing owner's blocked slots for this date so the
+    // booking UI can grey them out alongside already-booked times.
+    const blockedSlots = await prisma.unavailableSlot.findMany({
+      where: {
+        sellerId: listing.userId,
+        ...(date ? { date } : {}),
+      },
+      select: {
+        id: true,
+        date: true,
+        startTime: true,
+        endTime: true,
+        reason: true,
+      },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    });
+
+    return {
+      booked: bookedAppointments,
+      blocked: blockedSlots,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════════════
+  // SELLER AVAILABILITY (blocked-out slots)
+  // ═══════════════════════════════════════════════════════════════════
+
+  /**
+   * List the authenticated seller's blocked slots, optionally filtered by date.
+   */
+  async getSellerAvailability(
+    sellerId: string,
+    query: GetUnavailableSlotsQueryInput
+  ) {
+    const slots = await prisma.unavailableSlot.findMany({
+      where: {
+        sellerId,
+        ...(query.date ? { date: query.date } : {}),
+      },
+      orderBy: [{ date: "asc" }, { startTime: "asc" }],
+    });
+    return slots;
+  }
+
+  /**
+   * Add a blocked-out slot for the authenticated seller.
+   */
+  async addUnavailableSlot(
+    sellerId: string,
+    data: CreateUnavailableSlotInput
+  ) {
+    const slot = await prisma.unavailableSlot.create({
+      data: {
+        sellerId,
+        date: data.date,
+        startTime: data.startTime ?? null,
+        endTime: data.endTime ?? null,
+        reason: data.reason ?? null,
+      },
+    });
+    return slot;
+  }
+
+  /**
+   * Delete a blocked-out slot (seller may only delete their own).
+   */
+  async deleteUnavailableSlot(sellerId: string, slotId: string) {
+    const slot = await prisma.unavailableSlot.findUnique({
+      where: { id: slotId },
+    });
+    if (!slot) {
+      throw new ApiError(404, "Blocked slot not found");
+    }
+    if (slot.sellerId !== sellerId) {
+      throw new ApiError(
+        403,
+        "You can only remove your own blocked slots"
+      );
+    }
+    await prisma.unavailableSlot.delete({ where: { id: slotId } });
+    return { message: "Blocked slot removed successfully" };
   }
 
   /**

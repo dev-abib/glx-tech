@@ -9,6 +9,7 @@ import compression from "compression";
 import { notFoundMiddleware } from "./middlewares/not-found.middleware.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 import { env } from "./config/env.js";
+import { ApiError } from "./utils/api-error.js";
 
 // ── Swagger ────────────────────────────────────────────────────────────────
 import swaggerRoutes from "./routes/swagger.route.js";
@@ -54,7 +55,45 @@ app.use(
   })
 );
 
-app.use(cors());
+// ── CORS ──────────────────────────────────────────────────────────────────
+// Explicitly allow the configured frontends (env-driven) plus localhost during
+// development. Credentials are supported so cookie/header auth never silently
+// breaks, and preflight (OPTIONS) is handled for the methods/headers the API
+// actually uses. Requests without an Origin header (curl, server-to-server)
+// are always allowed.
+const allowedOrigins = [
+  env.FRONTEND_URL,
+  env.APP_URL,
+  "https://glxtech-seller.vercel.app",
+  "https://glx-tech-pink.vercel.app",
+].filter((origin): origin is string => Boolean(origin));
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Non-browser requests have no Origin header — allow them.
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // Allow any localhost origin in development.
+      if (
+        env.NODE_ENV !== "production" &&
+        /^https?:\/\/localhost(:\d+)?$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      callback(new ApiError(403, "Not allowed by CORS"));
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+    ],
+  })
+);
 
 import { stripeWebhook } from "./modules/stripe/stripe.controllers.js";
 app.post(

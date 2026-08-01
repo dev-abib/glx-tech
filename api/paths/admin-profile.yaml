@@ -114,7 +114,7 @@ delete-user:
   delete:
     tags: ["07 — Admin — Profile"]
     summary: Delete a user (Admin only)
-    description: Deletes a regular user by ID. Super admins can also delete admins via this endpoint.
+    description: Soft-deletes a user by ID — cancels their Stripe subscription, deletes unbooked listings/seller data, and anonymizes the account row while preserving appointment history. Super admins can also delete admins via this endpoint.
     security:
       - bearerAuth: []
     parameters:
@@ -129,5 +129,38 @@ delete-user:
         description: User deleted successfully
       "403":
         description: Forbidden — Cannot delete admins
+      "404":
+        description: User not found
+verify-seller:
+  patch:
+    tags: ["07 — Admin — Profile"]
+    summary: Approve/revoke seller verified badge (Admin only)
+    description: Sets the admin-approved isVerifiedSeller flag for a seller. Email verification is required before a seller can be marked verified. The flag is surfaced publicly on listings.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Seller user ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - isVerifiedSeller
+            properties:
+              isVerifiedSeller:
+                type: boolean
+                description: "true to approve, false to revoke"
+    responses:
+      "200":
+        description: Verification status updated
+      "400":
+        description: Not a seller or email not verified
       "404":
         description: User not found

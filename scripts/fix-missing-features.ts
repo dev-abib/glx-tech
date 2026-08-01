@@ -63,7 +63,6 @@ const PLAN_ENABLED_FEATURES: Record<string, string[]> = {
   ],
   professional: [
     "basic_analytics",
-    "featured_listing",
     "multiple_locations",
     "priority_support",
     "verified_badge",

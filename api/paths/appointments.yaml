@@ -140,8 +140,32 @@ seller-get-my-appointments:
 get-booked-times:
   get:
     tags: ["19 — Appointments"]
-    summary: Get booked times for a listing (Public)
-    description: Returns an array of booked slots for a specific listing. If a date is provided, filters to that date. Useful for frontend to grey out unavailable slots.
+    summary: Get booked + seller-blocked times for a listing (Public)
+    description: >
+      Returns the booked slots **and** the listing owner's blocked-out slots for
+      a listing. If a date is provided, filters to that date. Useful for the
+      frontend to grey out both taken and unavailable slots.
+
+
+      ### 📦 Response shape
+
+      ```json
+      {
+        "booked": [{ "bookingDate": "2026-07-15", "bookingTime": "09:00" }],
+        "blocked": [
+          {
+            "id": "clz...",
+            "date": "2026-07-16",
+            "startTime": "09:00",
+            "endTime": "11:00",
+            "reason": "Maintenance"
+          }
+        ]
+      }
+      ```
+
+      - `blocked[]` entries with `startTime`/`endTime` `null` mean the **whole
+        day** is blocked.
     parameters:
       - name: listingId
         in: path
@@ -169,6 +193,105 @@ get-booked-times:
                       $ref: "#/components/schemas/BookedTimes"
       "404":
         description: Listing not found
+
+seller-get-availability:
+  get:
+    tags: ["19 — Appointments"]
+    summary: List my blocked-out slots (Seller)
+    description: >
+      Returns all dates/time ranges the authenticated seller has blocked out.
+      Optionally filter with `?date=YYYY-MM-DD`.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: date
+        in: query
+        required: false
+        schema:
+          type: string
+          example: "2026-07-15"
+        description: Filter by date (YYYY-MM-DD)
+    responses:
+      "200":
+        description: Availability fetched successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: "#/components/schemas/UnavailableSlot"
+      "401":
+        description: Unauthorized
+
+seller-add-availability:
+  post:
+    tags: ["19 — Appointments"]
+    summary: Block out a slot (Seller)
+    description: >
+      Blocks a date (and optional HH:mm time range) so no bookings are accepted
+      for it. Omit `startTime`/`endTime` to block the whole day.
+
+
+      ### 📋 Examples
+
+      ```json
+      { "date": "2026-07-16", "reason": "Out of office" }
+      ```
+
+      ```json
+      { "date": "2026-07-17", "startTime": "09:00", "endTime": "11:00", "reason": "Maintenance" }
+      ```
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/CreateUnavailableSlotInput"
+    responses:
+      "201":
+        description: Blocked slot added successfully
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/ApiResponse"
+                - properties:
+                    data:
+                      $ref: "#/components/schemas/UnavailableSlot"
+      "400":
+        description: Validation error (e.g. endTime before startTime)
+      "401":
+        description: Unauthorized
+
+seller-delete-availability:
+  delete:
+    tags: ["19 — Appointments"]
+    summary: Unblock a slot (Seller)
+    description: Removes a blocked-out slot. Sellers can only remove their own slots.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: slotId
+        in: path
+        required: true
+        schema:
+          type: string
+        description: ID of the blocked slot to remove
+    responses:
+      "200":
+        description: Blocked slot removed successfully
+      "401":
+        description: Unauthorized
+      "403":
+        description: Not your blocked slot
+      "404":
+        description: Blocked slot not found
 
 seller-get-recent-appointments:
   get:

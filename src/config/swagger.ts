@@ -55,7 +55,7 @@ S("listing.yaml", "Listing"); S("listing.yaml", "CreateListingInput"); S("listin
 S("listing.yaml", "UserReview"); S("listing.yaml", "CreateUserReviewInput"); S("listing.yaml", "UpdateUserReviewInput");
 S("newsletter.yaml", "NewsLetterInput"); S("seller.yaml", "SellerAddressInput"); S("seller.yaml", "UpdateUserAsSellerInput"); S("seller.yaml", "UpdateSellerDetailsInput"); S("seller.yaml", "CreateSellerAddressInput"); S("seller.yaml", "UpdateSellerAddressInput");
 S("admin-campaigns.yaml", "Campaign"); S("admin-campaigns.yaml", "CreateCampaignInput");
-S("appointment.yaml", "Appointment"); S("appointment.yaml", "CreateAppointmentInput"); S("appointment.yaml", "CreateServiceAppointmentInput"); S("appointment.yaml", "CreateRentAppointmentInput"); S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes"); S("appointment.yaml", "BookedSlot");
+S("appointment.yaml", "Appointment"); S("appointment.yaml", "CreateAppointmentInput"); S("appointment.yaml", "CreateServiceAppointmentInput"); S("appointment.yaml", "CreateRentAppointmentInput"); S("appointment.yaml", "UpdateAppointmentStatusInput"); S("appointment.yaml", "BookedTimes"); S("appointment.yaml", "BookedSlot"); S("appointment.yaml", "UnavailableSlot"); S("appointment.yaml", "CreateUnavailableSlotInput");
 S("stripe-donate.yaml", "CreateDonationInput"); S("stripe-donate.yaml", "DonationPaymentLinkResponse");
 S("stripe-donate.yaml", "Donation"); S("stripe-donate.yaml", "DonationListResponse"); S("stripe-donate.yaml", "DonationCheckoutResponse"); S("stripe-donate.yaml", "DonationStatsResponse");
 S("subscription-plans.yaml", "SubscriptionPlan"); S("subscription-plans.yaml", "PlanFeature"); S("subscription-plans.yaml", "FeatureDefinition");
@@ -108,6 +108,7 @@ P("admin-profile.yaml", "/admin/update-me", "update-me");
 P("admin-profile.yaml", "/admin/change-password", "change-password");
 P("admin-profile.yaml", "/admin/get-user/{id}", "get-user");
 P("admin-profile.yaml", "/admin/delete-user/{id}", "delete-user");
+P("admin-profile.yaml", "/admin/verify-seller/{id}", "verify-seller");
 // ── Admin — Super Admin ─────────────────────────────────────────────
 P("admin-super.yaml", "/admin/create-admin", "create-admin");
 P("admin-super.yaml", "/admin/gt-all-users", "gt-all-users");
@@ -194,6 +195,9 @@ P("appointments.yaml", "/appointments/seller/upcoming", "seller-get-upcoming-app
 P("appointments.yaml", "/appointments/seller/dashboard-stats", "seller-get-dashboard-stats");
 P("appointments.yaml", "/appointments/booked-times/{listingId}", "get-booked-times");
 P("appointments.yaml", "/appointments/update-status/{appointmentId}", "update-appointment-status");
+P("appointments.yaml", "/appointments/seller/availability", "seller-get-availability");
+PM("appointments.yaml", "/appointments/seller/availability", "seller-add-availability");
+P("appointments.yaml", "/appointments/seller/availability/{slotId}", "seller-delete-availability");
 
 // ── Donations / Stripe ────────────────────────────────────────────────
 P("stripe-donate.yaml", "/stripe/donate/checkout", "quick-donate");

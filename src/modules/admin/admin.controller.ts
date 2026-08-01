@@ -12,6 +12,7 @@ import type {
   CreateAdminInput,
   AdminChangePasswordInput,
   AdminUpdateUserInput,
+  AdminSetSellerVerificationInput,
 } from "./admin.validation.js";
 
 const adminService = new AdminService();
@@ -132,6 +133,24 @@ export const adminDeleteUser: RequestHandler<
   return res
     .status(200)
     .json(new ApiResponse(200, result.message));
+});
+
+// ── Admin approves/revokes a seller's verified badge ──────────────────────
+
+export const adminSetSellerVerification: RequestHandler<
+  { id: string },
+  ApiResponse<{ isVerifiedSeller: boolean }>,
+  AdminSetSellerVerificationInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const result = await adminService.setSellerVerification(
+    id,
+    req.body.isVerifiedSeller
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result.message, { isVerifiedSeller: result.isVerifiedSeller }));
 });
 
 // ── Super admin gets all users ────────────────────────────────────────────
@@ -347,6 +366,33 @@ export const adminGetAllReviews: RequestHandler = asyncHandler(
   }
 );
 
+// Admin deletes a listing (blocks listings that still have bookings)
+export const adminDeleteListing: RequestHandler<
+  { id: string },
+  ApiResponse<null>
+> = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const result = await adminService.deleteListing(id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result.message));
+});
+
+// Admin deletes a user review
+// (The listing delete/review delete routes are registered in admin.routes.ts.)
+export const adminDeleteReview: RequestHandler<
+  { id: string },
+  ApiResponse<null>
+> = asyncHandler(async (req: Request, res: Response) => {
+  const id = req.params.id as string;
+  const result = await adminService.deleteReview(id);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result.message));
+});
+
 // ═══════════════════════════════════════════════════════════════════════════
 // ADMIN APPOINTMENT VIEWS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -357,6 +403,8 @@ export const adminGetAllAppointments: RequestHandler = asyncHandler(
     const result = await appointmentService.getAllAppointments({
       page: Number(req.query.page) || 1,
       limit: Number(req.query.limit) || 10,
+      search: (req.query.search as string | undefined)?.trim() || undefined,
+      status: req.query.status as "pending" | "confirmed" | "completed" | "cancelled" | undefined,
     });
 
     return res

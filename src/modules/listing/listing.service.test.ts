@@ -7,7 +7,7 @@ import type { Mock } from "vitest";
 
 const { mockPrisma } = vi.hoisted(() => ({
   mockPrisma: {
-    listing: { findUnique: vi.fn() },
+    listing: { findUnique: vi.fn(), findFirst: vi.fn() },
   },
 }));
 
@@ -40,6 +40,7 @@ describe("ListingService — getListingBySlug", () => {
 
     // Assign a fresh mock for each test
     mockPrisma.listing.findUnique = vi.fn();
+    mockPrisma.listing.findFirst = vi.fn();
 
     listingService = new ListingService();
   });
@@ -63,28 +64,32 @@ describe("ListingService — getListingBySlug", () => {
       dailyPrice: "200",
     };
 
-    (mockPrisma.listing.findUnique as Mock).mockResolvedValue(fakeListing);
+    (mockPrisma.listing.findFirst as Mock).mockResolvedValue(fakeListing);
 
     const result = await listingService.getListingBySlug(
       "professional-web-development"
     );
 
-    expect(mockPrisma.listing.findUnique).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.listing.findUnique).toHaveBeenCalledWith({
-      where: { slug: "professional-web-development" },
+    expect(mockPrisma.listing.findFirst).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.listing.findFirst).toHaveBeenCalledWith({
+      where: {
+        slug: "professional-web-development",
+        user: { isActive: true },
+      },
       include: expect.objectContaining({
         user: expect.any(Object),
         service: expect.any(Object),
         userReview: expect.any(Object),
       }),
     });
-    expect(result).toEqual(fakeListing);
+    // The seller's phone number is masked to the last 4 digits.
+    expect(result.user.phone).toBe("****123");
   });
 
   // ── Not found ────────────────────────────────────────────────────────
 
   it("should throw a 404 ApiError when the slug does not match any listing", async () => {
-    (mockPrisma.listing.findUnique as Mock).mockResolvedValue(null);
+    (mockPrisma.listing.findFirst as Mock).mockResolvedValue(null);
 
     const promise = listingService.getListingBySlug("non-existent-slug");
 
@@ -94,9 +99,9 @@ describe("ListingService — getListingBySlug", () => {
       message: "Listing not found",
     });
 
-    expect(mockPrisma.listing.findUnique).toHaveBeenCalledTimes(1);
-    expect(mockPrisma.listing.findUnique).toHaveBeenCalledWith({
-      where: { slug: "non-existent-slug" },
+    expect(mockPrisma.listing.findFirst).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.listing.findFirst).toHaveBeenCalledWith({
+      where: { slug: "non-existent-slug", user: { isActive: true } },
       include: expect.any(Object),
     });
   });
@@ -105,7 +110,7 @@ describe("ListingService — getListingBySlug", () => {
 
   it("should propagate database errors", async () => {
     const dbError = new Error("Database connection failed");
-    (mockPrisma.listing.findUnique as Mock).mockRejectedValue(dbError);
+    (mockPrisma.listing.findFirst as Mock).mockRejectedValue(dbError);
 
     await expect(
       listingService.getListingBySlug("any-slug")

@@ -4,6 +4,7 @@ import { asyncHandler } from "../../utils/async-handler.js";
 import { AppointmentService } from "./appoinment.service.js";
 import type {
   CreateAppointmentInput,
+  CreateUnavailableSlotInput,
   UpdateAppointmentStatusInput,
 } from "./appoinment.validation.js";
 
@@ -201,3 +202,57 @@ export const updateAppointmentStatus: RequestHandler<
       )
     );
 });
+
+// ── Seller availability (blocked-out slots) ──────────────────────────────
+
+// List the seller's blocked slots
+export const getSellerAvailability: RequestHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const sellerId = req.user?.id as string;
+    const date = req.query.date as string | undefined;
+
+    const slots = await appointmentService.getSellerAvailability(sellerId, {
+      date,
+    });
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          "Availability fetched successfully",
+          slots
+        )
+      );
+  }
+);
+
+// Add a blocked-out slot
+export const addUnavailableSlot: RequestHandler<
+  {},
+  ApiResponse<unknown>,
+  CreateUnavailableSlotInput
+> = asyncHandler(async (req: Request, res: Response) => {
+  const sellerId = req.user?.id as string;
+  const slot = await appointmentService.addUnavailableSlot(sellerId, req.body);
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, "Blocked slot added successfully", slot));
+});
+
+// Remove a blocked-out slot
+export const deleteUnavailableSlot: RequestHandler<{ slotId: string }> =
+  asyncHandler(async (req: Request, res: Response) => {
+    const sellerId = req.user?.id as string;
+    const slotId = req.params.slotId as string;
+
+    const result = await appointmentService.deleteUnavailableSlot(
+      sellerId,
+      slotId
+    );
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, result.message));
+  });

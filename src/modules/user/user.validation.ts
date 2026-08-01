@@ -1,4 +1,5 @@
 import z from "zod";
+import { updatePhoneSchema } from "../../utils/phone.utils.js";
 
 export const createUserSchema = z
   .object({
@@ -31,10 +32,8 @@ export const updateUserSchema = z
   .object({
     name: z.string().trim().min(3).max(100).optional(),
     email: z.string().trim().email("Invalid email format").optional(),
-    phone: z
-      .string()
-      .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")
-      .optional(),
+    // Accepts masked placeholders too (see updatePhoneSchema).
+    phone: updatePhoneSchema,
   })
   .strict();
 

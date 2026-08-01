@@ -81,8 +81,8 @@ router.route("/switch-role").post(authenticate(), validate(switchRoleSchema), sw
 // Admin routes
 router.route("/gt-all-users").get(authenticate({ type: "admin" }), getAllUsers);
 
-// update user to seller
-router.route("/update-as-seller").post(authenticate({ type: 'user' }), validate(updateUserAsSellerSchema), updateAsSeller)
+// update user to seller (allowed for any authenticated user — resubmission is idempotent)
+router.route("/update-as-seller").post(authenticate(), validate(updateUserAsSellerSchema), updateAsSeller)
 
 // update seller details (requires seller role)
 router.route("/update-seller-details").put(authenticate({ type: "seller" }), validate(updateSellerDetailsSchema), updateSellerDetails)

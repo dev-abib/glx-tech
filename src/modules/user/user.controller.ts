@@ -201,7 +201,10 @@ export const updateUser: RequestHandler<
 // update user to seller
 export const updateAsSeller: RequestHandler<
   {},
-  ApiResponse<{ message: string }>,
+  ApiResponse<{
+    message: string;
+    data: { accessToken: string; refreshToken: string; role: string };
+  }>,
   UpdateUserAsSellerInput
 > = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user!.id;
@@ -209,7 +212,12 @@ export const updateAsSeller: RequestHandler<
 
   return res
     .status(200)
-    .json(new ApiResponse<{ message: string }>(200, result.message, result));
+    .json(
+      new ApiResponse<{
+        message: string;
+        data: { accessToken: string; refreshToken: string; role: string };
+      }>(200, result.message, result)
+    );
 });
 
 // update seller details (seller info only — no address management)

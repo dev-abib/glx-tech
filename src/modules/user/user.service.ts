@@ -110,7 +110,8 @@ export class UserService {
           prisma.listing.count({ where: { userId, isAvailable: true } }),
         ]);
 
-      const maxActiveListings = userPlan.plan?.maxActiveListings ?? 1;
+      // Default matches the free tier (legacy sellers without a plan).
+      const maxActiveListings = userPlan.plan?.maxActiveListings ?? 5;
       const maxFeaturedListings = userPlan.plan?.maxFeaturedListings ?? 0;
       const platformFeePercent = userPlan.plan
         ? Number(userPlan.plan.platformFeePercent)
@@ -174,7 +175,10 @@ export class UserService {
   async updateUserAsSeller(
     userId: string,
     data: UpdateUserAsSellerInput
-  ): Promise<{ message: string }> {
+  ): Promise<{
+    message: string;
+    data: { accessToken: string; refreshToken: string; role: string };
+  }> {
     return userRepo.updateUserAsSeller(userId, data);
   }
 

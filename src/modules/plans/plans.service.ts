@@ -456,6 +456,10 @@ export class PlansService {
         const { features: planFeatures, ...planRest } = plan;
         return {
           ...planRest,
+          // Prices are stored as integer cents (Stripe convention) — convert
+          // to dollars for public consumption so the frontend never has to.
+          priceMonthly: plan.priceMonthly / 100,
+          priceAnnual: plan.priceAnnual / 100,
           enabledFeatureKeys: planFeatures.map((f) => f.key),
           listingUsage: {
             totalListings,

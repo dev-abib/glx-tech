@@ -21,7 +21,9 @@ import { JwtPayload } from "jsonwebtoken";
 import { sendEmail } from "../../emails/email.services.js";
 import { accountVerificationTemplate } from "../../emails/templates/syestem/account.verification.template.js";
 import { createOTP, verifyOTP } from "../../helpers/otp/otp.js";
+import { isMaskedPhone, maskPhone } from "../../utils/phone.utils.js";
 import { getPrismaClient } from "../../config/database.js";
+import { stripe } from "../../config/stripe.config.js";
 import { accountVerificationConfirmationTemplate } from "../../emails/templates/syestem/account-verfication.confirmation.template.js";
 import { resetPasswordTemplate } from "../../emails/templates/auth/reset-password.template.js";
 import { resetPasswordConfirmationTemplate } from "../../emails/templates/auth/reset-password-confirmation.template.js";
@@ -544,6 +546,7 @@ export class UserRepository {
           avatar: true,
           phone: true,
           isEmailVerified: true,
+          isVerifiedSeller: true,
           isActive: true,
           isPaid: true,
           createdAt: true,
@@ -554,7 +557,8 @@ export class UserRepository {
     ]);
 
     return {
-      users,
+      // Never expose full phone numbers — only the last 4 digits.
+      users: users.map((user) => ({ ...user, phone: maskPhone(user.phone) })),
       pagination: {
         page,
         limit,
@@ -575,7 +579,10 @@ export class UserRepository {
     const updateData: Record<string, unknown> = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.phone !== undefined) updateData.phone = data.phone;
+    // Never persist an already-masked phone number echoed back by a client.
+    if (data.phone !== undefined && !isMaskedPhone(data.phone)) {
+      updateData.phone = data.phone;
+    }
 
     // Handle email change — check uniqueness first
     if (data.email !== undefined) {
@@ -621,15 +628,19 @@ export class UserRepository {
   }
 
   // update user as seller repo
+  //
+  // Membership is enforced server-side: a user may only be labelled
+  // "seller" after an active membership exists. New sellers are activated
+  // on the Free tier here — the free plan is assigned as the membership and
+  // activates the account with the free plan's listing limits.
   async updateUserAsSeller(
     userId: string,
     data: UpdateUserAsSellerInput
-  ): Promise<{ message: string }> {
+  ): Promise<{
+    message: string;
+    data: { accessToken: string; refreshToken: string; role: string };
+  }> {
     const user = await this.findUser("id", userId, true);
-
-    if (user.isSeller) {
-      throw new ApiError(400, "User already marked as a seller");
-    }
 
     if (
       !Array.isArray(data.servicesId) ||
@@ -646,10 +657,81 @@ export class UserRepository {
       throw new ApiError(400, "You can only add one address during registration. You can add more later from your account settings.");
     }
 
-    await prisma.$transaction([
-      prisma.sellerInfo.create({
+    // ── Membership check ─────────────────────────────────────────────────
+    // If the user has no plan at all, activate them on the Free tier (assigns
+    // the free plan → max listings from the plan). Users who already have a
+    // plan — even a past_due/canceled one — keep it and are never silently
+    // downgraded to the free tier.
+    const wasOnPaidPlan = Boolean(user.subscriptionPlanId);
+
+    if (!wasOnPaidPlan) {
+      const freePlan = await prisma.subscriptionPlan.findUnique({
+        where: { slug: "free" },
+        select: { id: true },
+      });
+      if (!freePlan) {
+        throw new ApiError(
+          500,
+          "The free tier is not configured. Please contact support."
+        );
+      }
+      await prisma.user.update({
+        where: { id: userId },
         data: {
-          userId: userId,
+          subscriptionPlanId: freePlan.id,
+          subscriptionStatus: "active",
+          isPaid: false,
+        },
+      });
+    }
+
+    // ── Upsert seller profile (idempotent — safe to resubmit the form) ──
+    const address = data.addresses[0];
+    const existingSellerInfo = await prisma.sellerInfo.findUnique({
+      where: { userId },
+    });
+
+    if (existingSellerInfo) {
+      await prisma.sellerInfo.update({
+        where: { id: existingSellerInfo.id },
+        data: {
+          storeName: data.storeName,
+          servicesId: data.servicesId as string[],
+          insuranceStatus: data.insuranceStatus,
+          socialLInk: data.socialLInk,
+          businessNumber: data.businessNumber,
+          businessEmail: data.businessEmail,
+        },
+      });
+
+      const existingAddress = await prisma.selleraddress.findFirst({
+        where: { sellerId: existingSellerInfo.id },
+      });
+      if (existingAddress) {
+        await prisma.selleraddress.update({
+          where: { id: existingAddress.id },
+          data: {
+            streetAddress: address.streetAddress,
+            city: address.city,
+            state: address.state,
+            zipCode: address.zipCode,
+          },
+        });
+      } else {
+        await prisma.selleraddress.create({
+          data: {
+            sellerId: existingSellerInfo.id,
+            streetAddress: address.streetAddress,
+            city: address.city,
+            state: address.state,
+            zipCode: address.zipCode,
+          },
+        });
+      }
+    } else {
+      await prisma.sellerInfo.create({
+        data: {
+          userId,
           storeName: data.storeName,
           servicesId: data.servicesId as string[],
           insuranceStatus: data.insuranceStatus,
@@ -657,27 +739,182 @@ export class UserRepository {
           businessNumber: data.businessNumber,
           businessEmail: data.businessEmail,
           sellerAddress: {
-            createMany: {
-              data: data.addresses.map((addr) => ({
-                streetAddress: addr.streetAddress,
-                city: addr.city,
-                state: addr.state,
-                zipCode: addr.zipCode,
-              })),
+            create: {
+              streetAddress: address.streetAddress,
+              city: address.city,
+              state: address.state,
+              zipCode: address.zipCode,
             },
           },
         },
-      }),
-      prisma.user.update({
-        where: { id: userId },
-        data: { isSeller: true },
-      }),
-    ]);
+      });
+    }
 
-    return { message: "User updated as seller successfully" };
+    // ── Activate seller label + regenerate tokens with the new role ────
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: { isSeller: true, role: "seller" },
+    });
+
+    const payload: JwtPayload = {
+      name: updated.name as string,
+      email: updated.email as string,
+      id: updated.id,
+      isPaid: updated.isPaid as boolean,
+      role: updated.role,
+    };
+
+    const accessToken = auth.generateToken(payload, "seller", "access");
+    const refreshToken = auth.generateToken(payload, "seller", "refresh");
+
+    await prisma.user.update({
+      where: { id: updated.id },
+      data: {
+        accessToken: auth.hashToken(accessToken),
+        refreshToken: auth.hashToken(refreshToken),
+      },
+    });
+
+    return {
+      message: wasOnPaidPlan
+        ? "Seller account activated successfully. You can now create listings."
+        : "Seller account activated successfully on the free tier. You can now create listings.",
+      data: { accessToken, refreshToken, role: updated.role },
+    };
   }
 
-  // delete user (hard delete)
+  /**
+   * Soft-delete a user while preserving appointment history.
+   *
+   * The user row is anonymized (kept, so Appointment FK references to
+   * buyerId/sellerId stay valid). Listings WITHOUT bookings are hard-deleted;
+   * listings WITH bookings are kept but anonymized + hidden so their
+   * appointments survive. Reviews, availability slots, unreferenced addresses
+   * and the seller profile are removed, and the Stripe subscription is
+   * cancelled (best-effort).
+   */
+  async softDeleteUserData(userId: string) {
+    const user = await this.findUser("id", userId, true);
+
+    // ── 1. Cancel the Stripe subscription (best-effort) ───────────────
+    if (user.stripeSubscriptionId) {
+      try {
+        await stripe.subscriptions.cancel(user.stripeSubscriptionId);
+      } catch (err) {
+        // Ignore — subscription may already be canceled/inactive
+      }
+    }
+
+    // ── 2. Listings: hard-delete unbooked ones, keep + anonymize ones
+    //        that still have appointment history ─────────────────────
+    const listings = await prisma.listing.findMany({
+      where: { userId },
+      select: { id: true, addressId: true, media: true },
+    });
+
+    const keptAddressIds = new Set<string>();
+
+    for (const listing of listings) {
+      const bookingCount = await prisma.appointment.count({
+        where: { listingId: listing.id },
+      });
+
+      // Reviews always belong to the listing — remove them
+      await prisma.userReview.deleteMany({ where: { listingId: listing.id } });
+
+      if (bookingCount === 0) {
+        // No history — clean up media, then hard delete
+        const media = (listing.media as Array<{ publicId?: string }>) ?? [];
+        for (const img of media) {
+          if (img.publicId) {
+            await cloudinary.deleteFile(img.publicId).catch(() => {});
+          }
+        }
+        await prisma.listing.delete({ where: { id: listing.id } });
+      } else {
+        // Has appointment history — keep the row, anonymize + hide it
+        keptAddressIds.add(listing.addressId);
+        await prisma.listing.update({
+          where: { id: listing.id },
+          data: {
+            title: "Deleted listing",
+            description: "",
+            media: [],
+            isAvailable: false,
+            isFeatured: false,
+          },
+        });
+      }
+    }
+
+    // ── 3. Reviews this user wrote on OTHER listings ──────────────────
+    await prisma.userReview.deleteMany({ where: { userId } });
+
+    // ── 4. Blocked availability slots ─────────────────────────────────
+    await prisma.unavailableSlot.deleteMany({ where: { sellerId: userId } });
+
+    // ── 5. Seller profile + addresses (keep any still referenced) ─────
+    const sellerInfo = await prisma.sellerInfo.findUnique({
+      where: { userId },
+      include: { sellerAddress: true },
+    });
+    if (sellerInfo) {
+      const addressesToDelete = sellerInfo.sellerAddress.filter(
+        (a) => !keptAddressIds.has(a.id)
+      );
+      if (addressesToDelete.length > 0) {
+        await prisma.selleraddress.deleteMany({
+          where: { id: { in: addressesToDelete.map((a) => a.id) } },
+        });
+      }
+      // Only delete SellerInfo if no address still references it (FK)
+      const remaining = sellerInfo.sellerAddress.filter((a) =>
+        keptAddressIds.has(a.id)
+      );
+      if (remaining.length === 0) {
+        await prisma.sellerInfo.delete({ where: { userId } });
+      }
+    }
+
+    // ── 6. Clean up avatar file (best-effort) ─────────────────────────
+    if (user.avatarPublicId) {
+      await cloudinary.deleteFile(user.avatarPublicId).catch(() => {});
+    }
+
+    // ── 7. Anonymize the user row (keeps buyer/seller FKs valid) ─────
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        name: "Deleted User",
+        email: `deleted-${userId}@deleted.invalid`,
+        password: "!deleted!", // unrecoverable
+        phone: null,
+        avatar: null,
+        avatarPublicId: null,
+        isEmailVerified: false,
+        isVerifiedSeller: false,
+        isActive: false,
+        isPaid: false,
+        isSeller: false,
+        role: "user",
+        otp: null,
+        otpExpiresAt: null,
+        otpAttempts: 0,
+        blockedUntil: null,
+        refreshToken: null,
+        accessToken: null,
+        resetToken: null,
+        subscriptionPlanId: null,
+        subscriptionStatus: null,
+        stripeCustomerId: null,
+        stripeSubscriptionId: null,
+        currentPeriodEnd: null,
+        lastLoginAt: null,
+      },
+    });
+  }
+
+  // delete user (self-service) — soft delete, preserves appointment history
   async deleteUser(userId: string) {
     const user = await this.findUser("id", userId, true);
 
@@ -690,14 +927,7 @@ export class UserRepository {
       }),
     });
 
-    // Delete DB record, then clean up Cloudinary
-    await prisma.user.delete({ where: { id: userId } });
-
-    if (user.avatarPublicId) {
-      await cloudinary.deleteFile(user.avatarPublicId).catch(() => {
-        // Ignore errors — file cleanup is best-effort after DB delete
-      });
-    }
+    await this.softDeleteUserData(userId);
 
     return { message: "User deleted successfully" };
   }

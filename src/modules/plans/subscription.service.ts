@@ -39,8 +39,12 @@ function invalidateCache(pattern?: string): void {
 interface UserPlanResult {
   planId: string | null;
   isFree: boolean;
-  plan: { id: string; maxActiveListings: number; maxFeaturedListings: number; platformFeePercent: number } | null;
+  plan: { id: string; slug: string; maxActiveListings: number; maxFeaturedListings: number; platformFeePercent: number } | null;
 }
+
+// Listing limit granted to legacy sellers who predate membership enforcement
+// but have no plan assigned yet (they behave like free-tier sellers).
+const LEGACY_SELLER_DEFAULT_LISTINGS = 5;
 
 export class SubscriptionService {
   /**
@@ -58,6 +62,7 @@ export class SubscriptionService {
         subscriptionPlan: {
           select: {
             id: true,
+            slug: true,
             maxActiveListings: true,
             maxFeaturedListings: true,
             platformFeePercent: true,
@@ -68,7 +73,9 @@ export class SubscriptionService {
 
     const result: UserPlanResult = {
       planId: user?.subscriptionPlanId ?? null,
-      isFree: !user?.subscriptionPlanId,
+      // The Free tier is still "free" even though it is a real membership.
+      isFree:
+        !user?.subscriptionPlanId || user?.subscriptionPlan?.slug === "free",
       plan: (user?.subscriptionPlan ?? null) as UserPlanResult["plan"],
     };
 
@@ -112,24 +119,86 @@ export class SubscriptionService {
   }
 
   /**
-   * Check if a user can create a new listing based on their plan's maxActiveListings.
+   * Whether a user currently holds an active membership.
+   *
+   * Any assigned plan (including the Free tier, which IS a real membership)
+   * counts as active. TRUE legacy sellers — accounts created before
+   * membership enforcement with no subscription status recorded at all — are
+   * treated as free-tier members. Users who are recorded as canceled /
+   * past_due / unpaid (status set, no plan) do NOT have an active membership.
    */
-  async canCreateListing(userId: string): Promise<{ allowed: boolean; currentCount: number; maxAllowed: number }> {
+  async hasActiveMembership(userId: string): Promise<boolean> {
+    const userPlan = await this.getPlanForUser(userId);
+    if (userPlan.plan) return true;
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isSeller: true, subscriptionStatus: true },
+    });
+    return !!user?.isSeller && !user.subscriptionStatus;
+  }
+
+  /**
+   * Check if a user can create a new listing based on their plan's maxActiveListings.
+   *
+   * Membership is enforced here: users without any plan (no free tier, no paid
+   * subscription) cannot create listings unless they are legacy sellers created
+   * before membership enforcement, who keep the free-tier limit.
+   */
+  async canCreateListing(userId: string): Promise<{
+    allowed: boolean;
+    currentCount: number;
+    maxAllowed: number;
+    reason: "membership_required" | "limit_reached" | null;
+  }> {
     const cacheKey = `listingLimit:${userId}`;
-    const cached = getFromCache<{ allowed: boolean; currentCount: number; maxAllowed: number }>(cacheKey);
+    const cached = getFromCache<{
+      allowed: boolean;
+      currentCount: number;
+      maxAllowed: number;
+      reason: "membership_required" | "limit_reached" | null;
+    }>(cacheKey);
     if (cached) return cached;
 
     const userPlan = await this.getPlanForUser(userId);
 
-    // Free users get a default limit of 1
-    const maxAllowed = userPlan.plan?.maxActiveListings ?? 1;
+    let maxAllowed: number;
+    if (userPlan.plan) {
+      maxAllowed = userPlan.plan.maxActiveListings;
+    } else {
+      // No plan. Only TRUE legacy sellers — accounts created before
+      // membership enforcement, i.e. with no subscription status recorded at
+      // all — keep the free-tier limit. Canceled/past_due users (who have a
+      // status but no plan) must reactivate a membership before listing.
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { isSeller: true, subscriptionStatus: true },
+      });
+      if (user?.isSeller && !user.subscriptionStatus) {
+        maxAllowed = LEGACY_SELLER_DEFAULT_LISTINGS;
+      } else {
+        const result = {
+          allowed: false,
+          currentCount: 0,
+          maxAllowed: 0,
+          reason: "membership_required" as const,
+        };
+        setCache(cacheKey, result);
+        return result;
+      }
+    }
 
     const currentCount = await prisma.listing.count({
       where: { userId },
     });
 
     const allowed = currentCount < maxAllowed;
-    const result = { allowed, currentCount, maxAllowed };
+    const result = {
+      allowed,
+      currentCount,
+      maxAllowed,
+      reason: allowed ? null : ("limit_reached" as const),
+    };
 
     setCache(cacheKey, result);
     return result;
@@ -167,6 +236,72 @@ export class SubscriptionService {
     invalidateCache(`plan:user:${userId}`);
     invalidateCache(`feature:${userId}:`);
     invalidateCache(`listingLimit:${userId}`);
+  }
+
+  /**
+   * Hide all of a seller's listings because their subscription lapsed or
+   * ended (grace period over). Keeps the rows (appointment history stays
+   * valid) but marks them unavailable + isHiddenByLapse so a later renewal
+   * can restore exactly the auto-hidden ones.
+   */
+  async hideListingsForLapse(userId: string): Promise<number> {
+    const result = await prisma.listing.updateMany({
+      where: { userId, isAvailable: true },
+      data: { isAvailable: false, isHiddenByLapse: true },
+    });
+    this.invalidateUserCache(userId);
+    return result.count;
+  }
+
+  /**
+   * Restore listings that were auto-hidden by a subscription lapse (called
+   * after a renewal / reactivation). Only touches listings flagged with
+   * isHiddenByLapse — listings the seller manually hid stay hidden.
+   */
+  async restoreLapsedListings(userId: string): Promise<number> {
+    const result = await prisma.listing.updateMany({
+      where: { userId, isHiddenByLapse: true },
+      data: { isAvailable: true, isHiddenByLapse: false },
+    });
+    this.invalidateUserCache(userId);
+    return result.count;
+  }
+
+  // TTL guard so the sweep runs at most once per minute per process.
+  private lastLapseSweepAt: number = 0;
+
+  /**
+   * Lazy sweep for sellers whose grace period has passed: subscription is
+   * past_due/canceled AND currentPeriodEnd is in the past → auto-hide their
+   * listings. TTL-guarded (60s) so it's cheap to call on the public listing
+   * endpoint. No cron infrastructure needed.
+   */
+  async hideExpiredListings(force: boolean = false): Promise<number> {
+    const now = Date.now();
+    if (!force && now - this.lastLapseSweepAt < 60_000) return 0;
+    this.lastLapseSweepAt = now;
+
+    const expiredUsers = await prisma.user.findMany({
+      where: {
+        isSeller: true,
+        subscriptionStatus: {
+          in: ["past_due", "unpaid", "canceled"],
+        },
+        OR: [
+          // past_due/unpaid sellers whose grace period has ended
+          { currentPeriodEnd: { lt: new Date() } },
+          // canceled sellers (subscription actually ended — period end cleared)
+          { subscriptionStatus: "canceled" },
+        ],
+      },
+      select: { id: true },
+    });
+
+    let hidden = 0;
+    for (const u of expiredUsers) {
+      hidden += await this.hideListingsForLapse(u.id);
+    }
+    return hidden;
   }
 
   /**

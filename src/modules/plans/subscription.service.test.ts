@@ -7,9 +7,9 @@ import type { Mock } from "vitest";
 
 const { mockPrisma } = vi.hoisted(() => ({
   mockPrisma: {
-    user: { findUnique: vi.fn() },
+    user: { findUnique: vi.fn(), findMany: vi.fn() },
     planFeature: { findUnique: vi.fn() },
-    listing: { count: vi.fn() },
+    listing: { count: vi.fn(), updateMany: vi.fn() },
   },
 }));
 
@@ -189,6 +189,7 @@ describe("SubscriptionService — canCreateListing", () => {
       subscriptionPlanId: "plan-premium",
       subscriptionPlan: {
         id: "plan-premium",
+        slug: "premium",
         maxActiveListings: 50,
         maxFeaturedListings: 10,
         platformFeePercent: 0,
@@ -208,6 +209,7 @@ describe("SubscriptionService — canCreateListing", () => {
       subscriptionPlanId: "plan-premium",
       subscriptionPlan: {
         id: "plan-premium",
+        slug: "premium",
         maxActiveListings: 50,
         maxFeaturedListings: 10,
         platformFeePercent: 0,
@@ -220,33 +222,69 @@ describe("SubscriptionService — canCreateListing", () => {
     expect(result.allowed).toBe(false);
     expect(result.currentCount).toBe(50);
     expect(result.maxAllowed).toBe(50);
+    expect(result.reason).toBe("limit_reached");
   });
 
-  it("✅ should allow 1 listing for free users (default limit)", async () => {
-    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
-      subscriptionPlanId: null,
-      subscriptionPlan: null,
-    });
+  it("❌ should REJECT listing creation for users with NO membership (not a seller)", async () => {
+    (mockPrisma.user.findUnique as Mock)
+      .mockResolvedValueOnce({
+        subscriptionPlanId: null,
+        subscriptionPlan: null,
+      })
+      .mockResolvedValueOnce({ isSeller: false, subscriptionStatus: null });
+
+    const result = await subscriptionService.canCreateListing("user-free");
+
+    expect(result.allowed).toBe(false);
+    expect(result.maxAllowed).toBe(0);
+    expect(result.reason).toBe("membership_required");
+  });
+
+  it("✅ should allow listings for legacy sellers without a plan (free-tier limit = 5)", async () => {
+    (mockPrisma.user.findUnique as Mock)
+      .mockResolvedValueOnce({
+        subscriptionPlanId: null,
+        subscriptionPlan: null,
+      })
+      .mockResolvedValueOnce({ isSeller: true, subscriptionStatus: null });
     (mockPrisma.listing.count as Mock).mockResolvedValue(0);
 
     const result = await subscriptionService.canCreateListing("user-free");
 
     expect(result.allowed).toBe(true);
-    expect(result.maxAllowed).toBe(1); // Default for free users
+    expect(result.maxAllowed).toBe(5); // Free-tier limit
   });
 
-  it("❌ should reject 2nd listing for free users (default limit = 1)", async () => {
-    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
-      subscriptionPlanId: null,
-      subscriptionPlan: null,
-    });
-    (mockPrisma.listing.count as Mock).mockResolvedValue(1);
+  it("❌ should reject a 6th listing for legacy free-tier sellers (limit = 5)", async () => {
+    (mockPrisma.user.findUnique as Mock)
+      .mockResolvedValueOnce({
+        subscriptionPlanId: null,
+        subscriptionPlan: null,
+      })
+      .mockResolvedValueOnce({ isSeller: true, subscriptionStatus: null });
+    (mockPrisma.listing.count as Mock).mockResolvedValue(5);
 
     const result = await subscriptionService.canCreateListing("user-free");
 
     expect(result.allowed).toBe(false);
-    expect(result.maxAllowed).toBe(1);
-    expect(result.currentCount).toBe(1);
+    expect(result.maxAllowed).toBe(5);
+    expect(result.currentCount).toBe(5);
+    expect(result.reason).toBe("limit_reached");
+  });
+
+  it("❌ should REJECT listing creation for CANCELED users without a plan (must reactivate membership)", async () => {
+    (mockPrisma.user.findUnique as Mock)
+      .mockResolvedValueOnce({
+        subscriptionPlanId: null,
+        subscriptionPlan: null,
+      })
+      .mockResolvedValueOnce({ isSeller: true, subscriptionStatus: "canceled" });
+
+    const result = await subscriptionService.canCreateListing("user-canceled");
+
+    expect(result.allowed).toBe(false);
+    expect(result.maxAllowed).toBe(0);
+    expect(result.reason).toBe("membership_required");
   });
 });
 
@@ -361,5 +399,75 @@ describe("SubscriptionService — getPlatformFee", () => {
 
     const fee = await subscriptionService.getPlatformFee("user-free");
     expect(fee).toBe(5);
+  });
+});
+
+describe("SubscriptionService — lapse policy (hide/restore listings)", () => {
+  let subscriptionService: SubscriptionService;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    subscriptionService = new SubscriptionService();
+    subscriptionService.clearAllCache();
+  });
+
+  it("🚫 hideListingsForLapse should mark a seller's available listings as unavailable + isHiddenByLapse", async () => {
+    (mockPrisma.listing.updateMany as Mock).mockResolvedValue({ count: 3 });
+
+    const hidden = await subscriptionService.hideListingsForLapse("user-lapsed");
+
+    expect(hidden).toBe(3);
+    expect(mockPrisma.listing.updateMany).toHaveBeenCalledWith({
+      where: { userId: "user-lapsed", isAvailable: true },
+      data: { isAvailable: false, isHiddenByLapse: true },
+    });
+  });
+
+  it("♻️ restoreLapsedListings should only bring back isHiddenByLapse listings", async () => {
+    (mockPrisma.listing.updateMany as Mock).mockResolvedValue({ count: 2 });
+
+    const restored = await subscriptionService.restoreLapsedListings(
+      "user-renewed"
+    );
+
+    expect(restored).toBe(2);
+    expect(mockPrisma.listing.updateMany).toHaveBeenCalledWith({
+      where: { userId: "user-renewed", isHiddenByLapse: true },
+      data: { isAvailable: true, isHiddenByLapse: false },
+    });
+  });
+
+  it("🧹 hideExpiredListings should hide listings for past_due sellers whose grace period ended", async () => {
+    (mockPrisma.user.findMany as Mock).mockResolvedValue([{ id: "u1" }, { id: "u2" }]);
+    (mockPrisma.listing.updateMany as Mock).mockResolvedValue({ count: 1 });
+
+    const hidden = await subscriptionService.hideExpiredListings(true);
+
+    expect(hidden).toBe(2);
+    expect(mockPrisma.user.findMany).toHaveBeenCalledTimes(1);
+    expect(mockPrisma.listing.updateMany).toHaveBeenCalledTimes(2);
+  });
+
+  it("⏱️ hideExpiredListings should be TTL-guarded (skip when called again within 60s)", async () => {
+    (mockPrisma.user.findMany as Mock).mockResolvedValue([{ id: "u1" }]);
+    (mockPrisma.listing.updateMany as Mock).mockResolvedValue({ count: 1 });
+
+    // First call (force bypasses guard) — runs the sweep
+    await subscriptionService.hideExpiredListings(true);
+    expect(mockPrisma.user.findMany).toHaveBeenCalledTimes(1);
+
+    // Second call within 60s — should skip entirely
+    const second = await subscriptionService.hideExpiredListings();
+    expect(second).toBe(0);
+    expect(mockPrisma.user.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it("❌ hideExpiredListings should not touch listings of sellers with active subscriptions", async () => {
+    (mockPrisma.user.findMany as Mock).mockResolvedValue([]);
+
+    const hidden = await subscriptionService.hideExpiredListings(true);
+
+    expect(hidden).toBe(0);
+    expect(mockPrisma.listing.updateMany).not.toHaveBeenCalled();
   });
 });

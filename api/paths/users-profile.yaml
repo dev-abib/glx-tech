@@ -84,8 +84,8 @@ update-me:
 delete-me:
   delete:
     tags: ["03 — Users — Profile"]
-    summary: Delete user account
-    description: Permanently deletes the authenticated user's account.
+    summary: Delete user account (self-service)
+    description: Soft-deletes the authenticated user's account — cancels their Stripe subscription, deletes listings without bookings plus seller data, and anonymizes the account row while preserving appointment history. Deleted users can no longer log in.
     security:
       - bearerAuth: []
     responses:

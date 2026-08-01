@@ -10,6 +10,22 @@ enum APPOINTMENT_TYPE {
   RENT
 }
 
+// A date (and optional time range) the seller has blocked out — no bookings
+// are accepted for that slot. `startTime`/`endTime` are HH:mm; when both are
+// null the whole day is blocked.
+model UnavailableSlot {
+  id        String   @id @default(cuid())
+  sellerId  String
+  seller    User     @relation("SellerUnavailableSlots", fields: [sellerId], references: [id])
+  date      String // YYYY-MM-DD
+  startTime String? // HH:mm — null + null endTime = whole day blocked
+  endTime   String?
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([sellerId, date])
+}
+
 model Appointment {
   id              String           @id @default(cuid())
   listingId       String

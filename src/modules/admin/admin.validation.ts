@@ -1,4 +1,5 @@
 import z from "zod";
+import { updatePhoneSchema } from "../../utils/phone.utils.js";
 
 /**
  * Login schema for admin / super_admin users.
@@ -71,11 +72,8 @@ export const adminUpdateSelfSchema = z
   .object({
     name: z.string().trim().min(3).max(100).optional(),
     email: z.string().trim().email("Invalid email format").optional(),
-    phone: z
-      .string()
-      .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")
-      .optional()
-      .or(z.literal("")),
+    // Accepts masked placeholders too (see updatePhoneSchema).
+    phone: updatePhoneSchema.or(z.literal("")),
   })
   .strict();
 
@@ -88,13 +86,24 @@ export const adminUpdateUserSchema = z
   .object({
     name: z.string().trim().min(3).max(100).optional(),
     email: z.string().trim().email("Invalid email format").optional(),
-    phone: z
-      .string()
-      .regex(/^\+?[1-9]\d{7,14}$/, "Invalid phone number")
-      .optional(),
+    // Accepts masked placeholders too (see updatePhoneSchema).
+    phone: updatePhoneSchema,
     isActive: z.boolean().optional(),
     role: z.enum(["user", "admin", "super_admin"], "Invalid role").optional(),
   })
   .strict();
 
 export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>;
+
+/**
+ * Schema for admin approving/revoking a seller's verified badge.
+ */
+export const adminSetSellerVerificationSchema = z
+  .object({
+    isVerifiedSeller: z.boolean(),
+  })
+  .strict();
+
+export type AdminSetSellerVerificationInput = z.infer<
+  typeof adminSetSellerVerificationSchema
+>;

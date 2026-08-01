@@ -3,17 +3,21 @@ import { authenticate } from "../../middlewares/auth.middleware.js";
 import { validate } from "../../middlewares/validation.middleware.js";
 import {
   CreateAppointmentSchema,
+  CreateUnavailableSlotSchema,
   UpdateAppointmentStatusSchema,
 } from "./appoinment.validation.js";
 import {
+  addUnavailableSlot,
   cancelMyBooking,
   createAppointment,
+  deleteUnavailableSlot,
+  getBookedTimes,
   getMyBuyerAppointments,
   getMySellerAppointments,
   getMyRecentAppointments,
   getMyUpcomingAppointments,
+  getSellerAvailability,
   getSellerDashboardStats,
-  getBookedTimes,
   updateAppointmentStatus,
 } from "./appoinment.controller.js";
 
@@ -67,5 +71,23 @@ router
       validate(UpdateAppointmentStatusSchema),
       updateAppointmentStatus
     );
+
+// ── Seller Availability (blocked-out slots) ──────────────────────────────
+
+// List the seller's blocked slots (optional ?date=YYYY-MM-DD filter)
+// and add a new blocked-out slot.
+router
+  .route("/seller/availability")
+  .get(authenticate({ type: "seller" }), getSellerAvailability)
+  .post(
+    authenticate({ type: "seller" }),
+    validate(CreateUnavailableSlotSchema),
+    addUnavailableSlot
+  );
+
+// Remove a blocked-out slot
+router
+  .route("/seller/availability/:slotId")
+  .delete(authenticate({ type: "seller" }), deleteUnavailableSlot);
 
 export default router;

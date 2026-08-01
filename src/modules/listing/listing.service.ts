@@ -2,6 +2,11 @@ import { getPrismaClient } from "../../config/database.js";
 import { CloudinaryService } from "../../helpers/cloudinary.service.js";
 import { UserRepository } from "../user/user.repository.js";
 import { ApiError } from "../../utils/api-error.js";
+import { maskPhone } from "../../utils/phone.utils.js";
+import {
+  generateUniqueListingSlug,
+  slugifyTitle,
+} from "../../utils/slugify.js";
 import { SubscriptionService } from "../plans/subscription.service.js";
 import type {
   CreateListingInput,
@@ -26,9 +31,15 @@ export class ListingService {
     // checking if user exists
     await userRepo.findUser("id", userId, true);
 
-    // Enforce plan limits — check if user can create a new listing
+    // Enforce membership + plan limits server-side before a listing can be created.
     const planCheck = await subscriptionService.canCreateListing(userId);
     if (!planCheck.allowed) {
+      if (planCheck.reason === "membership_required") {
+        throw new ApiError(
+          403,
+          "A membership is required to create listings. Activate the free tier or subscribe to a plan first."
+        );
+      }
       throw new ApiError(
         403,
         `Listing limit reached. Your plan allows a maximum of ${planCheck.maxAllowed} active listing(s). ` +
@@ -69,12 +80,16 @@ export class ListingService {
       uploadedImages.push(uploadedImage);
     }
 
+    // Generate a unique slug server-side from the title so listings with the
+    // same title never collide (the DB slug column is globally unique).
+    const slug = await generateUniqueListingSlug(data.title);
+
     const listing = await prisma.listing.create({
       data: {
         userId,
         title: data.title,
         description: data.description,
-        slug: data.slug,
+        slug,
         serviceId: data.serviceId,
         addressId: data.addressId,
         basePrice: data.basePrice ?? null,
@@ -93,6 +108,7 @@ export class ListingService {
       data: {
         ...data,
         listingId: listing.id,
+        slug: listing.slug,
         address: {
           id: sellerAddress.id,
           streetAddress: sellerAddress.streetAddress,
@@ -127,17 +143,59 @@ export class ListingService {
     } = query;
     const skip = (page - 1) * limit;
 
-    // ── Build the Prisma where clause (DB-level filters) ────────────
-    const where: Record<string, unknown> = {};
+    // Lapse policy — hide listings of sellers whose subscription grace
+    // period ended (TTL-guarded sweep, runs at most once per minute).
+    await subscriptionService.hideExpiredListings();
 
-    // Text search
+    // ── Build the Prisma where clause (DB-level filters) ────────────
+    const where: Record<string, unknown> = {
+      // Exclude listings of soft-deleted (anonymized) sellers.
+      user: { isActive: true },
+    };
+
+    // Text search — matches across all listing fields (title, slug,
+    // description, seller name/email, service name, full address, price).
     if (search) {
       where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
         { slug: { contains: search, mode: "insensitive" } },
         { description: { contains: search, mode: "insensitive" } },
+        { basePrice: { contains: search, mode: "insensitive" } },
+        { hourlyPrice: { contains: search, mode: "insensitive" } },
+        { dailyPrice: { contains: search, mode: "insensitive" } },
         {
           address: {
             streetAddress: { contains: search, mode: "insensitive" },
+          },
+        },
+        {
+          address: {
+            city: { contains: search, mode: "insensitive" },
+          },
+        },
+        {
+          address: {
+            state: { contains: search, mode: "insensitive" },
+          },
+        },
+        {
+          address: {
+            zipCode: { contains: search, mode: "insensitive" },
+          },
+        },
+        {
+          user: {
+            name: { contains: search, mode: "insensitive" },
+          },
+        },
+        {
+          user: {
+            email: { contains: search, mode: "insensitive" },
+          },
+        },
+        {
+          service: {
+            name: { contains: search, mode: "insensitive" },
           },
         },
       ];
@@ -209,6 +267,7 @@ export class ListingService {
           name: true,
           email: true,
           avatar: true,
+          isVerifiedSeller: true,
           sellerInfo: {
             select: { socialLInk: true },
           },
@@ -369,6 +428,7 @@ export class ListingService {
     const where = {
       serviceId: sourceListing.serviceId,
       id: { not: sourceListing.id },
+      user: { isActive: true },
     };
 
     // Fetch other listings with the same serviceId, excluding the current one
@@ -385,6 +445,7 @@ export class ListingService {
               name: true,
               email: true,
               avatar: true,
+              isVerifiedSeller: true,
               sellerInfo: {
                 select: { socialLInk: true },
               },
@@ -449,8 +510,8 @@ export class ListingService {
 
   // get listing by slug (public)
   async getListingBySlug(slug: string) {
-    const listing = await prisma.listing.findUnique({
-      where: { slug },
+    const listing = await prisma.listing.findFirst({
+      where: { slug, user: { isActive: true } },
       include: {
         user: {
           select: {
@@ -459,6 +520,7 @@ export class ListingService {
             email: true,
             avatar: true,
             phone: true,
+            isVerifiedSeller: true,
             sellerInfo: {
               select: { socialLInk: true },
             },
@@ -498,7 +560,11 @@ export class ListingService {
       throw new ApiError(404, "Listing not found");
     }
 
-    return listing;
+    // Never expose the seller's full phone number publicly — only last 4 digits.
+    return {
+      ...listing,
+      user: { ...listing.user, phone: maskPhone(listing.user.phone) },
+    };
   }
 
   // get my listings (authenticated seller)
@@ -573,6 +639,14 @@ export class ListingService {
       throw new ApiError(403, "You can only update your own listings");
     }
 
+    // Membership must remain active to manage an existing listing.
+    if (!(await subscriptionService.hasActiveMembership(userId))) {
+      throw new ApiError(
+        403,
+        "Your membership is inactive. Reactivate the free tier or subscribe to a plan to manage your listings."
+      );
+    }
+
     // If serviceId is being changed, validate it against the seller's servicesId
     if (data.serviceId !== undefined) {
       const sellerInfo = await prisma.sellerInfo.findUnique({
@@ -592,8 +666,22 @@ export class ListingService {
 
     const updateData: Record<string, unknown> = {};
 
-    if (data.title !== undefined) updateData.title = data.title;
-    if (data.slug !== undefined) updateData.slug = data.slug;
+    if (data.title !== undefined) {
+      updateData.title = data.title;
+      // Regenerate the slug from the new title and keep it unique.
+      updateData.slug = await generateUniqueListingSlug(data.title, id);
+    } else if (data.slug !== undefined) {
+      // No title change — keep the client slug only if it stays unique.
+      const candidate = data.slug.trim() || slugifyTitle(listing.title);
+      const existing = await prisma.listing.findUnique({
+        where: { slug: candidate },
+        select: { id: true },
+      });
+      if (existing && existing.id !== id) {
+        throw new ApiError(409, "A listing with this slug already exists");
+      }
+      updateData.slug = candidate;
+    }
     if (data.serviceId !== undefined) updateData.serviceId = data.serviceId;
     if (data.description !== undefined)
       updateData.description = data.description;
@@ -653,6 +741,14 @@ export class ListingService {
       throw new ApiError(403, "You can only delete your own listings");
     }
 
+    // Membership must remain active to delete an existing listing.
+    if (!(await subscriptionService.hasActiveMembership(userId))) {
+      throw new ApiError(
+        403,
+        "Your membership is inactive. Reactivate the free tier or subscribe to a plan to delete your listings."
+      );
+    }
+
     // Delete listing images from cloudinary
     const existingMedia = listing.media as Array<{
       url: string;
@@ -689,6 +785,14 @@ export class ListingService {
       throw new ApiError(403, "You can only toggle the status of your own listings");
     }
 
+    // Membership must remain active to re-enable a lapsed/hidden listing.
+    if (!(await subscriptionService.hasActiveMembership(userId))) {
+      throw new ApiError(
+        403,
+        "Your membership is inactive. Reactivate the free tier or subscribe to a plan to change listing availability."
+      );
+    }
+
     const updated = await prisma.listing.update({
       where: { id },
       data: { isAvailable: !listing.isAvailable },
@@ -709,6 +813,14 @@ export class ListingService {
 
     if (listing.userId !== userId) {
       throw new ApiError(403, "You can only toggle the featured status of your own listings");
+    }
+
+    // Membership must remain active to manage the featured flag.
+    if (!(await subscriptionService.hasActiveMembership(userId))) {
+      throw new ApiError(
+        403,
+        "Your membership is inactive. Reactivate the free tier or subscribe to a plan to change featured status."
+      );
     }
 
     // If trying to feature, check subscription has the feature and slot available

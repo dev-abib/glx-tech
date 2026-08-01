@@ -5,8 +5,8 @@
  *  1. Register a user
  *  2. Manually verify the user (set isEmailVerified in DB)
  *  3. Login to get tokens
- *  4. Update user as seller (creates SellerInfo + Selleraddress)
- *  5. Create a listing using the addressId from step 4
+ *  4. Update user as seller (activates seller role + returns new tokens)
+ *  5. Create a listing using the addressId created in step 4
  *  6. Fetch the listing to verify it was created
  *
  * Run: npx tsx scripts/test-listing-flow.ts
@@ -132,29 +132,19 @@ async function main() {
     await prisma.$disconnect();
     return;
   }
-  console.log(`  ✅ Seller created`);
-
-  // ── 6. Switch role to seller ─────────────────────────────────────────
-  console.log("6. Switching role to seller...");
-  const switchRes = await fetch(`${BASE}/users/switch-role`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({}),
-  });
-  const switchBody = await switchRes.json();
-  if (!switchRes.ok) {
-    console.error("  ❌ Switch role failed:", switchBody);
+  // update-as-seller activates the seller role and returns fresh tokens.
+  const sellerToken = sellerBody.data?.data?.accessToken;
+  if (!sellerToken) {
+    console.error(
+      "  ❌ update-as-seller did not return seller tokens:",
+      sellerBody
+    );
     await prisma.$disconnect();
     return;
   }
-  // Use the new token from the role switch
-  const sellerToken = switchBody.data.accessToken;
-  console.log(`  ✅ Role switched to seller`);
+  console.log(`  ✅ Seller activated (role: ${sellerBody.data?.data?.role})`);
 
-  // ── 7. Get the addressId ─────────────────────────────────────────────
+  // ── 6. Get the addressId ─────────────────────────────────────────────
   console.log("6. Fetching seller address ID...");
   const sellerInfo = await prisma.sellerInfo.findUnique({
     where: { userId: user.id },
@@ -168,8 +158,8 @@ async function main() {
   const addressId = sellerInfo.sellerAddress[0].id;
   console.log(`  ✅ Address ID: ${addressId}`);
 
-  // ── 8. Create listing ────────────────────────────────────────────────
-  console.log("8. Creating listing...");
+  // ── 7. Create listing ────────────────────────────────────────────────
+  console.log("7. Creating listing...");
 
   // Create FormData for the listing (multipart)
   const listingPayload = {
@@ -207,8 +197,8 @@ async function main() {
   }
   console.log(`  ✅ Listing created! ID: ${listingBody.data?.data?.listingId}`);
 
-  // ── 9. Verify the listing in DB ──────────────────────────────────────
-  console.log("9. Verifying listing in database...");
+  // ── 8. Verify the listing in DB ──────────────────────────────────────
+  console.log("8. Verifying listing in database...");
   const listing = await prisma.listing.findUnique({
     where: { id: listingBody.data?.data?.listingId },
     select: {

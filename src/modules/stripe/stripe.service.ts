@@ -2,6 +2,8 @@ import { stripe } from "../../config/stripe.config.js";
 import { getPrismaClient } from "../../config/database.js";
 import { env } from "../../config/env.js";
 import { ApiError } from "../../utils/api-error.js";
+import { sendEmail } from "../../emails/email.services.js";
+import { subscriptionConfirmationTemplate } from "../../emails/templates/syestem/subscription-confirmation.template.js";
 import { SubscriptionService } from "../plans/subscription.service.js";
 import type {
   CreateDonationInput,
@@ -32,9 +34,14 @@ export class StripeService {
   /**
    * Build a frontend URL from env config, stripping trailing slashes
    * and trimming whitespace/spurious characters.
+   *
+   * Falls back to the deployed seller app so checkout redirects never point
+   * at localhost when FRONTEND_URL/APP_URL are not configured.
    */
   private getFrontendUrl(): string {
-    const raw = (env.FRONTEND_URL || env.APP_URL).trim();
+    const raw = (
+      env.FRONTEND_URL || env.APP_URL || "https://glxtech-seller.vercel.app"
+    ).trim();
     return raw.replace(/\/+$/, "");
   }
 
@@ -201,8 +208,9 @@ export class StripeService {
         data: { stripeCustomerId: customerId },
       });
     }
-    const successUrl = "https://glxtech-seller.vercel.app/payment/success";
-    const cancelUrl = "https://glxtech-seller.vercel.app/payment/cancel";
+    const baseUrl = this.getFrontendUrl();
+    const successUrl = `${baseUrl}/payment/success`;
+    const cancelUrl = `${baseUrl}/payment/cancel`;
 
     // Create the checkout session
     const session = await stripe.checkout.sessions.create({
@@ -335,13 +343,17 @@ export class StripeService {
       user.subscriptionStatus === "canceled" ||
       user.subscriptionStatus === "incomplete_expired";
 
+    // The Free tier is a real membership but is still "free".
+    const isFree =
+      !user.subscriptionPlanId || user.subscriptionPlan?.slug === "free";
+
     return {
       plan: user.subscriptionPlan
         ? {
             // getMe-compatible fields
             planId: user.subscriptionPlan.id,
             planName: user.subscriptionPlan.name,
-            isFree: !user.subscriptionPlanId,
+            isFree,
             maxActiveListings: user.subscriptionPlan.maxActiveListings,
             maxFeaturedListings: user.subscriptionPlan.maxFeaturedListings,
             platformFeePercent: Number(
@@ -355,15 +367,16 @@ export class StripeService {
             name: user.subscriptionPlan.name,
             slug: user.subscriptionPlan.slug,
             description: user.subscriptionPlan.description,
-            priceMonthly: user.subscriptionPlan.priceMonthly,
-            priceAnnual: user.subscriptionPlan.priceAnnual,
+            // Prices are stored in cents — convert to dollars for the API.
+            priceMonthly: user.subscriptionPlan.priceMonthly / 100,
+            priceAnnual: user.subscriptionPlan.priceAnnual / 100,
             enabledFeatures: user.subscriptionPlan.features.map(
               (f) => f.key
             ),
           }
         : null,
       // Also include isFree at top level for convenience
-      isFree: !user.subscriptionPlanId,
+      isFree,
       listingUsage: {
         totalListings,
         featuredListings,
@@ -481,7 +494,13 @@ export class StripeService {
       );
     }
 
-    const baseUrl = `https://glxtech-seller.vercel.app`;
+    // Which billing cycle was actually chosen (drives the confirmation email).
+    const billingCycle: "monthly" | "annual" =
+      user.subscriptionPlan.stripePriceIdMonthly === priceId
+        ? "monthly"
+        : "annual";
+
+    const baseUrl = this.getFrontendUrl();
     const successUrl = `${baseUrl}/payment/success`;
     const cancelUrl = `${baseUrl}/payment/cancel`;
 
@@ -497,6 +516,7 @@ export class StripeService {
         planSlug: user.subscriptionPlan.slug,
         userId,
         action: "renew",
+        billingCycle,
       },
       subscription_data: {
         metadata: {
@@ -618,6 +638,11 @@ export class StripeService {
     const updateData: Record<string, unknown> = {
       stripeCustomerId: customerId ?? null,
       subscriptionStatus: "active",
+      // Membership enforcement: paying for a plan labels the user as a
+      // seller (in case they upgraded before completing seller setup).
+      isSeller: true,
+      role: "seller",
+      isPaid: true,
     };
 
     if (subscriptionId) {
@@ -644,6 +669,54 @@ export class StripeService {
 
     // Invalidate subscription service cache so plan check is fresh
     subscriptionService.invalidateUserCache(userId);
+
+    // ── Confirmation email (fire-and-forget — never fail the webhook) ──
+    try {
+      const [user, plan] = await Promise.all([
+        prisma.user.findUnique({
+          where: { id: userId },
+          select: { email: true, name: true },
+        }),
+        prisma.subscriptionPlan.findUnique({
+          where: { id: planId },
+          select: { name: true, priceMonthly: true, priceAnnual: true },
+        }),
+      ]);
+
+      if (user?.email && plan) {
+        const billingCycle = (metadata?.billingCycle as
+          | "monthly"
+          | "annual"
+          | undefined) || "monthly";
+        // Prices are stored in cents — convert to dollars for the email.
+        const price = billingCycle === "annual"
+          ? plan.priceAnnual / 100
+          : plan.priceMonthly / 100;
+
+        await sendEmail({
+          to: user.email,
+          subject: `Subscription Confirmed — ${plan.name}`,
+          html: subscriptionConfirmationTemplate({
+            name: user.name ?? "there",
+            planName: plan.name,
+            price,
+            billingCycle,
+          }),
+        });
+        console.log(
+          `[StripeService] Confirmation email sent to ${user.email} for plan ${plan.name}`
+        );
+      }
+    } catch (emailErr) {
+      // Email failure must not break the payment webhook flow.
+      console.error(
+        "[StripeService] Failed to send subscription confirmation email:",
+        emailErr instanceof Error ? emailErr.message : emailErr
+      );
+    }
+
+    // Reactivation — bring any lapse-hidden listings back online.
+    await subscriptionService.restoreLapsedListings(userId);
 
     console.log(
       `[StripeService] Subscription activated for user ${userId} — plan: ${planId}`
@@ -702,6 +775,19 @@ export class StripeService {
       data: updateData,
     });
 
+    // Lapse policy: subscription ended → hide listings; reactivated → restore.
+    if (status === "canceled" || status === "incomplete_expired") {
+      await subscriptionService.hideListingsForLapse(userId);
+    } else if (status === "active") {
+      await subscriptionService.restoreLapsedListings(userId);
+    } else if (status === "unpaid") {
+      // Retries exhausted — grace continues until currentPeriodEnd, then the
+      // hideExpiredListings sweep takes over (unpaid is included there).
+      console.log(
+        `[StripeService] Subscription unpaid for user ${userId} — listings stay live until period end`
+      );
+    }
+
     // Invalidate cache so plan checks reflect the new status
     subscriptionService.invalidateUserCache(userId);
 
@@ -753,6 +839,9 @@ export class StripeService {
         currentPeriodEnd: periodEnd ? new Date(periodEnd * 1000) : undefined,
       },
     });
+
+    // Renewal paid — bring lapse-hidden listings back online.
+    await subscriptionService.restoreLapsedListings(user.id);
 
     console.log(
       `[StripeService] Invoice paid for user ${user.id} — amount: ${amountPaid ? amountPaid / 100 : "?"}`
@@ -817,6 +906,8 @@ export class StripeService {
           currentPeriodEnd: null,
         },
       });
+      // Subscription truly ended — hide the seller's listings (grace over).
+      await subscriptionService.hideListingsForLapse(userId);
       subscriptionService.invalidateUserCache(userId);
       console.log(`[StripeService] Subscription deleted for user ${userId}`);
       return;
@@ -837,6 +928,7 @@ export class StripeService {
             currentPeriodEnd: null,
           },
         });
+        await subscriptionService.hideListingsForLapse(user.id);
         subscriptionService.invalidateUserCache(user.id);
         console.log(
           `[StripeService] Subscription deleted for user ${user.id} (via customer lookup)`

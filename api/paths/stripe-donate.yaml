@@ -151,9 +151,11 @@ get-my-subscription:
                               type: string
                               nullable: true
                             priceMonthly:
-                              type: integer
+                              type: number
+                              description: Plan price per month in dollars
                             priceAnnual:
-                              type: integer
+                              type: number
+                              description: Plan price per year in dollars
                             maxActiveListings:
                               type: integer
                             maxFeaturedListings:

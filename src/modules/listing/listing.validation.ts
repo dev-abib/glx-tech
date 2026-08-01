@@ -50,7 +50,10 @@ const BooleanField = () => z.preprocess(parseBoolean, z.boolean());
 
 export const CreateListingSchema = z.looseObject({
   title: z.string(),
-  slug: z.string(),
+  // Accepted for backwards compatibility but ignored server-side — the
+  // server always generates a unique slug from the title (see
+  // generateUniqueListingSlug) so slugs can never collide.
+  slug: z.string().optional(),
   serviceId: z.string(),
   description: z.string(),
   addressId: z.string(),

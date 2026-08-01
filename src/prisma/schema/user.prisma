@@ -52,6 +52,7 @@ model User {
   avatarPublicId       String?           @map("avatar_public_id")
   phone                String?
   isEmailVerified      Boolean           @default(false) @map("is_email_verified")
+  isVerifiedSeller     Boolean           @default(false) @map("is_verified_seller")
   otp                  String?
   otpExpiresAt         DateTime?         @map("otp_expires_at")
   otpAttempts          Int?              @default(0) @map("otp_attempts")
@@ -76,6 +77,7 @@ model User {
   userReview           UserReview[]
   buyerAppointments    Appointment[]     @relation("BuyerAppointments")
   sellerAppointments   Appointment[]     @relation("SellerAppointments")
+  unavailableSlots     UnavailableSlot[] @relation("SellerUnavailableSlots")
   isSeller             Boolean           @default(false) @map("is_seller")
   sellerInfo           SellerInfo?
 

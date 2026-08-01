@@ -19,8 +19,11 @@ import {
   adminGetListingBySlug,
   adminGetListingReviews,
   adminGetAllReviews,
+  adminDeleteListing,
+  adminDeleteReview,
   adminGetDashboardTrends,
   adminGetAllAppointments,
+  adminSetSellerVerification,
 } from "./admin.controller.js";
 import {
   adminLoginSchema,
@@ -28,6 +31,7 @@ import {
   adminChangePasswordSchema,
   adminUpdateSelfSchema,
   adminUpdateUserSchema,
+  adminSetSellerVerificationSchema,
 } from "./admin.validation.js";
 
 const router = Router();
@@ -47,7 +51,7 @@ router
     createAdmin
   );
 
-router.route("/gt-all-users").get(authenticate({ type: "super_admin" }), adminGetAllUsers);
+router.route("/gt-all-users").get(authenticate({ type: "admin" }), adminGetAllUsers);
 
 router
   .route("/delete-admin/:id")
@@ -78,7 +82,9 @@ router
     adminUpdateSelf
   );
 
-router.route("/gt-all-admins").get(authenticate({ type: "super_admin" }), getAllAdmins);
+// Read-only listing of admin accounts — available to all admins (create,
+// update and delete remain super_admin-only above).
+router.route("/gt-all-admins").get(authenticate({ type: "admin" }), getAllAdmins);
 
 router
   .route("/change-password")
@@ -96,6 +102,14 @@ router
   .route("/delete-user/:id")
   .delete(authenticate({ type: "admin" }), adminDeleteUser);
 
+router
+  .route("/verify-seller/:id")
+  .patch(
+    authenticate({ type: "admin" }),
+    validate(adminSetSellerVerificationSchema),
+    adminSetSellerVerification
+  );
+
 // ═══════════════════════════════════════════════════════════════════════════
 // LISTING & REVIEW VIEWS (admin read-only)
 // ═══════════════════════════════════════════════════════════════════════════
@@ -112,9 +126,20 @@ router
   .route("/listings/:listingId/reviews")
   .get(authenticate({ type: "admin" }), adminGetListingReviews);
 
+// Admin removes a listing — guarded in the service (rejects listings that
+// still have bookings so appointment history is never orphaned).
+router
+  .route("/listings/:id")
+  .delete(authenticate({ type: "admin" }), adminDeleteListing);
+
 router
   .route("/reviews")
   .get(authenticate({ type: "admin" }), adminGetAllReviews);
+
+// Admin removes a user review directly from the panel.
+router
+  .route("/reviews/:id")
+  .delete(authenticate({ type: "admin" }), adminDeleteReview);
 
 // ── Dashboard Trends ──────────────────────────────────────────────────────
 
