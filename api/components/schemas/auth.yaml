@@ -20,6 +20,11 @@ CreateUserInput:
       type: string
       format: password
       example: P@ssw0rd!
+    userRole:
+      type: string
+      enum: [buyer, seller, renter, real_estate_agent, brokerage, practitioner, home_explorer, homeowner, investor, interior_designer, architect]
+      example: buyer
+      description: Real estate persona/user role field. Optional. Accepts TitleCase or snake_case strings (e.g. "Real Estate Agent", "real_estate_agent", "Buyer", "buyer").
 VerifyUserInput:
   type: object
   required: [email, otp]

@@ -1,34 +1,91 @@
 import z from "zod";
 
-export const createUserSchema = z
-  .object({
-    name: z.string().trim().min(3).max(100),
-    email: z.string().trim().email("Invalid email format"),
-    password: z
-      .string()
-      .min(8)
-      .max(128)
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()[\]{}\-_=+|\\:;"'<>,./~`]).+$/,
-        "Password must include uppercase, lowercase, number, and special character"
-      ),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  })
+export const userRoleEnumValues = [
+  "buyer",
+  "seller",
+  "renter",
+  "real_estate_agent",
+  "brokerage",
+  "practitioner",
+  "home_explorer",
+  "homeowner",
+  "investor",
+  "interior_designer",
+  "architect",
+] as const;
 
-  .strict();
+export const normalizeUserRole = (val: unknown): unknown => {
+  if (typeof val !== "string") return val;
+  const normalized = val.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if ((userRoleEnumValues as readonly string[]).includes(normalized)) {
+    return normalized;
+  }
+  return val;
+};
+
+export const userRoleSchema = z.preprocess(
+  normalizeUserRole,
+  z.enum(userRoleEnumValues, {
+    message: `Invalid user role. Allowed roles are: ${userRoleEnumValues.join(", ")}`,
+  })
+);
+
+const normalizeCreateUser = (input: unknown): unknown => {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+  const data = { ...(input as Record<string, unknown>) };
+  if (data.user_role !== undefined && data.userRole === undefined) {
+    data.userRole = data.user_role;
+    delete data.user_role;
+  }
+  return data;
+};
+
+export const createUserSchema = z.preprocess(
+  normalizeCreateUser,
+  z
+    .object({
+      name: z.string().trim().min(3).max(100),
+      email: z.string().trim().email("Invalid email format"),
+      password: z
+        .string()
+        .min(8)
+        .max(128)
+        .regex(
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&^#()[\]{}\-_=+|\\:;"'<>,./~`]).+$/,
+          "Password must include uppercase, lowercase, number, and special character"
+        ),
+      confirmPassword: z.string(),
+      userRole: userRoleSchema.optional(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: "Passwords do not match",
+      path: ["confirmPassword"],
+    })
+    .strict()
+);
 
 export type CreateUserInput = z.infer<typeof createUserSchema>;
 
-export const updateUserSchema = z
-  .object({
-    name: z.string().trim().min(3).max(100).optional(),
-    email: z.string().trim().email("Invalid email format").optional(),
-  })
-  .strict();
+const normalizeUpdateUser = (input: unknown): unknown => {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+  const data = { ...(input as Record<string, unknown>) };
+  if (data.user_role !== undefined && data.userRole === undefined) {
+    data.userRole = data.user_role;
+    delete data.user_role;
+  }
+  return data;
+};
+
+export const updateUserSchema = z.preprocess(
+  normalizeUpdateUser,
+  z
+    .object({
+      name: z.string().trim().min(3).max(100).optional(),
+      email: z.string().trim().email("Invalid email format").optional(),
+      userRole: userRoleSchema.optional(),
+    })
+    .strict()
+);
 
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 

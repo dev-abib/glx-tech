@@ -75,14 +75,6 @@ app.use(
       // Non-browser requests have no Origin header — allow them.
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      // Allow any localhost origin in development.
-      if (
-        env.NODE_ENV !== "production" &&
-        /^https?:\/\/localhost(:\d+)?$/.test(origin)
-      ) {
-        return callback(null, true);
-      }
-      callback(new ApiError(403, "Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

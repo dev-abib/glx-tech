@@ -5,6 +5,20 @@ enum Role {
   super_admin
 }
 
+enum UserRole {
+  buyer
+  seller
+  renter
+  real_estate_agent
+  brokerage
+  practitioner
+  home_explorer
+  homeowner
+  investor
+  interior_designer
+  architect
+}
+
 enum Provider {
   local
   google
@@ -52,6 +66,7 @@ model User {
   email                String            @unique
   password             String
   role                 Role              @default(user)
+  userRole             UserRole?         @map("user_role")
   avatar               String?
   avatarPublicId       String?           @map("avatar_public_id")
   isEmailVerified      Boolean           @default(false) @map("is_email_verified")

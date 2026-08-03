@@ -153,6 +153,7 @@ export const getAllUsers: RequestHandler<
       | "name"
       | "email"
       | "role"
+      | "userRole"
       | "avatar"
       | "isEmailVerified"
       | "isActive"
