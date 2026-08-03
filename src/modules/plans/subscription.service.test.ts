@@ -5,16 +5,27 @@ import type { Mock } from "vitest";
 // vi.mock is hoisted to the top of the file by Vitest, so any variable
 // referenced inside vi.mock must also be hoisted via vi.hoisted().
 
-const { mockPrisma } = vi.hoisted(() => ({
+const { mockPrisma, mockStripe } = vi.hoisted(() => ({
   mockPrisma: {
-    user: { findUnique: vi.fn(), findMany: vi.fn() },
+    user: { findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn() },
     planFeature: { findUnique: vi.fn() },
+    subscriptionPlan: { findUnique: vi.fn(), findFirst: vi.fn() },
     listing: { count: vi.fn(), updateMany: vi.fn() },
+  },
+  mockStripe: {
+    subscriptions: {
+      list: vi.fn(),
+      retrieve: vi.fn(),
+    },
   },
 }));
 
 vi.mock("../../config/database.js", () => ({
   getPrismaClient: vi.fn(() => mockPrisma),
+}));
+
+vi.mock("../../config/stripe.config.js", () => ({
+  stripe: mockStripe,
 }));
 
 // ── SUT ──────────────────────────────────────────────────────────────────
@@ -476,9 +487,12 @@ describe("SubscriptionService — hasPaidSubscription (seller onboarding gate)",
     expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
       where: { id: "user-1" },
       select: {
+        id: true,
         subscriptionPlanId: true,
         subscriptionStatus: true,
         subscriptionPlan: { select: { slug: true } },
+        stripeSubscriptionId: true,
+        stripeCustomerId: true,
       },
     });
   });
@@ -563,5 +577,157 @@ describe("SubscriptionService — hasPaidSubscription (seller onboarding gate)",
     const second = await subscriptionService.hasPaidSubscription("user-new");
     expect(second).toBe(true);
     expect(mockPrisma.user.findUnique).toHaveBeenCalledTimes(2);
+  });
+
+  it("🔄 should fall back to Stripe and sync the purchase when the webhook hasn't fired yet (async race)", async () => {
+    // Webhook hasn't synced: the user has a Stripe customer (saved when the
+    // checkout session was initiated) but no plan recorded locally yet.
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      id: "user-race",
+      subscriptionPlanId: null,
+      subscriptionStatus: null,
+      subscriptionPlan: null,
+      stripeSubscriptionId: null,
+      stripeCustomerId: "cus_race",
+    });
+    (mockStripe.subscriptions.list as Mock).mockResolvedValue({
+      data: [
+        {
+          id: "sub_race",
+          status: "active",
+          current_period_end: 1770000000,
+          metadata: { planId: "plan-premium" },
+          items: { data: [{ price: { id: "price_monthly" } }] },
+        },
+      ],
+    });
+    (mockPrisma.subscriptionPlan.findUnique as Mock).mockResolvedValue({
+      id: "plan-premium",
+      slug: "premium",
+    });
+
+    const result = await subscriptionService.hasPaidSubscription("user-race");
+
+    expect(result).toBe(true);
+    // The purchase is synced locally so onboarding succeeds immediately.
+    expect(mockPrisma.user.update).toHaveBeenCalledWith({
+      where: { id: "user-race" },
+      data: expect.objectContaining({
+        subscriptionPlanId: "plan-premium",
+        subscriptionStatus: "active",
+        stripeSubscriptionId: "sub_race",
+        isPaid: true,
+      }),
+    });
+  });
+
+  it("🔄 should resolve the plan by Stripe price when subscription metadata lacks planId", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      id: "user-price",
+      subscriptionPlanId: null,
+      subscriptionStatus: null,
+      subscriptionPlan: null,
+      stripeSubscriptionId: "sub_price",
+      stripeCustomerId: null,
+    });
+    (mockStripe.subscriptions.retrieve as Mock).mockResolvedValue({
+      id: "sub_price",
+      status: "trialing",
+      current_period_end: 1770000000,
+      metadata: {},
+      items: { data: [{ price: { id: "price_annual" } }] },
+    });
+    (mockPrisma.subscriptionPlan.findUnique as Mock).mockResolvedValue(null);
+    (mockPrisma.subscriptionPlan.findFirst as Mock).mockResolvedValue({
+      id: "plan-premium",
+      slug: "premium",
+    });
+
+    const result = await subscriptionService.hasPaidSubscription("user-price");
+
+    expect(result).toBe(true);
+    expect(mockPrisma.subscriptionPlan.findFirst).toHaveBeenCalledWith({
+      where: {
+        OR: [
+          { stripePriceIdMonthly: "price_annual" },
+          { stripePriceIdAnnual: "price_annual" },
+        ],
+      },
+    });
+  });
+
+  it("❌ should return FALSE when the Stripe subscription exists but is canceled", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      id: "user-canceled-stripe",
+      subscriptionPlanId: null,
+      subscriptionStatus: null,
+      subscriptionPlan: null,
+      stripeSubscriptionId: "sub_canceled",
+      stripeCustomerId: null,
+    });
+    (mockStripe.subscriptions.retrieve as Mock).mockResolvedValue({
+      id: "sub_canceled",
+      status: "canceled",
+      current_period_end: 1770000000,
+      metadata: { planId: "plan-premium" },
+      items: { data: [{ price: { id: "price_monthly" } }] },
+    });
+
+    const result = await subscriptionService.hasPaidSubscription(
+      "user-canceled-stripe"
+    );
+
+    expect(result).toBe(false);
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("❌ should return FALSE when the Stripe subscription resolves to the FREE plan", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      id: "user-free-stripe",
+      subscriptionPlanId: null,
+      subscriptionStatus: null,
+      subscriptionPlan: null,
+      stripeSubscriptionId: "sub_free",
+      stripeCustomerId: null,
+    });
+    (mockStripe.subscriptions.retrieve as Mock).mockResolvedValue({
+      id: "sub_free",
+      status: "active",
+      current_period_end: 1770000000,
+      metadata: { planId: "plan-free" },
+      items: { data: [{ price: { id: "price_free" } }] },
+    });
+    (mockPrisma.subscriptionPlan.findUnique as Mock).mockResolvedValue({
+      id: "plan-free",
+      slug: "free",
+    });
+
+    const result = await subscriptionService.hasPaidSubscription(
+      "user-free-stripe"
+    );
+
+    expect(result).toBe(false);
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+  });
+
+  it("❌ should return FALSE (no grant) when the Stripe lookup throws an API error", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      id: "user-stripe-error",
+      subscriptionPlanId: null,
+      subscriptionStatus: null,
+      subscriptionPlan: null,
+      stripeSubscriptionId: null,
+      stripeCustomerId: "cus_error",
+    });
+    (mockStripe.subscriptions.list as Mock).mockRejectedValue(
+      new Error("Stripe API error")
+    );
+
+    const result = await subscriptionService.hasPaidSubscription(
+      "user-stripe-error"
+    );
+
+    expect(result).toBe(false);
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
   });
 });

@@ -1,4 +1,5 @@
 import { getPrismaClient } from "../../config/database.js";
+import { stripe } from "../../config/stripe.config.js";
 
 const prisma = getPrismaClient();
 
@@ -134,6 +135,12 @@ export class SubscriptionService {
    * does NOT count — it has no Stripe price and cannot be purchased — and
    * the subscription must be in an active (or trialing) state.
    *
+   * When the local DB doesn't show a paid plan yet, this falls back to
+   * checking Stripe directly and syncs the result into the DB. That closes
+   * the async race where a user completes seller onboarding immediately
+   * after paying but before the checkout.session.completed webhook has
+   * synced the purchase.
+   *
    * Intentionally NOT cached: these gates are only hit on rare,
    * user-initiated actions (onboarding / role switch), so a fresh read
    * stays correct the moment a subscription is activated.
@@ -142,19 +149,126 @@ export class SubscriptionService {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
+        id: true,
         subscriptionPlanId: true,
         subscriptionStatus: true,
         subscriptionPlan: { select: { slug: true } },
+        stripeSubscriptionId: true,
+        stripeCustomerId: true,
       },
     });
 
-    if (!user?.subscriptionPlanId || !user.subscriptionPlan) return false;
+    if (!user) return false;
 
-    return (
+    // Fast path — the DB already reflects an active paid membership.
+    if (
+      user.subscriptionPlanId &&
+      user.subscriptionPlan &&
       user.subscriptionPlan.slug !== "free" &&
       (user.subscriptionStatus === "active" ||
         user.subscriptionStatus === "trialing")
-    );
+    ) {
+      return true;
+    }
+
+    // Slow path — async webhook race: the user just paid on Stripe but the
+    // webhook hasn't synced the purchase yet. Verify against Stripe directly
+    // and sync the DB so onboarding succeeds immediately (the webhook update
+    // arriving moments later is then idempotent).
+    return this.syncPaidSubscriptionFromStripe(user);
+  }
+
+  /**
+   * Resolve the user's active paid subscription directly from Stripe and
+   * sync it into the local DB. Used as the fallback for the async gap
+   * between a completed Stripe checkout and the webhook arriving.
+   *
+   * Only payment state is synced — the seller role is deliberately NOT
+   * activated here; that stays the job of POST /users/update-as-seller.
+   */
+  private async syncPaidSubscriptionFromStripe(user: {
+    id: string;
+    stripeSubscriptionId: string | null;
+    stripeCustomerId: string | null;
+  }): Promise<boolean> {
+    let subscription: Awaited<
+      ReturnType<typeof stripe.subscriptions.retrieve>
+    > | undefined;
+    try {
+      if (user.stripeSubscriptionId) {
+        subscription = await stripe.subscriptions.retrieve(
+          user.stripeSubscriptionId
+        );
+      } else if (user.stripeCustomerId) {
+        // No subscription recorded yet — find the latest one via the
+        // Stripe customer (saved synchronously when the checkout session
+        // was initiated).
+        const subscriptions = await stripe.subscriptions.list({
+          customer: user.stripeCustomerId,
+          limit: 10,
+        });
+        subscription = subscriptions.data[0] as
+          | typeof subscription
+          | undefined;
+      }
+    } catch {
+      // Stripe lookup failed — treat as not paid.
+    }
+
+    if (!subscription) return false;
+
+    const status = subscription.status;
+    if (status !== "active" && status !== "trialing") return false;
+
+    // Resolve the purchased plan from the subscription metadata (planId is
+    // stamped on checkout) or, failing that, by matching the Stripe price
+    // back to a plan.
+    const metadata = subscription.metadata;
+    let plan = metadata?.planId
+      ? await prisma.subscriptionPlan.findUnique({
+          where: { id: metadata.planId },
+        })
+      : null;
+
+    if (!plan) {
+      const priceId = subscription.items.data[0]?.price?.id;
+      if (priceId) {
+        plan = await prisma.subscriptionPlan.findFirst({
+          where: {
+            OR: [
+              { stripePriceIdMonthly: priceId },
+              { stripePriceIdAnnual: priceId },
+            ],
+          },
+        });
+      }
+    }
+
+    // The Free plan has no Stripe price and is not a purchasable membership.
+    if (!plan || plan.slug === "free") return false;
+
+    // current_period_end is not part of the Subscription type in this Stripe
+    // API version — the rest of the codebase reads it via a cast too.
+    const currentPeriodEnd = (subscription as unknown as {
+      current_period_end?: number;
+    }).current_period_end;
+
+    // Sync the purchase locally so onboarding / role switch and subsequent
+    // checks are correct even before the webhook lands.
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        subscriptionPlanId: plan.id,
+        subscriptionStatus: status,
+        stripeSubscriptionId: subscription.id,
+        currentPeriodEnd: currentPeriodEnd
+          ? new Date(currentPeriodEnd * 1000)
+          : undefined,
+        isPaid: true,
+      },
+    });
+    this.invalidateUserCache(user.id);
+    return true;
   }
 
   /**

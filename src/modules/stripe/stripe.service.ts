@@ -640,10 +640,11 @@ export class StripeService {
     const updateData: Record<string, unknown> = {
       stripeCustomerId: customerId ?? null,
       subscriptionStatus: "active",
-      // Membership enforcement: paying for a plan labels the user as a
-      // seller (in case they upgraded before completing seller setup).
-      isSeller: true,
-      role: "seller",
+      // New flow: users subscribe FIRST and become a seller LATER via
+      // POST /users/update-as-seller (which requires an active paid
+      // subscription). So paying for a plan must NOT flip the user into
+      // the seller role here — onboarding does that and returns fresh
+      // tokens carrying the seller role claim.
       isPaid: true,
     };
 
