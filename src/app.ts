@@ -70,6 +70,10 @@ app.use(
       // Non-browser requests have no Origin header — allow them.
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
+      // Reject anything not in the allow list — otherwise the callback
+      // never fires and the request hangs instead of failing cleanly.
+      console.warn("Blocked CORS origin:", origin);
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -108,10 +112,9 @@ app.use(
 // System health report (also available at /api/v1/health)
 app.get("/health", getSystemReport);
 
-// ── Swagger Routes ────────────────────────────────────────────────────────
+
 app.use(swaggerRoutes);
 
-// ── API Routes ─────────────────────────────────────────────────────────────
 app.use(env.API_VERSION, allRoutes);
 
 app.use(notFoundMiddleware);
