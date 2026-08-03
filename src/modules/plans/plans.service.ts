@@ -430,7 +430,7 @@ export class PlansService {
       orderBy: { displayOrder: "asc" },
     });
 
-    // Enrich each plan with aggregate listing counts across its users
+    // Enrich each plan with aggregate listing counts & detailed pricing structures for monthly/yearly
     const enrichedPlans = await Promise.all(
       plans.map(async (plan) => {
         const userIds = (
@@ -453,13 +453,89 @@ export class PlansService {
               ])
             : [0, 0, 0];
 
+        const priceMonthlyUSD = plan.priceMonthly / 100;
+        const priceAnnualUSD = plan.priceAnnual / 100;
+
+        // Monthly equivalent price when paid annually
+        const annualMonthlyEquivalentUSD =
+          priceAnnualUSD > 0
+            ? Math.round((priceAnnualUSD / 12) * 100) / 100
+            : 0;
+
+        // Calculate savings compared to paying 12 full monthly payments
+        const fullYearMonthlyCostUSD = priceMonthlyUSD * 12;
+        const savingsAmountUSD =
+          fullYearMonthlyCostUSD > priceAnnualUSD && priceAnnualUSD > 0
+            ? Math.round((fullYearMonthlyCostUSD - priceAnnualUSD) * 100) / 100
+            : 0;
+
+        const savingsPercent =
+          fullYearMonthlyCostUSD > 0 && savingsAmountUSD > 0
+            ? Math.round((savingsAmountUSD / fullYearMonthlyCostUSD) * 100)
+            : 0;
+
+        const pricing = {
+          monthly: {
+            price: priceMonthlyUSD,
+            priceCents: plan.priceMonthly,
+            currency: "usd",
+            currencySymbol: "$",
+            priceFormatted: `$${priceMonthlyUSD}`,
+            displayPrice: `$${priceMonthlyUSD}/month`,
+            interval: "month",
+            billingCycle: "monthly",
+            stripePriceId: plan.stripePriceIdMonthly,
+          },
+          annual: {
+            price: priceAnnualUSD,
+            priceCents: plan.priceAnnual,
+            currency: "usd",
+            currencySymbol: "$",
+            monthlyEquivalent: annualMonthlyEquivalentUSD,
+            monthlyEquivalentFormatted: `$${annualMonthlyEquivalentUSD}`,
+            displayPrice: `$${priceAnnualUSD}/year`,
+            displayMonthlyEquivalent: `$${annualMonthlyEquivalentUSD}/month`,
+            savingsAmount: savingsAmountUSD,
+            savingsPercent,
+            savingsBadge: savingsPercent > 0 ? `Save ${savingsPercent}%` : null,
+            interval: "year",
+            billingCycle: "annual",
+            stripePriceId: plan.stripePriceIdAnnual,
+          },
+        };
+
+        const billingOptions = [
+          {
+            billingCycle: "monthly",
+            label: "Monthly",
+            price: priceMonthlyUSD,
+            priceFormatted: `$${priceMonthlyUSD}`,
+            intervalLabel: "/month",
+            stripePriceId: plan.stripePriceIdMonthly,
+          },
+          {
+            billingCycle: "annual",
+            label: "Annual",
+            price: priceAnnualUSD,
+            priceFormatted: `$${priceAnnualUSD}`,
+            monthlyEquivalent: annualMonthlyEquivalentUSD,
+            monthlyEquivalentFormatted: `$${annualMonthlyEquivalentUSD}`,
+            intervalLabel: "/year",
+            savingsPercent,
+            savingsBadge: savingsPercent > 0 ? `Save ${savingsPercent}%` : null,
+            stripePriceId: plan.stripePriceIdAnnual,
+          },
+        ];
+
         const { features: planFeatures, ...planRest } = plan;
         return {
           ...planRest,
           // Prices are stored as integer cents (Stripe convention) — convert
           // to dollars for public consumption so the frontend never has to.
-          priceMonthly: plan.priceMonthly / 100,
-          priceAnnual: plan.priceAnnual / 100,
+          priceMonthly: priceMonthlyUSD,
+          priceAnnual: priceAnnualUSD,
+          pricing,
+          billingOptions,
           enabledFeatureKeys: planFeatures.map((f) => f.key),
           listingUsage: {
             totalListings,
@@ -470,9 +546,35 @@ export class PlansService {
       })
     );
 
+    const maxSavingsAcrossPlans = Math.max(
+      0,
+      ...enrichedPlans.map((p) => p.pricing.annual.savingsPercent)
+    );
+
     return {
       plans: enrichedPlans,
       featureDefinitions: featureDefs,
+      billingCycles: [
+        {
+          key: "monthly",
+          label: "Monthly",
+          description: "Standard month-to-month billing, cancel anytime",
+        },
+        {
+          key: "annual",
+          label: "Annual",
+          description: `Billed annually${
+            maxSavingsAcrossPlans > 0
+              ? ` (Save up to ${maxSavingsAcrossPlans}%)`
+              : ""
+          }`,
+          maxSavingsPercent: maxSavingsAcrossPlans,
+          savingsBadge:
+            maxSavingsAcrossPlans > 0
+              ? `Save up to ${maxSavingsAcrossPlans}%`
+              : null,
+        },
+      ],
     };
   }
 }

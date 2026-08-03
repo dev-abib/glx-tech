@@ -249,6 +249,12 @@ PublicPlansResponse:
             items:
               type: string
             description: List of feature keys that are enabled for this plan
+          pricing:
+            type: object
+            description: Structured monthly and annual pricing details
+          billingOptions:
+            type: array
+            description: Array of billing interval options
           createdAt:
             type: string
             format: date-time
@@ -259,6 +265,9 @@ PublicPlansResponse:
       type: array
       items:
         $ref: "#/components/schemas/FeatureDefinition"
+    billingCycles:
+      type: array
+      description: Overview of available billing cycles
 
 CreateSubscriptionCheckoutInput:
   type: object

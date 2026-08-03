@@ -13,8 +13,8 @@ const stripeService = new StripeService();
  * Public endpoint — no authentication or payload required.
  */
 export const quickDonateCheckout: RequestHandler = asyncHandler(
-  async (_req: Request, res: Response) => {
-    const result = await stripeService.createDonationCheckoutSession();
+  async (req: Request, res: Response) => {
+    const result = await stripeService.createDonationCheckoutSession(req);
     if (!result.url) {
       return res
         .status(500)
@@ -87,7 +87,8 @@ export const createSubscriptionCheckout: RequestHandler<
 > = asyncHandler(async (req: Request, res: Response) => {
   const result = await stripeService.createSubscriptionCheckoutSession(
     req.body,
-    req.user!.id
+    req.user!.id,
+    req
   );
 
   return res
@@ -106,7 +107,8 @@ export const createBillingPortal: RequestHandler<
   const returnUrl = (req.query.return_url as string) || undefined;
   const result = await stripeService.createBillingPortalSession(
     req.user!.id,
-    returnUrl
+    returnUrl,
+    req
   );
 
   return res
@@ -145,7 +147,7 @@ export const cancelMySubscription: RequestHandler = asyncHandler(
  */
 export const renewMySubscription: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const result = await stripeService.renewSubscription(req.user!.id);
+    const result = await stripeService.renewSubscription(req.user!.id, req);
 
     return res
       .status(201)

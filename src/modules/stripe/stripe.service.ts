@@ -1,3 +1,4 @@
+import { Request } from "express";
 import { stripe } from "../../config/stripe.config.js";
 import { getPrismaClient } from "../../config/database.js";
 import { env } from "../../config/env.js";
@@ -33,15 +34,33 @@ async function getOrCreateDonationPrice(): Promise<string> {
 
 export class StripeService {
   /**
-   * Build a frontend URL from env config, stripping trailing slashes
-   * and trimming whitespace/spurious characters.
-   *
-   * Falls back to the deployed seller app so checkout redirects never point
-   * at localhost when FRONTEND_URL/APP_URL are not configured.
+   * Build a frontend URL dynamically from incoming request origin/referer or env config,
+   * stripping trailing slashes. Prevents unwanted redirects to localhost on live deployments.
    */
-  private getFrontendUrl(): string {
+  private getFrontendUrl(req?: Request): string {
+    if (req) {
+      const origin = req.headers?.origin;
+      if (typeof origin === "string" && /^https?:\/\//i.test(origin)) {
+        return origin.replace(/\/+$/, "");
+      }
+      const referer = req.headers?.referer;
+      if (typeof referer === "string") {
+        try {
+          const parsed = new URL(referer);
+          if (/^https?:\/\//i.test(parsed.origin)) {
+            return parsed.origin.replace(/\/+$/, "");
+          }
+        } catch {
+          // ignore invalid referer URL
+        }
+      }
+    }
     const raw = (
-      env.FRONTEND_URL || env.APP_URL || "https://glxtech-seller.vercel.app"
+      env.FRONTEND_URL ||
+      env.APP_URL ||
+      (process.env.NODE_ENV === "production"
+        ? "https://glx-tech-pink.vercel.app"
+        : "http://localhost:5173")
     ).trim();
     return raw.replace(/\/+$/, "");
   }
@@ -50,11 +69,11 @@ export class StripeService {
    * Create a Stripe Checkout Session for a quick donation.
    * No payload needed — donors enter amount/name/email on Stripe's hosted page.
    */
-  async createDonationCheckoutSession() {
+  async createDonationCheckoutSession(req?: Request) {
     // Reuse the same price — the config (custom_unit_amount) never changes
     const priceId = await getOrCreateDonationPrice();
 
-    const baseUrl = this.getFrontendUrl();
+    const baseUrl = this.getFrontendUrl(req);
     const successUrl = `${baseUrl}/donate/success?session_id={CHECKOUT_SESSION_ID}`;
     const cancelUrl = `${baseUrl}/donate`;
 
@@ -156,7 +175,8 @@ export class StripeService {
    */
   async createSubscriptionCheckoutSession(
     data: CreateSubscriptionCheckoutInput,
-    userId: string
+    userId: string,
+    req?: Request
   ) {
     // Look up the plan
     const plan = await prisma.subscriptionPlan.findUnique({
@@ -209,9 +229,9 @@ export class StripeService {
         data: { stripeCustomerId: customerId },
       });
     }
-    const baseUrl = this.getFrontendUrl();
-    const successUrl = `${baseUrl}/payment/success`;
-    const cancelUrl = `${baseUrl}/payment/cancel`;
+    const baseUrl = this.getFrontendUrl(req);
+    const successUrl = data.successUrl || `${baseUrl}/payment/success`;
+    const cancelUrl = data.cancelUrl || `${baseUrl}/payment/cancel`;
 
     // Create the checkout session
     const session = await stripe.checkout.sessions.create({
@@ -245,7 +265,7 @@ export class StripeService {
   /**
    * Create a Stripe Billing Portal session for managing the subscription.
    */
-  async createBillingPortalSession(userId: string, returnUrl?: string) {
+  async createBillingPortalSession(userId: string, returnUrl?: string, req?: Request) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { stripeCustomerId: true },
@@ -258,7 +278,7 @@ export class StripeService {
       );
     }
 
-    const baseUrl = this.getFrontendUrl();
+    const baseUrl = this.getFrontendUrl(req);
 
     const session = await stripe.billingPortal.sessions.create({
       customer: user.stripeCustomerId,
@@ -450,7 +470,7 @@ export class StripeService {
   /**
    * Create a new checkout session to renew/reactivate the subscription.
    */
-  async renewSubscription(userId: string) {
+  async renewSubscription(userId: string, req?: Request) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -502,7 +522,7 @@ export class StripeService {
         ? "monthly"
         : "annual";
 
-    const baseUrl = this.getFrontendUrl();
+    const baseUrl = this.getFrontendUrl(req);
     const successUrl = `${baseUrl}/payment/success`;
     const cancelUrl = `${baseUrl}/payment/cancel`;
 

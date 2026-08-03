@@ -186,13 +186,13 @@ export const env = {
   APP_URL:
     process.env.APP_URL ||
     (process.env.NODE_ENV === "production"
-      ? "https://glxtech-seller.vercel.app"
+      ? "https://glx-tech-pink.vercel.app"
       : "http://localhost:5173"),
   FRONTEND_URL:
     process.env.FRONTEND_URL ||
     process.env.APP_URL ||
     (process.env.NODE_ENV === "production"
-      ? "https://glxtech-seller.vercel.app"
+      ? "https://glx-tech-pink.vercel.app"
       : "http://localhost:5173"),
 
   // Stripe
