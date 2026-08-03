@@ -22,12 +22,6 @@ SafeUser:
       enum: [user, seller, admin, super_admin]
       example: user
       description: User role determining permissions
-    userRole:
-      type: string
-      nullable: true
-      enum: [buyer, seller, renter, real_estate_agent, brokerage, practitioner, home_explorer, homeowner, investor, interior_designer, architect]
-      example: buyer
-      description: Real estate persona/user role field (e.g. buyer, real_estate_agent, investor)
     avatar:
       type: string
       format: uri
@@ -89,12 +83,6 @@ UpdateUserInput:
       maxLength: 500
       example: 123 Main St, San Francisco, CA
       description: Updated physical address
-    userRole:
-      type: string
-      nullable: true
-      enum: [buyer, seller, renter, real_estate_agent, brokerage, practitioner, home_explorer, homeowner, investor, interior_designer, architect]
-      example: real_estate_agent
-      description: Updated real estate persona/user role field. Accepts TitleCase or snake_case strings (e.g. "Real Estate Agent", "real_estate_agent", "Buyer", "buyer").
 GetMeResponse:
   type: object
   properties:

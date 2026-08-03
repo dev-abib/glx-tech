@@ -16,8 +16,6 @@ model Listing {
   user        User          @relation(fields: [userId], references: [id])
   title       String
   slug        String        @unique()
-
-  @@unique([userId, title])
   serviceId   String
   service     Service       @relation(fields: [serviceId], references: [id])
   description String
@@ -25,14 +23,16 @@ model Listing {
   address     Selleraddress @relation(fields: [addressId], references: [id])
   media       Json
 
-  basePrice   String?
-  hourlyPrice String?
-  dailyPrice  String?
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
+  basePrice       String?
+  hourlyPrice     String?
+  dailyPrice      String?
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
   userReview      UserReview[]
   isAvailable     Boolean       @default(true)
   isFeatured      Boolean       @default(false)
   isHiddenByLapse Boolean       @default(false) @map("is_hidden_by_lapse")
   bookings        Appointment[]
+
+  @@unique([userId, title])
 }

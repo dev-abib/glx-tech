@@ -77,7 +77,6 @@ export class UserRepository {
         name: data.name,
         email: data.email,
         password: hashedPassword,
-        userRole: data.userRole,
         otp: hashedOtp,
         otpExpiresAt: expiresAt,
         otpAttempts: 0,
@@ -555,7 +554,6 @@ export class UserRepository {
           name: true,
           email: true,
           role: true,
-          userRole: true,
           avatar: true,
           isEmailVerified: true,
           isVerifiedSeller: true,
@@ -590,7 +588,6 @@ export class UserRepository {
     const updateData: Record<string, unknown> = {};
 
     if (data.name !== undefined) updateData.name = data.name;
-    if (data.userRole !== undefined) updateData.userRole = data.userRole;
 
     // Handle email change — check uniqueness first
     if (data.email !== undefined) {
