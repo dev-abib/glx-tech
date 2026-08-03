@@ -55,18 +55,15 @@ app.use(
   })
 );
 
-// ── CORS ──────────────────────────────────────────────────────────────────
-// Explicitly allow the configured frontends (env-driven) plus localhost during
-// development. Credentials are supported so cookie/header auth never silently
-// breaks, and preflight (OPTIONS) is handled for the methods/headers the API
-// actually uses. Requests without an Origin header (curl, server-to-server)
-// are always allowed.
+
 const allowedOrigins = [
   env.FRONTEND_URL,
   env.APP_URL,
   "https://glxtech-seller.vercel.app",
   "https://glx-tech-pink.vercel.app",
   "https://glx-tech-admin-dashboard.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:5173",
 ].filter((origin): origin is string => Boolean(origin));
 
 app.use(
