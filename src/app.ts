@@ -9,7 +9,6 @@ import compression from "compression";
 import { notFoundMiddleware } from "./middlewares/not-found.middleware.js";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 import { env } from "./config/env.js";
-import { ApiError } from "./utils/api-error.js";
 
 // ── Swagger ────────────────────────────────────────────────────────────────
 import swaggerRoutes from "./routes/swagger.route.js";
