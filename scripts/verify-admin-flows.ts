@@ -102,8 +102,27 @@ async function main() {
     }
     const token = loginBody.data.token.accessToken;
 
-    // ── 4. Activate seller + create listings ─────────────────────────────
-    console.log("4. Setting up seller profile...");
+    // ── 4. Assign a paid plan + activate seller + create listings ─────────
+    // Becoming a seller now requires an active paid subscription — assign
+    // the Premium plan first so update-as-seller below passes the gate.
+    console.log("4. Assigning a paid plan + setting up seller profile...");
+    const premiumPlan = await prisma.subscriptionPlan.findUnique({
+      where: { slug: "premium" },
+    });
+    if (!premiumPlan) {
+      fail("  ❌ Premium plan not found — run the plans seeder first (npm run seed:plans)");
+      return;
+    }
+    await prisma.user.update({
+      where: { id: sellerId },
+      data: {
+        subscriptionPlanId: premiumPlan.id,
+        subscriptionStatus: "active",
+        isPaid: true,
+      },
+    });
+    console.log(`  ✅ Plan assigned to user: ${premiumPlan.name}`);
+
     const sellerRes = await fetch(`${BASE}/users/update-as-seller`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -124,25 +143,6 @@ async function main() {
       return;
     }
     console.log("  ✅ Seller activated");
-
-    // Onboarding no longer auto-assigns the Free tier — assign a plan
-    // directly so the listing-creation steps below can proceed.
-    const premiumPlan = await prisma.subscriptionPlan.findUnique({
-      where: { slug: "premium" },
-    });
-    if (!premiumPlan) {
-      fail("  ❌ Premium plan not found — run the plans seeder first (npm run seed:plans)");
-      return;
-    }
-    await prisma.user.update({
-      where: { id: sellerId },
-      data: {
-        subscriptionPlanId: premiumPlan.id,
-        subscriptionStatus: "active",
-        isPaid: true,
-      },
-    });
-    console.log(`  ✅ Plan assigned to seller: ${premiumPlan.name}`);
 
     const sellerInfo = await prisma.sellerInfo.findUnique({
       where: { userId: sellerId },

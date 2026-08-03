@@ -4,12 +4,14 @@
  * 1. Register a user
  * 2. Verify email in DB
  * 3. Login
- * 4. Update as seller (activates seller role + returns new tokens)
- * 5. Create a listing
- * 6. Try toggle featured (should fail - free user)
- * 7. Assign Premium plan to user (featured is Premium-only)
- * 8. Try toggle featured (should succeed)
- * 9. Verify listing isFeatured = true in DB
+ * 4. Assign Premium plan (a subscription is required to become a seller)
+ * 5. Update as seller (activates seller role + returns new tokens)
+ * 6. Switch to the Free plan (featured stays blocked)
+ * 7. Create a listing
+ * 8. Try toggle featured (should fail - free user)
+ * 9. Assign Premium plan to user (featured is Premium-only)
+ * 10. Try toggle featured (should succeed)
+ * 11. Verify listing isFeatured = true in DB
  *
  * Run: npx tsx scripts/test-featured-toggle.ts
  */
@@ -83,8 +85,28 @@ async function main() {
   const token = loginBody.data.token.accessToken;
   console.log("  ✅ Logged in");
 
-  // ── 5. Update as seller ──────────────────────────────────────────────
-  console.log("5. Updating as seller...");
+  // ── 5. Assign Premium plan (required to become a seller) ─────────────
+  // Becoming a seller now requires an active paid subscription — assign
+  // the Premium plan first so update-as-seller below passes the gate.
+  console.log("5. Assigning Premium plan (required to become a seller)...");
+  const premiumPlan = await prisma.subscriptionPlan.findUnique({ where: { slug: "premium" } });
+  if (!premiumPlan) {
+    console.error("  ❌ Premium plan not found — run the plans seeder first (npm run seed:plans)");
+    await prisma.$disconnect();
+    return;
+  }
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      subscriptionPlanId: premiumPlan.id,
+      subscriptionStatus: "active",
+      isPaid: true,
+    },
+  });
+  console.log(`  ✅ Premium plan assigned to user: ${premiumPlan.name}`);
+
+  // ── 6. Update as seller ──────────────────────────────────────────────
+  console.log("6. Updating as seller...");
   const sellerRes = await fetch(`${BASE}/users/update-as-seller`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -114,9 +136,10 @@ async function main() {
   }
   console.log(`  ✅ Seller activated (role: ${sellerBody.data?.data?.role})`);
 
-  // Onboarding no longer auto-assigns the Free tier — assign it directly
-  // so listing creation works while the featured toggle stays blocked for
-  // the free user (maxFeaturedListings = 0, no featured_listing feature).
+  // ── 7. Switch to the Free plan so the featured toggle stays blocked ──
+  // (maxFeaturedListings = 0, no featured_listing feature) while listing
+  // creation still works (Free allows 5 listings).
+  console.log("7. Switching to the Free plan...");
   const freePlan = await prisma.subscriptionPlan.findUnique({
     where: { slug: "free" },
   });
@@ -135,8 +158,8 @@ async function main() {
   });
   console.log(`  ✅ Free plan assigned to seller: ${freePlan.name}`);
 
-  // ── 6. Get address ID ────────────────────────────────────────────────
-  console.log("6. Getting address ID...");
+  // ── 8. Get address ID ────────────────────────────────────────────────
+  console.log("8. Getting address ID...");
   const sellerInfo = await prisma.sellerInfo.findUnique({
     where: { userId: user.id },
     include: { sellerAddress: true },
@@ -147,8 +170,8 @@ async function main() {
   const addressId = sellerInfo.sellerAddress[0].id;
   console.log(`  ✅ Address ID: ${addressId}`);
 
-  // ── 7. Create listing ────────────────────────────────────────────────
-  console.log("7. Creating listing...");
+  // ── 9. Create listing ────────────────────────────────────────────────
+  console.log("9. Creating listing...");
   const slug = `feature-test-${Date.now()}`;
   const formData = new FormData();
   formData.append("title", "Featured Test Listing");
@@ -173,8 +196,8 @@ async function main() {
   const listingId = createBody.data?.data?.listingId || createBody.data?.listingId;
   console.log(`  ✅ Listing created! ID: ${listingId}`);
 
-  // ── 8. Try toggle featured (should fail - free user) ─────────────────
-  console.log("\n8. Trying to toggle featured (free user — should fail)...");
+  // ── 10. Try toggle featured (should fail - free user) ────────────────
+  console.log("\n10. Trying to toggle featured (free user — should fail)...");
   const toggleFailRes = await fetch(`${BASE}/listings/toggle-featured/${listingId}`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${sellerToken}` },
@@ -186,10 +209,9 @@ async function main() {
     console.log(`  ⚠️  Unexpected success: ${JSON.stringify(toggleFailBody)}`);
   }
 
-  // ── 9. Assign Premium plan to user ──────────────────────────────────
+  // ── 11. Assign Premium plan to user ─────────────────────────────────
   // Featured listings are Premium-only — Professional (maxFeatured = 0) would fail.
-  console.log("\n9. Assigning Premium plan to user...");
-  const premiumPlan = await prisma.subscriptionPlan.findUnique({ where: { slug: "premium" } });
+  console.log("\n11. Assigning Premium plan to user...");
   if (!premiumPlan) {
     console.error("  ❌ Premium plan not found in DB");
     await prisma.$disconnect();
@@ -215,8 +237,8 @@ async function main() {
   subService.invalidateUserCache(user.id);
   console.log("  ✅ Cache invalidated (script process only)");
 
-  // ── 10. Try toggle featured (should succeed) ────────────────────────
-  console.log("\n10. Trying to toggle featured (with Premium plan)...");
+  // ── 12. Try toggle featured (should succeed) ────────────────────────
+  console.log("\n12. Trying to toggle featured (with Premium plan)...");
   const toggleSuccessRes = await fetch(`${BASE}/listings/toggle-featured/${listingId}`, {
     method: "PATCH",
     headers: { Authorization: `Bearer ${sellerToken}` },
@@ -229,8 +251,8 @@ async function main() {
     console.error(`  ❌ Toggle failed: ${toggleSuccessBody.message}`);
   }
 
-  // ── 11. Verify in DB ────────────────────────────────────────────────
-  console.log("\n11. Verifying listing in database...");
+  // ── 13. Verify in DB ────────────────────────────────────────────────
+  console.log("\n13. Verifying listing in database...");
   const listing = await prisma.listing.findUnique({
     where: { id: listingId },
     select: { id: true, isFeatured: true },

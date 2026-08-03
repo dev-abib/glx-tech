@@ -3,7 +3,8 @@
  * self-service account-deletion (soft delete) flow.
  *
  * Availability:
- * 1. Register + verify a seller, set up business profile (update-as-seller)
+ * 1. Register + verify a seller, assign a paid plan (a subscription is
+ *    required to become a seller), set up business profile (update-as-seller)
  * 2. Create a listing
  * 3. Seller blocks a time range (09:00–11:00) on a future date
  * 4. Register + verify a buyer
@@ -114,8 +115,29 @@ async function main() {
     }
     const token = loginBody.data.token.accessToken;
 
-    // ── 4. Activate seller + create listing ───────────────────────────
-    console.log("4. Setting up seller profile + listing...");
+    // ── 4. Assign a paid plan (required to become a seller) ─────────────
+    // Becoming a seller now requires an active paid subscription — assign
+    // the Premium plan first so update-as-seller below passes the gate.
+    console.log("4. Assigning a paid plan (required to become a seller)...");
+    const premiumPlan = await prisma.subscriptionPlan.findUnique({
+      where: { slug: "premium" },
+    });
+    if (!premiumPlan) {
+      fail("  ❌ Premium plan not found — run the plans seeder first (npm run seed:plans)");
+      return;
+    }
+    await prisma.user.update({
+      where: { id: sellerId },
+      data: {
+        subscriptionPlanId: premiumPlan.id,
+        subscriptionStatus: "active",
+        isPaid: true,
+      },
+    });
+    console.log(`  ✅ Plan assigned to user: ${premiumPlan.name}`);
+
+    // ── 5. Activate seller + create listing ───────────────────────────
+    console.log("5. Setting up seller profile + listing...");
     const sellerRes = await fetch(`${BASE}/users/update-as-seller`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -136,25 +158,6 @@ async function main() {
       return;
     }
     console.log("  ✅ Seller activated");
-
-    // Onboarding no longer auto-assigns the Free tier — assign a plan
-    // directly so the listing-creation steps below can proceed.
-    const premiumPlan = await prisma.subscriptionPlan.findUnique({
-      where: { slug: "premium" },
-    });
-    if (!premiumPlan) {
-      fail("  ❌ Premium plan not found — run the plans seeder first (npm run seed:plans)");
-      return;
-    }
-    await prisma.user.update({
-      where: { id: sellerId },
-      data: {
-        subscriptionPlanId: premiumPlan.id,
-        subscriptionStatus: "active",
-        isPaid: true,
-      },
-    });
-    console.log(`  ✅ Plan assigned to seller: ${premiumPlan.name}`);
 
     const sellerInfo = await prisma.sellerInfo.findUnique({
       where: { userId: sellerId },
@@ -187,8 +190,8 @@ async function main() {
     listingId = listingBody.data?.data?.listingId;
     console.log(`  ✅ Listing created: ${listingId}`);
 
-    // ── 5. Seller blocks a time range ─────────────────────────────────
-    console.log(`5. Blocking ${BLOCKED_DATE} ${BLOCKED_START}–${BLOCKED_END}...`);
+    // ── 6. Seller blocks a time range ─────────────────────────────────
+    console.log(`6. Blocking ${BLOCKED_DATE} ${BLOCKED_START}–${BLOCKED_END}...`);
     const blockRes = await fetch(`${BASE}/appointments/seller/availability`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${sellerToken}` },
@@ -207,8 +210,8 @@ async function main() {
     slotId = blockBody.data?.id;
     console.log(`  ✅ Blocked slot created: ${slotId}`);
 
-    // ── 6. Register + verify buyer ────────────────────────────────────
-    console.log("6. Registering buyer...");
+    // ── 7. Register + verify buyer ────────────────────────────────────
+    console.log("7. Registering buyer...");
     const buyerRegRes = await fetch(`${BASE}/users/create-user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -243,8 +246,8 @@ async function main() {
     const buyerToken = buyerLoginBody.data.token.accessToken;
     console.log("  ✅ Buyer ready");
 
-    // ── 7. Buyer books INSIDE blocked range → expect 409 ──────────────
-    console.log(`7. Buyer books ${BLOCKED_DATE} at 10:00 (inside block) → expect 409...`);
+    // ── 8. Buyer books INSIDE blocked range → expect 409 ──────────────
+    console.log(`8. Buyer books ${BLOCKED_DATE} at 10:00 (inside block) → expect 409...`);
     const blockedRes = await fetch(`${BASE}/appointments/create-appointment`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${buyerToken}` },
@@ -264,8 +267,8 @@ async function main() {
       return;
     }
 
-    // ── 8. Buyer books OUTSIDE blocked range → expect 201 ─────────────
-    console.log(`8. Buyer books ${BLOCKED_DATE} at 14:00 (outside block) → expect 201...`);
+    // ── 9. Buyer books OUTSIDE blocked range → expect 201 ─────────────
+    console.log(`9. Buyer books ${BLOCKED_DATE} at 14:00 (outside block) → expect 201...`);
     const openRes = await fetch(`${BASE}/appointments/create-appointment`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${buyerToken}` },
@@ -286,8 +289,8 @@ async function main() {
       return;
     }
 
-    // ── 9. getBookedTimes surfaces the blocked slot ───────────────────
-    console.log("9. Checking getBookedTimes includes the blocked slot...");
+    // ── 10. getBookedTimes surfaces the blocked slot ──────────────────
+    console.log("10. Checking getBookedTimes includes the blocked slot...");
     const timesRes = await fetch(`${BASE}/appointments/booked-times/${listingId}?date=${BLOCKED_DATE}`);
     const timesBody = await timesRes.json();
     const blockedList = timesBody.data?.blocked ?? [];
@@ -302,9 +305,9 @@ async function main() {
     // PART B — SELF-SERVICE ACCOUNT DELETION (soft delete)
     // ════════════════════════════════════════════════════════════════════
 
-    // ── 10. Create a second listing with NO bookings ───────────────────
+    // ── 11. Create a second listing with NO bookings ───────────────────
     //        (this one should be hard-deleted on account deletion)
-    console.log("10. Creating a second listing (no bookings)...");
+    console.log("11. Creating a second listing (no bookings)...");
     const formData2 = new FormData();
     formData2.append("title", "Availability Test Listing 2");
     formData2.append("serviceId", service.id);
@@ -326,10 +329,10 @@ async function main() {
     secondListingId = listing2Body.data?.data?.listingId;
     console.log(`  ✅ Second listing created: ${secondListingId}`);
 
-    // ── 11. Simulate an active Stripe subscription ─────────────────────
+    // ── 12. Simulate an active Stripe subscription ─────────────────────
     //        (fake sub ID — softDeleteUserData must attempt to cancel it
     //         and still complete the deletion if the cancellation fails)
-    console.log("11. Simulating an active Stripe subscription (fake sub ID)...");
+    console.log("12. Simulating an active Stripe subscription (fake sub ID)...");
     await prisma.user.update({
       where: { id: sellerId },
       data: {
@@ -341,8 +344,8 @@ async function main() {
     });
     console.log("  ✅ Stripe fields set on seller");
 
-    // ── 12. Self-service delete ────────────────────────────────────────
-    console.log("12. Calling DELETE /users/delete-me as the seller...");
+    // ── 13. Self-service delete ────────────────────────────────────────
+    console.log("13. Calling DELETE /users/delete-me as the seller...");
     const delRes = await fetch(`${BASE}/users/delete-me`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${sellerToken}` },
@@ -354,8 +357,8 @@ async function main() {
     }
     console.log("  ✅ Delete accepted (Stripe cancel attempted, failure tolerated)");
 
-    // ── 13. Verify user row anonymized + Stripe cleared ────────────────
-    console.log("13. Verifying user anonymization + Stripe cleanup...");
+    // ── 14. Verify user row anonymized + Stripe cleared ────────────────
+    console.log("14. Verifying user anonymization + Stripe cleanup...");
     const deletedUser = await prisma.user.findUnique({ where: { id: sellerId } });
     if (!deletedUser) {
       fail("  ❌ Deleted user row missing (expected anonymized row)");
@@ -379,8 +382,8 @@ async function main() {
       return;
     }
 
-    // ── 14. Verify listing anonymization + hard delete ─────────────────
-    console.log("14. Verifying listing handling...");
+    // ── 15. Verify listing anonymization + hard delete ─────────────────
+    console.log("15. Verifying listing handling...");
     const keptListing = await prisma.listing.findUnique({ where: { id: listingId } });
     const goneListing = await prisma.listing.findUnique({ where: { id: secondListingId } });
 
@@ -402,8 +405,8 @@ async function main() {
       return;
     }
 
-    // ── 15. Verify appointment history preserved ───────────────────────
-    console.log("15. Verifying appointment history preserved...");
+    // ── 16. Verify appointment history preserved ───────────────────────
+    console.log("16. Verifying appointment history preserved...");
     if (!appointmentId) {
       fail("  ❌ No appointment id captured from step 8 — cannot verify preservation");
       return;
@@ -428,8 +431,8 @@ async function main() {
       return;
     }
 
-    // ── 16. Buyer still works, seller cannot log in ────────────────────
-    console.log("16. Verifying login gates after deletion...");
+    // ── 17. Buyer still works, seller cannot log in ────────────────────
+    console.log("17. Verifying login gates after deletion...");
     const buyerReLoginRes = await fetch(`${BASE}/users/login-user`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

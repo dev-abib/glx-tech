@@ -28,8 +28,10 @@ import { resetPasswordTemplate } from "../../emails/templates/auth/reset-passwor
 import { resetPasswordConfirmationTemplate } from "../../emails/templates/auth/reset-password-confirmation.template.js";
 import { changePasswordConfirmationTemplate } from "../../emails/templates/auth/change-password.template.js";
 import { deleteAccountConfirmationTemplate } from "../../emails/templates/auth/delete-account-confirmation.template.js";
+import { SubscriptionService } from "../plans/subscription.service.js";
 
 const prisma = getPrismaClient();
+const subscriptionService = new SubscriptionService();
 const auth = new AuthHelper();
 const cloudinary = new CloudinaryService();
 
@@ -644,7 +646,21 @@ export class UserRepository {
     data: { accessToken: string; refreshToken: string; role: string };
   }  > {
     // Verifies the user exists (throws 404 if not).
-    await this.findUser("id", userId, true);
+    const user = await this.findUser("id", userId, true);
+
+    // ── Subscription gate ─────────────────────────────────────────────
+    // Becoming a seller requires an active paid subscription. Existing
+    // sellers resubmitting this onboarding form are NOT re-gated — the
+    // requirement only applies to the user → seller transition.
+    if (
+      !user.isSeller &&
+      !(await subscriptionService.hasPaidSubscription(userId))
+    ) {
+      throw new ApiError(
+        403,
+        "To become a seller, you must have an active subscription. Please buy a subscription first."
+      );
+    }
 
     if (
       !Array.isArray(data.servicesId) ||
@@ -1161,14 +1177,35 @@ export class UserRepository {
       );
     }
 
-    if (user.role === "user" && !user.isSeller) {
-      throw new ApiError(
-        401,
-        "To switch roles, you must have to setup your business account."
-      );
-    }
-
     const newRole = user.role === "user" ? "seller" : "user";
+
+    if (newRole === "seller") {
+      // ── Seller profile gate ─────────────────────────────────────────
+      // Switching INTO the seller role requires a completed seller
+      // profile (created by the seller onboarding). Users who paid but
+      // never finished onboarding have no profile yet.
+      const sellerInfo = await prisma.sellerInfo.findUnique({
+        where: { userId },
+        select: { id: true },
+      });
+      if (!sellerInfo) {
+        throw new ApiError(
+          400,
+          "You haven't set up your seller profile yet. Please complete your seller onboarding before switching to the seller role."
+        );
+      }
+
+      // ── Subscription gate ───────────────────────────────────────────
+      // Entering the seller role also requires an active paid
+      // subscription — a user can never switch into the seller role
+      // without one.
+      if (!(await subscriptionService.hasPaidSubscription(userId))) {
+        throw new ApiError(
+          403,
+          "To become a seller, you must have an active subscription. Please buy a subscription first."
+        );
+      }
+    }
 
     const updated = await prisma.user.update({
       where: { id: userId },

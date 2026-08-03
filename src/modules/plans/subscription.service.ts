@@ -127,6 +127,37 @@ export class SubscriptionService {
   }
 
   /**
+   * Whether a user holds an active PAID subscription.
+   *
+   * Becoming a seller (POST /users/update-as-seller) and switching into the
+   * seller role (POST /users/switch-role) both require this. The Free plan
+   * does NOT count — it has no Stripe price and cannot be purchased — and
+   * the subscription must be in an active (or trialing) state.
+   *
+   * Intentionally NOT cached: these gates are only hit on rare,
+   * user-initiated actions (onboarding / role switch), so a fresh read
+   * stays correct the moment a subscription is activated.
+   */
+  async hasPaidSubscription(userId: string): Promise<boolean> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        subscriptionPlanId: true,
+        subscriptionStatus: true,
+        subscriptionPlan: { select: { slug: true } },
+      },
+    });
+
+    if (!user?.subscriptionPlanId || !user.subscriptionPlan) return false;
+
+    return (
+      user.subscriptionPlan.slug !== "free" &&
+      (user.subscriptionStatus === "active" ||
+        user.subscriptionStatus === "trialing")
+    );
+  }
+
+  /**
    * Check if a user can create a new listing based on their plan's maxActiveListings.
    *
    * Membership is strictly enforced: users without any plan cannot create

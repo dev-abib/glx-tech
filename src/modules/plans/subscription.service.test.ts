@@ -453,3 +453,115 @@ describe("SubscriptionService — lapse policy (hide/restore listings)", () => {
     expect(mockPrisma.listing.updateMany).not.toHaveBeenCalled();
   });
 });
+
+describe("SubscriptionService — hasPaidSubscription (seller onboarding gate)", () => {
+  let subscriptionService: SubscriptionService;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    subscriptionService = new SubscriptionService();
+    subscriptionService.clearAllCache();
+  });
+
+  it("✅ should return TRUE for a paid plan with status active", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      subscriptionPlanId: "plan-premium",
+      subscriptionStatus: "active",
+      subscriptionPlan: { slug: "premium" },
+    });
+
+    const result = await subscriptionService.hasPaidSubscription("user-1");
+
+    expect(result).toBe(true);
+    expect(mockPrisma.user.findUnique).toHaveBeenCalledWith({
+      where: { id: "user-1" },
+      select: {
+        subscriptionPlanId: true,
+        subscriptionStatus: true,
+        subscriptionPlan: { select: { slug: true } },
+      },
+    });
+  });
+
+  it("✅ should return TRUE for a paid plan with status trialing", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      subscriptionPlanId: "plan-premium",
+      subscriptionStatus: "trialing",
+      subscriptionPlan: { slug: "premium" },
+    });
+
+    const result = await subscriptionService.hasPaidSubscription("user-2");
+
+    expect(result).toBe(true);
+  });
+
+  it("❌ should return FALSE for the FREE plan even with status active (free is not a purchasable subscription)", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      subscriptionPlanId: "plan-free",
+      subscriptionStatus: "active",
+      subscriptionPlan: { slug: "free" },
+    });
+
+    const result = await subscriptionService.hasPaidSubscription("user-free");
+
+    expect(result).toBe(false);
+  });
+
+  it("❌ should return FALSE when the user has NO plan at all", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      subscriptionPlanId: null,
+      subscriptionStatus: null,
+      subscriptionPlan: null,
+    });
+
+    const result = await subscriptionService.hasPaidSubscription("user-none");
+
+    expect(result).toBe(false);
+  });
+
+  it("❌ should return FALSE for a paid plan whose subscription is canceled", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      subscriptionPlanId: "plan-premium",
+      subscriptionStatus: "canceled",
+      subscriptionPlan: { slug: "premium" },
+    });
+
+    const result = await subscriptionService.hasPaidSubscription("user-cancelled");
+
+    expect(result).toBe(false);
+  });
+
+  it("❌ should return FALSE when the user does not exist", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue(null);
+
+    const result = await subscriptionService.hasPaidSubscription(
+      "nonexistent-user"
+    );
+
+    expect(result).toBe(false);
+  });
+
+  it("🔄 should NOT cache — a fresh read reflects a newly activated subscription", async () => {
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      subscriptionPlanId: null,
+      subscriptionStatus: null,
+      subscriptionPlan: null,
+    });
+
+    // First call — not subscribed yet
+    const first = await subscriptionService.hasPaidSubscription("user-new");
+    expect(first).toBe(false);
+
+    // User subscribes (e.g. Stripe webhook fires)
+    (mockPrisma.user.findUnique as Mock).mockResolvedValue({
+      subscriptionPlanId: "plan-premium",
+      subscriptionStatus: "active",
+      subscriptionPlan: { slug: "premium" },
+    });
+
+    // Second call — must see the new subscription without any invalidation
+    const second = await subscriptionService.hasPaidSubscription("user-new");
+    expect(second).toBe(true);
+    expect(mockPrisma.user.findUnique).toHaveBeenCalledTimes(2);
+  });
+});

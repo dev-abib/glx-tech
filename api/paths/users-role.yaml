@@ -74,14 +74,16 @@ update-as-seller:
 
       ### 🎟️ Membership & role activation
 
+      - **An active paid subscription is REQUIRED to become a seller.**
+        Users without one receive a `403 Forbidden` error asking them to buy
+        a subscription first. The Free plan does not count — it cannot be
+        purchased.
       - This endpoint **activates the seller role directly** — no separate
         `POST /users/switch-role` call is required. The response contains
         **fresh access/refresh tokens** carrying `role: "seller"`; use them
         for all subsequent seller-only endpoints.
-      - **No plan is auto-assigned during onboarding.** To add listings, the
-        seller must subscribe to a subscription plan first.
-      - Users who already hold a plan keep that plan — it is never
-        downgraded.
+      - No plan is auto-assigned during onboarding; the seller's existing
+        plan (if any) is kept — it is never downgraded.
 
 
       ### 📍 Address rules
@@ -186,6 +188,10 @@ update-as-seller:
         description: Validation error
       "401":
         description: Unauthorized
+      "403":
+        description: >
+          To become a seller, you must have an active subscription.
+          Please buy a subscription first.
 
 switch-role:
   post:
@@ -201,6 +207,17 @@ switch-role:
       seller profile. This endpoint is only needed if you want to flip back
       and forth between the `user` and `seller` roles (e.g. to browse the
       marketplace as a buyer again).
+
+      **⚠️ Switching INTO the seller role has two requirements:**
+
+      - You must have **completed your seller profile setup** (via
+        `POST /users/update-as-seller`) — otherwise the server returns
+        `400 Bad Request` with a friendly message asking you to finish
+        your seller onboarding.
+      - You must have an **active paid subscription** — otherwise the
+        server returns `403 Forbidden` asking you to buy a subscription.
+
+      Switching back to the `user` role is always allowed.
     security:
       - bearerAuth: []
     requestBody:
@@ -236,9 +253,15 @@ switch-role:
                           example: seller
                           description: The newly assigned role
       "400":
-        description: Only users can switch between user and seller roles
+        description: >
+          Only users can switch between user and seller roles, or no seller
+          profile is set up yet — complete your seller onboarding first.
       "401":
-        description: Unauthorized — must set up business account first
+        description: Unauthorized
+      "403":
+        description: >
+          To become a seller, you must have an active subscription.
+          Please buy a subscription first.
 
 update-seller-details:
   put:
