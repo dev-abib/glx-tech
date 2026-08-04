@@ -197,21 +197,67 @@ export class StripeService {
       ? plan.stripePriceIdMonthly
       : plan.stripePriceIdAnnual;
 
-    if (!priceId) {
-      throw new ApiError(
-        400,
-        `No Stripe price configured for ${data.billingCycle} billing on this plan`
-      );
-    }
-
     // Get or create Stripe customer for this user
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { stripeCustomerId: true, email: true, name: true },
+      select: {
+        stripeCustomerId: true,
+        stripeSubscriptionId: true,
+        email: true,
+        name: true,
+      },
     });
 
     if (!user) {
       throw new ApiError(404, "User not found");
+    }
+
+    const baseUrl = this.getFrontendUrl(req);
+    const successUrl = data.successUrl || `${baseUrl}/payment/success`;
+    const cancelUrl = data.cancelUrl || `${baseUrl}/payment/cancel`;
+
+    // Free plans ($0 on both billing cycles) have no Stripe price and no
+    // checkout session. Activate the plan directly and hand back the success
+    // URL so the seller app redirects exactly as it would after a paid
+    // checkout. A paid plan that's merely missing its Stripe price still
+    // errors — silently granting it would be wrong.
+    const isFreePlan = plan.priceMonthly === 0 && plan.priceAnnual === 0;
+
+    if (!priceId) {
+      if (!isFreePlan) {
+        throw new ApiError(
+          400,
+          `No Stripe price configured for ${data.billingCycle} billing on this plan`
+        );
+      }
+
+      // Downgrade safety: if the user held a paid Stripe subscription, cancel
+      // it (best-effort) and drop the local reference so they're not billed
+      // while on the free plan.
+      if (user.stripeSubscriptionId) {
+        stripe.subscriptions
+          .cancel(user.stripeSubscriptionId)
+          .catch(() => {});
+      }
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          subscriptionPlanId: plan.id,
+          subscriptionStatus: "active",
+          isPaid: false,
+          currentPeriodEnd: null,
+          stripeSubscriptionId: null,
+        },
+      });
+      // Make sure plan/feature caches reflect the newly activated free plan.
+      subscriptionService.invalidateUserCache(userId);
+
+      return {
+        url: successUrl,
+        sessionId: null,
+        isFree: true,
+      };
     }
 
     let customerId = user.stripeCustomerId;
@@ -229,9 +275,6 @@ export class StripeService {
         data: { stripeCustomerId: customerId },
       });
     }
-    const baseUrl = this.getFrontendUrl(req);
-    const successUrl = data.successUrl || `${baseUrl}/payment/success`;
-    const cancelUrl = data.cancelUrl || `${baseUrl}/payment/cancel`;
 
     // Create the checkout session
     const session = await stripe.checkout.sessions.create({
@@ -480,12 +523,15 @@ export class StripeService {
             id: true,
             name: true,
             slug: true,
+            priceMonthly: true,
+            priceAnnual: true,
             stripePriceIdMonthly: true,
             stripePriceIdAnnual: true,
             isActive: true,
           },
         },
         stripeCustomerId: true,
+        stripeSubscriptionId: true,
       },
     });
 
@@ -510,6 +556,43 @@ export class StripeService {
       user.subscriptionPlan.stripePriceIdAnnual;
 
     if (!priceId) {
+      // Free plans ($0 on both cycles) have no Stripe price and no renewal —
+      // the user is already on the plan. Re-activate idempotently and hand
+      // back the success URL so the seller app redirects as it would after a
+      // paid renewal. A paid plan missing its price still errors.
+      const isFreePlan =
+        user.subscriptionPlan.priceMonthly === 0 &&
+        user.subscriptionPlan.priceAnnual === 0;
+
+      if (isFreePlan) {
+        const baseUrl = this.getFrontendUrl(req);
+        const successUrl = `${baseUrl}/payment/success`;
+
+        if (user.stripeSubscriptionId) {
+          stripe.subscriptions
+            .cancel(user.stripeSubscriptionId)
+            .catch(() => {});
+        }
+
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            subscriptionPlanId: user.subscriptionPlan.id,
+            subscriptionStatus: "active",
+            isPaid: false,
+            currentPeriodEnd: null,
+            stripeSubscriptionId: null,
+          },
+        });
+        subscriptionService.invalidateUserCache(userId);
+
+        return {
+          url: successUrl,
+          sessionId: null,
+          isFree: true,
+        };
+      }
+
       throw new ApiError(
         400,
         "No Stripe price configured for your current plan. Contact support."

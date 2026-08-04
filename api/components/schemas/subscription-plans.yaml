@@ -302,9 +302,15 @@ SubscriptionCheckoutResponse:
   properties:
     url:
       type: string
-      description: Stripe Checkout Session URL
+      description: Stripe Checkout Session URL, or the success URL for free plans (no payment needed)
     sessionId:
       type: string
+      nullable: true
+      description: Stripe Checkout Session ID (null for free plans — plan is activated directly)
+    isFree:
+      type: boolean
+      description: True when the plan was activated without payment (free plan)
+      example: false
 
 BillingPortalResponse:
   type: object
