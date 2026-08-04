@@ -36,25 +36,24 @@ export class PlansService {
         description: data.description ?? undefined,
       });
 
-      if (data.priceMonthly > 0) {
-        const price = await stripe.prices.create({
-          product: product.id,
-          unit_amount: data.priceMonthly,
-          currency: "usd",
-          recurring: { interval: "month" },
-        });
-        stripePriceIdMonthly = price.id;
-      }
+      // Prices are created for every plan, including $0 plans — Stripe
+      // supports zero-amount recurring prices so free plans can flow
+      // through Checkout exactly like paid plans.
+      const priceMonthly = await stripe.prices.create({
+        product: product.id,
+        unit_amount: data.priceMonthly,
+        currency: "usd",
+        recurring: { interval: "month" },
+      });
+      stripePriceIdMonthly = priceMonthly.id;
 
-      if (data.priceAnnual > 0) {
-        const price = await stripe.prices.create({
-          product: product.id,
-          unit_amount: data.priceAnnual,
-          currency: "usd",
-          recurring: { interval: "year" },
-        });
-        stripePriceIdAnnual = price.id;
-      }
+      const priceAnnual = await stripe.prices.create({
+        product: product.id,
+        unit_amount: data.priceAnnual,
+        currency: "usd",
+        recurring: { interval: "year" },
+      });
+      stripePriceIdAnnual = priceAnnual.id;
     } catch (err) {
       // If Stripe fails, we still create the plan locally but without Stripe IDs
       console.error("[PlansService] Stripe product/price creation failed:", err);
@@ -224,7 +223,7 @@ export class PlansService {
     let stripePriceIdAnnual = plan.stripePriceIdAnnual;
 
     try {
-      if (data.priceMonthly !== undefined && data.priceMonthly !== plan.priceMonthly && data.priceMonthly > 0) {
+      if (data.priceMonthly !== undefined && data.priceMonthly !== plan.priceMonthly) {
         // Find or create a product first
         const productId = plan.stripePriceIdMonthly
           ? (await stripe.prices.retrieve(plan.stripePriceIdMonthly).catch(() => null))?.product
@@ -250,7 +249,7 @@ export class PlansService {
         stripePriceIdMonthly = price.id;
       }
 
-      if (data.priceAnnual !== undefined && data.priceAnnual !== plan.priceAnnual && data.priceAnnual > 0) {
+      if (data.priceAnnual !== undefined && data.priceAnnual !== plan.priceAnnual) {
         // Similar logic for annual price
         const productId = plan.stripePriceIdAnnual
           ? (await stripe.prices.retrieve(plan.stripePriceIdAnnual).catch(() => null))?.product

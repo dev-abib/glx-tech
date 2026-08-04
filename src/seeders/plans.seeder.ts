@@ -105,8 +105,8 @@ const PLANS: PlanSeed[] = [
     maxFeaturedListings: 0,
     platformFeePercent: 5,
     // Not shown on the public pricing page — onboarding never assigns the
-    // free tier automatically, and it has no Stripe price so it cannot be
-    // purchased. Sellers must subscribe to a paid plan to add listings.
+    // free tier automatically. It has a $0 Stripe price so it flows through
+    // Checkout like every other plan (redirect to Stripe, then back).
     isPublic: false,
     displayOrder: 1,
     enabledFeatures: ["basic_analytics", "verified_badge"],
@@ -286,25 +286,24 @@ async function seedPlans(): Promise<void> {
             description: planData.description,
           });
 
-          if (planData.priceMonthly > 0) {
-            const price = await stripe.prices.create({
-              product: product.id,
-              unit_amount: planData.priceMonthly,
-              currency: "usd",
-              recurring: { interval: "month" },
-            });
-            stripePriceIdMonthly = price.id;
-          }
+          // Prices are created for every plan, including $0 plans — Stripe
+          // supports zero-amount recurring prices so the Free plan can flow
+          // through Checkout exactly like paid plans.
+          const priceMonthly = await stripe.prices.create({
+            product: product.id,
+            unit_amount: planData.priceMonthly,
+            currency: "usd",
+            recurring: { interval: "month" },
+          });
+          stripePriceIdMonthly = priceMonthly.id;
 
-          if (planData.priceAnnual > 0) {
-            const price = await stripe.prices.create({
-              product: product.id,
-              unit_amount: planData.priceAnnual,
-              currency: "usd",
-              recurring: { interval: "year" },
-            });
-            stripePriceIdAnnual = price.id;
-          }
+          const priceAnnual = await stripe.prices.create({
+            product: product.id,
+            unit_amount: planData.priceAnnual,
+            currency: "usd",
+            recurring: { interval: "year" },
+          });
+          stripePriceIdAnnual = priceAnnual.id;
 
           console.log(`  [Stripe] Created product "${planData.name}" with prices.`);
         }

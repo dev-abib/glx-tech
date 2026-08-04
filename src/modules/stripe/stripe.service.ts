@@ -170,6 +170,59 @@ export class StripeService {
   // ══════════════════════════════════════════════════════════════════════
 
   /**
+   * Get (or lazily create) a $0 Stripe price for a free plan so it can flow
+   * through Stripe Checkout like any paid plan. Persists the price ID on the
+   * plan so subsequent checkouts reuse it instead of creating duplicates.
+   */
+  private async getOrCreateFreePlanPrice(
+    plan: {
+      id: string;
+      name: string;
+      stripePriceIdMonthly: string | null;
+      stripePriceIdAnnual: string | null;
+    },
+    isMonthly: boolean
+  ): Promise<string> {
+    const existing = isMonthly
+      ? plan.stripePriceIdMonthly
+      : plan.stripePriceIdAnnual;
+    if (existing) return existing;
+
+    // Reuse the plan's existing product (if the other billing cycle already
+    // has a price) so both prices hang off the same product.
+    const otherPriceId = isMonthly
+      ? plan.stripePriceIdAnnual
+      : plan.stripePriceIdMonthly;
+    let productId: string;
+    if (otherPriceId) {
+      const otherPrice = await stripe.prices
+        .retrieve(otherPriceId)
+        .catch(() => null);
+      productId =
+        (otherPrice?.product as string | undefined) ??
+        (await stripe.products.create({ name: plan.name })).id;
+    } else {
+      productId = (await stripe.products.create({ name: plan.name })).id;
+    }
+
+    const price = await stripe.prices.create({
+      product: productId,
+      unit_amount: 0,
+      currency: "usd",
+      recurring: { interval: isMonthly ? "month" : "year" },
+    });
+
+    await prisma.subscriptionPlan.update({
+      where: { id: plan.id },
+      data: isMonthly
+        ? { stripePriceIdMonthly: price.id }
+        : { stripePriceIdAnnual: price.id },
+    });
+
+    return price.id;
+  }
+
+  /**
    * Create a Stripe Checkout Session for subscribing to a plan.
    * Requires authentication — user must be logged in.
    */
@@ -193,7 +246,7 @@ export class StripeService {
 
     // Determine which price ID to use
     const isMonthly = data.billingCycle === "monthly";
-    const priceId = isMonthly
+    let priceId = isMonthly
       ? plan.stripePriceIdMonthly
       : plan.stripePriceIdAnnual;
 
@@ -216,11 +269,12 @@ export class StripeService {
     const successUrl = data.successUrl || `${baseUrl}/payment/success`;
     const cancelUrl = data.cancelUrl || `${baseUrl}/payment/cancel`;
 
-    // Free plans ($0 on both billing cycles) have no Stripe price and no
-    // checkout session. Activate the plan directly and hand back the success
-    // URL so the seller app redirects exactly as it would after a paid
-    // checkout. A paid plan that's merely missing its Stripe price still
-    // errors — silently granting it would be wrong.
+    // Free plans ($0 on both billing cycles) have no Stripe price yet. Create
+    // a $0 price on the fly so the free plan goes through Stripe Checkout
+    // exactly like every paid plan — the seller app redirects to Stripe
+    // first, and Stripe bounces the user back to the success URL. A paid
+    // plan that's merely missing its Stripe price still errors — silently
+    // granting it would be wrong.
     const isFreePlan = plan.priceMonthly === 0 && plan.priceAnnual === 0;
 
     if (!priceId) {
@@ -231,33 +285,7 @@ export class StripeService {
         );
       }
 
-      // Downgrade safety: if the user held a paid Stripe subscription, cancel
-      // it (best-effort) and drop the local reference so they're not billed
-      // while on the free plan.
-      if (user.stripeSubscriptionId) {
-        stripe.subscriptions
-          .cancel(user.stripeSubscriptionId)
-          .catch(() => {});
-      }
-
-      await prisma.user.update({
-        where: { id: userId },
-        data: {
-          subscriptionPlanId: plan.id,
-          subscriptionStatus: "active",
-          isPaid: false,
-          currentPeriodEnd: null,
-          stripeSubscriptionId: null,
-        },
-      });
-      // Make sure plan/feature caches reflect the newly activated free plan.
-      subscriptionService.invalidateUserCache(userId);
-
-      return {
-        url: successUrl,
-        sessionId: null,
-        isFree: true,
-      };
+      priceId = await this.getOrCreateFreePlanPrice(plan, isMonthly);
     }
 
     let customerId = user.stripeCustomerId;
@@ -276,7 +304,8 @@ export class StripeService {
       });
     }
 
-    // Create the checkout session
+    // Create the checkout session. For free plans the session totals $0, so
+    // "if_required" lets the user complete checkout without entering a card.
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
@@ -284,6 +313,7 @@ export class StripeService {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
+      payment_method_collection: isFreePlan ? "if_required" : "always",
       metadata: {
         planId: plan.id,
         planSlug: plan.slug,
@@ -551,52 +581,33 @@ export class StripeService {
     }
 
     // Determine which price ID to use (prefer monthly, fallback to annual)
-    const priceId =
+    let priceId =
       user.subscriptionPlan.stripePriceIdMonthly ||
       user.subscriptionPlan.stripePriceIdAnnual;
 
+    // Free plans ($0 on both cycles) have no Stripe price yet. Create the $0
+    // price on the fly so renewing the free plan flows through Stripe
+    // Checkout exactly like a paid renewal — the seller app redirects to
+    // Stripe first and comes back to the success URL. A paid plan missing its
+    // price still errors.
+    const isFreePlan =
+      user.subscriptionPlan.priceMonthly === 0 &&
+      user.subscriptionPlan.priceAnnual === 0;
+
     if (!priceId) {
-      // Free plans ($0 on both cycles) have no Stripe price and no renewal —
-      // the user is already on the plan. Re-activate idempotently and hand
-      // back the success URL so the seller app redirects as it would after a
-      // paid renewal. A paid plan missing its price still errors.
-      const isFreePlan =
-        user.subscriptionPlan.priceMonthly === 0 &&
-        user.subscriptionPlan.priceAnnual === 0;
-
-      if (isFreePlan) {
-        const baseUrl = this.getFrontendUrl(req);
-        const successUrl = `${baseUrl}/payment/success`;
-
-        if (user.stripeSubscriptionId) {
-          stripe.subscriptions
-            .cancel(user.stripeSubscriptionId)
-            .catch(() => {});
-        }
-
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            subscriptionPlanId: user.subscriptionPlan.id,
-            subscriptionStatus: "active",
-            isPaid: false,
-            currentPeriodEnd: null,
-            stripeSubscriptionId: null,
-          },
-        });
-        subscriptionService.invalidateUserCache(userId);
-
-        return {
-          url: successUrl,
-          sessionId: null,
-          isFree: true,
-        };
+      if (!isFreePlan) {
+        throw new ApiError(
+          400,
+          "No Stripe price configured for your current plan. Contact support."
+        );
       }
-
-      throw new ApiError(
-        400,
-        "No Stripe price configured for your current plan. Contact support."
+      // Renewal prefers the monthly price — reflect the created price on the
+      // in-memory snapshot so the billing-cycle check below is accurate.
+      priceId = await this.getOrCreateFreePlanPrice(
+        user.subscriptionPlan,
+        true
       );
+      user.subscriptionPlan.stripePriceIdMonthly = priceId;
     }
 
     // Which billing cycle was actually chosen (drives the confirmation email).
@@ -616,6 +627,7 @@ export class StripeService {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
+      payment_method_collection: isFreePlan ? "if_required" : "always",
       metadata: {
         planId: user.subscriptionPlan.id,
         planSlug: user.subscriptionPlan.slug,
@@ -740,6 +752,35 @@ export class StripeService {
       return;
     }
 
+    // Determine whether the purchased plan is the free tier ($0 on both
+    // cycles) so a free checkout is not recorded as a paid subscription.
+    const purchasedPlan = await prisma.subscriptionPlan.findUnique({
+      where: { id: planId },
+      select: { priceMonthly: true, priceAnnual: true },
+    });
+    const isFreePlan =
+      !!purchasedPlan &&
+      purchasedPlan.priceMonthly === 0 &&
+      purchasedPlan.priceAnnual === 0;
+
+    // Downgrade safety: switching down to the free plan cancels any prior
+    // paid Stripe subscription (best-effort) so the user is never billed for
+    // a plan they no longer hold.
+    if (isFreePlan && subscriptionId) {
+      const previous = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { stripeSubscriptionId: true },
+      });
+      if (
+        previous?.stripeSubscriptionId &&
+        previous.stripeSubscriptionId !== subscriptionId
+      ) {
+        stripe.subscriptions
+          .cancel(previous.stripeSubscriptionId)
+          .catch(() => {});
+      }
+    }
+
     const updateData: Record<string, unknown> = {
       stripeCustomerId: customerId ?? null,
       subscriptionStatus: "active",
@@ -748,7 +789,8 @@ export class StripeService {
       // subscription). So paying for a plan must NOT flip the user into
       // the seller role here — onboarding does that and returns fresh
       // tokens carrying the seller role claim.
-      isPaid: true,
+      // Free plans are not "paid" even though the checkout completes.
+      isPaid: !isFreePlan,
     };
 
     if (subscriptionId) {
@@ -857,6 +899,25 @@ export class StripeService {
       if (!userId) {
         console.warn(
           "[StripeService] Could not resolve user for subscription update"
+        );
+        return;
+      }
+    }
+
+    // Ignore events for stale subscriptions (e.g. an old paid subscription
+    // canceled during a downgrade to the Free plan) so they don't clobber
+    // the user's freshly-assigned plan.
+    if (typeof subscription.id === "string") {
+      const current = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { stripeSubscriptionId: true },
+      });
+      if (
+        current?.stripeSubscriptionId &&
+        current.stripeSubscriptionId !== subscription.id
+      ) {
+        console.log(
+          `[StripeService] Ignoring update for stale subscription ${subscription.id} (current: ${current.stripeSubscriptionId})`
         );
         return;
       }
@@ -1084,6 +1145,25 @@ export class StripeService {
     const customerId = subscription.customer as string;
 
     if (userId) {
+      // Ignore deletion events for stale subscriptions (e.g. an old paid
+      // subscription canceled during a downgrade to the Free plan) so they
+      // don't wipe the user's freshly-assigned plan.
+      if (typeof subscription.id === "string") {
+        const current = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { stripeSubscriptionId: true },
+        });
+        if (
+          current?.stripeSubscriptionId &&
+          current.stripeSubscriptionId !== subscription.id
+        ) {
+          console.log(
+            `[StripeService] Ignoring deletion for stale subscription ${subscription.id} (current: ${current.stripeSubscriptionId})`
+          );
+          return;
+        }
+      }
+
       await prisma.user.update({
         where: { id: userId },
         data: {
