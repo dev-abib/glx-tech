@@ -1225,13 +1225,14 @@ export class UserRepository {
       }
 
       // ── Subscription gate ───────────────────────────────────────────
-      // Entering the seller role also requires an active paid
-      // subscription — a user can never switch into the seller role
-      // without one.
-      if (!(await subscriptionService.hasPaidSubscription(userId))) {
+      // Switching into the seller role requires the user to have subscribed
+      // to any plan (including the free plan). Free-plan sellers are allowed
+      // to switch roles — they just can't create listings until they upgrade
+      // to a paid plan (enforced by the listing service).
+      if (!user.subscriptionPlanId && !(await subscriptionService.hasPaidSubscription(userId))) {
         throw new ApiError(
           403,
-          "To become a seller, you must have an active subscription. Please buy a subscription first."
+          "To switch to the seller role, you must first subscribe to a plan (including the free plan). Please select a plan first."
         );
       }
     }
