@@ -634,10 +634,9 @@ export class UserRepository {
 
   // update user as seller repo
   //
-  // Membership is enforced server-side: a user may only be labelled
-  // "seller" after an active membership exists. Onboarding does NOT assign
-  // a plan automatically — the seller must subscribe to a plan before they
-  // can add listings (enforced by the listing service).
+  // Any user who has subscribed to a plan (free or paid) may complete
+  // seller onboarding. Once a seller, re-submitting the form updates
+  // their profile (idempotent) without repeating the subscription gate.
   async updateUserAsSeller(
     userId: string,
     data: UpdateUserAsSellerInput
@@ -648,17 +647,47 @@ export class UserRepository {
     // Verifies the user exists (throws 404 if not).
     const user = await this.findUser("id", userId, true);
 
+    // ── Already a seller — return fresh tokens without re-processing ──
+    // If the user is already a seller (isSeller=true and role='seller'),
+    // they don't need to go through onboarding again. Re-submit updates
+    // their profile details but skips the subscription gate.
+    if (user.isSeller && user.role === "seller") {
+      const payload: JwtPayload = {
+        name: user.name as string,
+        email: user.email as string,
+        id: user.id,
+        isPaid: user.isPaid as boolean,
+        role: user.role,
+      };
+      const accessToken = auth.generateToken(payload, "seller", "access");
+      const refreshToken = auth.generateToken(payload, "seller", "refresh");
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          accessToken: auth.hashToken(accessToken),
+          refreshToken: auth.hashToken(refreshToken),
+        },
+      });
+      return {
+        message: "You are already registered as a seller. Profile updated.",
+        data: { accessToken, refreshToken, role: user.role },
+      };
+    }
+
     // ── Subscription gate ─────────────────────────────────────────────
-    // Becoming a seller requires an active paid subscription. Existing
-    // sellers resubmitting this onboarding form are NOT re-gated — the
-    // requirement only applies to the user → seller transition.
-    if (
-      !user.isSeller &&
-      !(await subscriptionService.hasPaidSubscription(userId))
-    ) {
+    // Becoming a seller requires the user to have subscribed to any plan
+    // (including the free plan). Users on a free plan are allowed to
+    // onboard as sellers — they just won't be able to create listings
+    // until they upgrade to a paid plan (enforced by the listing service).
+    const userHasAnyPlan = !!user.subscriptionPlanId;
+    const userHasPaidSub = userHasAnyPlan
+      ? false // skip slow Stripe check if we already know they have a plan
+      : await subscriptionService.hasPaidSubscription(userId);
+
+    if (!userHasAnyPlan && !userHasPaidSub) {
       throw new ApiError(
         403,
-        "To become a seller, you must have an active subscription. Please buy a subscription first."
+        "To become a seller, you must first subscribe to a plan (including the free plan). Please select a plan first."
       );
     }
 

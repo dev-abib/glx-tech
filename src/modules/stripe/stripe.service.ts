@@ -225,6 +225,11 @@ export class StripeService {
   /**
    * Create a Stripe Checkout Session for subscribing to a plan.
    * Requires authentication — user must be logged in.
+   *
+   * For FREE plans ($0 on both billing cycles) the Stripe Checkout page is
+   * bypassed entirely. The plan is activated directly in the database and the
+   * success URL is returned immediately — no Stripe-hosted page, no email /
+   * credit-card collection. Paid plans still flow through Stripe Checkout.
    */
   async createSubscriptionCheckoutSession(
     data: CreateSubscriptionCheckoutInput,
@@ -244,11 +249,60 @@ export class StripeService {
       throw new ApiError(400, "This plan is no longer available");
     }
 
-    // Determine which price ID to use
+    const baseUrl = this.getFrontendUrl(req);
+    const successUrl = data.successUrl || `${baseUrl}/payment/success`;
+
+    // ── Free-plan fast path ────────────────────────────────────────────
+    // Free plans are $0 on both billing cycles. Instead of sending the user
+    // through Stripe Checkout (which still shows the Stripe-hosted form and
+    // collects an email), we activate the plan directly server-side and
+    // return the success URL. No Stripe session is created.
+    const isFreePlan = plan.priceMonthly === 0 && plan.priceAnnual === 0;
+
+    if (isFreePlan) {
+      const periodDays = data.billingCycle === "annual" ? 365 : 30;
+      const currentPeriodEnd = new Date(
+        Date.now() + periodDays * 24 * 60 * 60 * 1000
+      );
+
+      await prisma.user.update({
+        where: { id: userId },
+        data: {
+          subscriptionPlanId: plan.id,
+          subscriptionStatus: "active",
+          isPaid: false, // free plan is not a paid subscription
+          currentPeriodEnd,
+        },
+      });
+
+      // Invalidate cache so subsequent plan checks are fresh
+      subscriptionService.invalidateUserCache(userId);
+
+      console.log(
+        `[StripeService] Free plan "${plan.name}" activated directly for user ${userId} (no Stripe Checkout)`
+      );
+
+      return {
+        // null url signals the client to redirect to successUrl directly
+        url: successUrl,
+        sessionId: null as unknown as string,
+        isFreeActivation: true,
+      };
+    }
+
+    // ── Paid plan — standard Stripe Checkout ──────────────────────────
+
     const isMonthly = data.billingCycle === "monthly";
     let priceId = isMonthly
       ? plan.stripePriceIdMonthly
       : plan.stripePriceIdAnnual;
+
+    if (!priceId) {
+      throw new ApiError(
+        400,
+        `No Stripe price configured for ${data.billingCycle} billing on this plan`
+      );
+    }
 
     // Get or create Stripe customer for this user
     const user = await prisma.user.findUnique({
@@ -265,28 +319,7 @@ export class StripeService {
       throw new ApiError(404, "User not found");
     }
 
-    const baseUrl = this.getFrontendUrl(req);
-    const successUrl = data.successUrl || `${baseUrl}/payment/success`;
     const cancelUrl = data.cancelUrl || `${baseUrl}/payment/cancel`;
-
-    // Free plans ($0 on both billing cycles) have no Stripe price yet. Create
-    // a $0 price on the fly so the free plan goes through Stripe Checkout
-    // exactly like every paid plan — the seller app redirects to Stripe
-    // first, and Stripe bounces the user back to the success URL. A paid
-    // plan that's merely missing its Stripe price still errors — silently
-    // granting it would be wrong.
-    const isFreePlan = plan.priceMonthly === 0 && plan.priceAnnual === 0;
-
-    if (!priceId) {
-      if (!isFreePlan) {
-        throw new ApiError(
-          400,
-          `No Stripe price configured for ${data.billingCycle} billing on this plan`
-        );
-      }
-
-      priceId = await this.getOrCreateFreePlanPrice(plan, isMonthly);
-    }
 
     let customerId = user.stripeCustomerId;
 
@@ -304,8 +337,6 @@ export class StripeService {
       });
     }
 
-    // Create the checkout session. For free plans the session totals $0, so
-    // "if_required" lets the user complete checkout without entering a card.
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: customerId,
@@ -313,7 +344,7 @@ export class StripeService {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
-      payment_method_collection: isFreePlan ? "if_required" : "always",
+      payment_method_collection: "always",
       metadata: {
         planId: plan.id,
         planSlug: plan.slug,
