@@ -68,9 +68,18 @@ export const getAllListings: RequestHandler = asyncHandler(
       random: req.query.random === "true" ? true : undefined,
     });
 
+    // When the result is empty the service returns random fallback
+    // listings with a "No listing found" message (HTTP 200) so the
+    // marketplace page is never blank.
     return res
       .status(200)
-      .json(new ApiResponse(200, "Listings fetched successfully", result));
+      .json(
+        new ApiResponse(
+          200,
+          result.message ?? "Listings fetched successfully",
+          result
+        )
+      );
   }
 );
 

@@ -18,6 +18,7 @@ const { mockPrisma } = vi.hoisted(() => ({
     user: { findUnique: vi.fn(), findMany: vi.fn() },
     sellerInfo: { findUnique: vi.fn() },
     selleraddress: { findUnique: vi.fn() },
+    service: { findMany: vi.fn() },
   },
 }));
 
@@ -238,6 +239,148 @@ describe("ListingService — getAllListings location filter", () => {
       .calls[0][0];
     expect(findManyCall.where.AND).toBeDefined();
     expect(findManyCall.where.OR).toBeDefined();
+  });
+});
+
+describe("ListingService — getAllListings empty-result fallback", () => {
+  let listingService: ListingService;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockPrisma.listing.findMany = vi.fn();
+    mockPrisma.listing.count = vi.fn();
+    mockPrisma.user.findMany = vi.fn();
+
+    // No expired sellers — the lapse sweep hides nothing.
+    (mockPrisma.user.findMany as Mock).mockResolvedValue([]);
+    (mockPrisma.listing.count as Mock).mockResolvedValue(0);
+
+    listingService = new ListingService();
+  });
+
+  const fakeListing = {
+    id: "listing-fallback-1",
+    userId: "user-1",
+    title: "Plumbing Services",
+    slug: "plumbing-services",
+    description: "Professional plumbing",
+    serviceId: "service-1",
+    basePrice: "100",
+    media: [],
+    user: {
+      id: "user-1",
+      name: "John",
+      email: "john@test.com",
+      avatar: null,
+      isVerifiedSeller: false,
+      sellerInfo: null,
+    },
+    address: {
+      id: "addr-1",
+      streetAddress: "1 Main St",
+      city: "New York",
+      state: "NY",
+      zipCode: "10001",
+    },
+    service: { id: "service-1", name: "Plumbing" },
+    userReview: [{ rating: 5 }],
+    _count: { userReview: 1 },
+  };
+
+  it("should return random fallback listings + 'no listing found' message when a keyword matches nothing", async () => {
+    // Main query returns no matches; the fallback query returns one random listing.
+    (mockPrisma.listing.findMany as Mock)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([fakeListing]);
+
+    const result = await listingService.getAllListings({
+      page: 1,
+      limit: 10,
+      search: "nonexistent-keyword",
+      sortBy: "createdAt",
+      sortOrder: "desc",
+    });
+
+    expect(result.isFallback).toBe(true);
+    expect(result.message).toContain('No listing found for "nonexistent-keyword"');
+    expect(result.listings).toHaveLength(1);
+    expect(result.listings[0]).toMatchObject({
+      id: "listing-fallback-1",
+      avgRating: 5,
+    });
+    expect(result.pagination).toMatchObject({ total: 0, totalPages: 0 });
+  });
+
+  it("should return fallback listings with a generic message when the list is empty without a keyword", async () => {
+    (mockPrisma.listing.findMany as Mock)
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([fakeListing]);
+
+    const result = await listingService.getAllListings({
+      page: 1,
+      limit: 10,
+      sortBy: "createdAt",
+      sortOrder: "desc",
+    });
+
+    expect(result.isFallback).toBe(true);
+    expect(result.message).toBe("No listing found");
+    expect(result.listings).toHaveLength(1);
+  });
+
+  it("should NOT fall back when fallbackWhenEmpty is false (admin view)", async () => {
+    (mockPrisma.listing.findMany as Mock).mockResolvedValue([]);
+
+    const result = await listingService.getAllListings(
+      {
+        page: 1,
+        limit: 10,
+        search: "nothing",
+        sortBy: "createdAt",
+        sortOrder: "desc",
+      },
+      { fallbackWhenEmpty: false }
+    );
+
+    expect(result.listings).toEqual([]);
+    expect(result.message).toBeUndefined();
+    expect(result.isFallback).toBeUndefined();
+  });
+
+  it("should return matching listings without a fallback message when the keyword matches", async () => {
+    (mockPrisma.listing.findMany as Mock).mockResolvedValue([fakeListing]);
+    (mockPrisma.listing.count as Mock).mockResolvedValue(1);
+
+    const result = await listingService.getAllListings({
+      page: 1,
+      limit: 10,
+      search: "plumbing",
+      sortBy: "createdAt",
+      sortOrder: "desc",
+    });
+
+    expect(result.listings).toHaveLength(1);
+    expect(result.listings[0]).toMatchObject({ id: "listing-fallback-1" });
+    expect(result.message).toBeUndefined();
+    expect(result.isFallback).toBeUndefined();
+  });
+
+  it("should fall back when a serviceName filter matches no services", async () => {
+    // In the serviceName path listing.findMany is only called by the
+    // fallback (no main-query fetch happens before the early return).
+    (mockPrisma.listing.findMany as Mock).mockResolvedValue([fakeListing]);
+    (mockPrisma.service.findMany as Mock).mockResolvedValue([]);
+
+    const result = await listingService.getAllListings({
+      page: 1,
+      limit: 10,
+      serviceName: "ghost-service",
+      sortBy: "createdAt",
+      sortOrder: "desc",
+    });
+
+    expect(result.isFallback).toBe(true);
+    expect(result.listings).toHaveLength(1);
   });
 });
 

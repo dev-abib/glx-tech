@@ -335,15 +335,20 @@ export const adminUpdateAdmin: RequestHandler<
 // Get all listings (admin view only)
 export const adminGetAllListings: RequestHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const result = await listingService.getAllListings({
-      page: Number(req.query.page) || 1,
-      limit: Number(req.query.limit) || 10,
-      search: req.query.search as string | undefined,
-      location: req.query.location as string | undefined,
-      serviceId: req.query.serviceId as string | undefined,
-      sortBy: (req.query.sortBy as string) || "createdAt",
-      sortOrder: (req.query.sortOrder as "asc" | "desc") || "desc",
-    });
+    const result = await listingService.getAllListings(
+      {
+        page: Number(req.query.page) || 1,
+        limit: Number(req.query.limit) || 10,
+        search: req.query.search as string | undefined,
+        location: req.query.location as string | undefined,
+        serviceId: req.query.serviceId as string | undefined,
+        sortBy: (req.query.sortBy as string) || "createdAt",
+        sortOrder: (req.query.sortOrder as "asc" | "desc") || "desc",
+      },
+      // Admin table views must keep a genuinely empty list — no random
+      // marketplace fallback listings here.
+      { fallbackWhenEmpty: false }
+    );
 
     return res
       .status(200)

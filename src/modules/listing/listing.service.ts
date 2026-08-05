@@ -53,6 +53,74 @@ const withApprovedSellerLink = <
   };
 };
 
+/**
+ * Common Prisma include for public listing payloads — always pulls in the
+ * seller, address, service and ratings (used to compute avgRating).
+ */
+const LISTING_INCLUDE = {
+  user: {
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      avatar: true,
+      isVerifiedSeller: true,
+      sellerInfo: {
+        select: { socialLInk: true, linkStatus: true },
+      },
+    },
+  },
+  address: {
+    select: {
+      id: true,
+      streetAddress: true,
+      city: true,
+      state: true,
+      zipCode: true,
+    },
+  },
+  service: {
+    select: {
+      id: true,
+      name: true,
+    },
+  },
+  userReview: {
+    select: { rating: true },
+  },
+  _count: {
+    select: { userReview: true },
+  },
+} as const;
+
+/** Compute the average rating (0 when there are no reviews). */
+const computeAvgRating = (reviews: { rating: number }[]): number => {
+  if (reviews.length === 0) return 0;
+  return parseFloat(
+    (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+  );
+};
+
+/** Fisher-Yates shuffle using Math.random for true random ordering. */
+const shuffleArray = <T>(arr: T[]): T[] => {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+type GetAllListingsOptions = {
+  /**
+   * When the filtered result is empty, return random fallback listings
+   * alongside a "No listing found" message instead of an empty array.
+   * Defaults to true (public marketplace behavior). Admin views pass
+   * false so they keep seeing a genuinely empty list.
+   */
+  fallbackWhenEmpty?: boolean;
+};
+
 export class ListingService {
   // create listing service
   async createListing(
@@ -173,7 +241,11 @@ export class ListingService {
 
 
   // get all listings (public)
-  async getAllListings(query: GetListingsQueryInput) {
+  async getAllListings(
+    query: GetListingsQueryInput,
+    options: GetAllListingsOptions = {}
+  ) {
+    const { fallbackWhenEmpty = true } = options;
     const {
       page,
       limit,
@@ -282,16 +354,9 @@ export class ListingService {
       if (services.length > 0) {
         where.serviceId = { in: services.map((s) => s.id) };
       } else {
-        // No services match the name — return empty result early
-        return {
-          listings: [],
-          pagination: {
-            page,
-            limit,
-            total: 0,
-            totalPages: 0,
-          },
-        };
+        // No services match the name — return the empty-result response
+        // (optionally with random fallback listings) early.
+        return this.buildEmptyResult(page, limit, search, fallbackWhenEmpty);
       }
     }
 
@@ -313,67 +378,6 @@ export class ListingService {
       maxPrice !== undefined ||
       random === true;
 
-    /**
-     * Fisher-Yates shuffle using Math.random for true random ordering.
-     */
-    const shuffleArray = <T>(arr: T[]): T[] => {
-      const shuffled = [...arr];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-      }
-      return shuffled;
-    };
-
-    // ── Common Prisma include (always includes ratings for avgRating) ──
-    const includeWithRatings = {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatar: true,
-          isVerifiedSeller: true,
-          sellerInfo: {
-            select: { socialLInk: true, linkStatus: true },
-          },
-        },
-      },
-      address: {
-        select: {
-          id: true,
-          streetAddress: true,
-          city: true,
-          state: true,
-          zipCode: true,
-        },
-      },
-      service: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-      userReview: {
-        select: { rating: true },
-      },
-      _count: {
-        select: { userReview: true },
-      },
-    } as const;
-
-    // ── Helper to compute avgRating from userReview array ───────────
-    const computeAvgRating = (
-      reviews: { rating: number }[]
-    ): number => {
-      if (reviews.length === 0) return 0;
-      return parseFloat(
-        (
-          reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-        ).toFixed(1)
-      );
-    };
-
     // If we need in-memory filtering (radius or minRating),
     // fetch ALL matching records first, then filter + paginate after.
     if (needsInMemoryFiltering) {
@@ -383,7 +387,7 @@ export class ListingService {
           { isFeatured: "desc" },
           { [sortBy]: sortOrder },
         ],
-        include: includeWithRatings,
+        include: LISTING_INCLUDE,
       });
 
       // Filter by minimum average rating
@@ -423,6 +427,12 @@ export class ListingService {
         })
       );
 
+      // Only fall back when there are genuinely no matching listings — an
+      // out-of-range page (total > 0) must behave normally.
+      if (total === 0) {
+        return this.buildEmptyResult(page, limit, search, fallbackWhenEmpty);
+      }
+
       return {
         listings,
         pagination: {
@@ -431,6 +441,8 @@ export class ListingService {
           total,
           totalPages: Math.ceil(total / limit),
         },
+        message: undefined,
+        isFallback: undefined,
       };
     }
 
@@ -445,7 +457,7 @@ export class ListingService {
           { isFeatured: "desc" },
           { [sortBy]: sortOrder },
         ],
-        include: includeWithRatings,
+        include: LISTING_INCLUDE,
       }),
       prisma.listing.count({ where }),
     ]);
@@ -458,6 +470,12 @@ export class ListingService {
       })
     );
 
+    // Only fall back when there are genuinely no matching listings — an
+    // out-of-range page (total > 0) must behave normally.
+    if (total === 0) {
+      return this.buildEmptyResult(page, limit, search, fallbackWhenEmpty);
+    }
+
     return {
       listings: enrichedListings,
       pagination: {
@@ -466,7 +484,60 @@ export class ListingService {
         total,
         totalPages: Math.ceil(total / limit),
       },
+      message: undefined,
+      isFallback: undefined,
     };
+  }
+
+  /**
+   * Response used when the filtered result is empty. When fallback is
+   * enabled it returns random listings (so the marketplace page is never
+   * blank) together with a "No listing found" message.
+   */
+  private async buildEmptyResult(
+    page: number,
+    limit: number,
+    search: string | undefined,
+    fallbackWhenEmpty: boolean
+  ) {
+    if (!fallbackWhenEmpty) {
+      return {
+        listings: [],
+        pagination: { page, limit, total: 0, totalPages: 0 },
+        message: undefined,
+        isFallback: undefined,
+      };
+    }
+
+    const fallbackListings = await this.fetchRandomListings(limit);
+    return {
+      listings: fallbackListings,
+      pagination: { page, limit, total: 0, totalPages: 0 },
+      message: search
+        ? `No listing found for "${search}"`
+        : "No listing found",
+      isFallback: true,
+    };
+  }
+
+  /**
+   * Fetch a small pool of active sellers' available listings, shuffle them
+   * in memory (Fisher-Yates) and return up to `limit` random suggestions.
+   */
+  private async fetchRandomListings(limit: number) {
+    const pool = await prisma.listing.findMany({
+      where: { user: { isActive: true }, isAvailable: true },
+      take: Math.min(Math.max(limit * 2, 10), 50),
+      include: LISTING_INCLUDE,
+    });
+
+    return shuffleArray(pool)
+      .slice(0, limit)
+      .map(({ userReview, ...rest }) => ({
+        ...rest,
+        user: withApprovedSellerLink(rest.user),
+        avgRating: computeAvgRating(userReview),
+      }));
   }
 
   // get related listings by service type (public)
@@ -506,41 +577,7 @@ export class ListingService {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              avatar: true,
-              isVerifiedSeller: true,
-              sellerInfo: {
-                select: { socialLInk: true, linkStatus: true },
-              },
-            },
-          },
-          address: {
-            select: {
-              id: true,
-              streetAddress: true,
-              city: true,
-              state: true,
-              zipCode: true,
-            },
-          },
-          service: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          userReview: {
-            select: { rating: true },
-          },
-          _count: {
-            select: { userReview: true },
-          },
-        },
+        include: LISTING_INCLUDE,
       }),
       prisma.listing.count({ where }),
     ]);

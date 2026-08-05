@@ -80,7 +80,13 @@ get-all-listings:
   get:
     tags: ["14 — Listings & Reviews"]
     summary: Get all listings (Public)
-    description: Returns a paginated list of all available listings.
+    description: >
+      Returns a paginated list of all available listings. When the filtered
+      result is empty (e.g. a keyword matches no listings), the API still
+      responds with HTTP 200 but sets the top-level message to
+      "No listing found" and returns a set of random fallback listings in
+      `data.listings` (with `data.isFallback` set to true) so the page is
+      never blank.
     parameters:
       - name: page
         in: query
@@ -174,6 +180,12 @@ get-all-listings:
                             $ref: "#/components/schemas/Listing"
                         pagination:
                           $ref: "#/components/schemas/Pagination"
+                        message:
+                          type: string
+                          description: "Set to 'No listing found' (or 'No listing found for \"<keyword>\"') when the filtered result is empty"
+                        isFallback:
+                          type: boolean
+                          description: "True when the listings array contains random fallback listings because the filtered result was empty"
 get-listing:
   get:
     tags: ["14 — Listings & Reviews"]
